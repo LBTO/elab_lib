@@ -1,0 +1,68 @@
+# Makefile for all the Adopt software
+
+SUBSYSTEMS_TO_BUILD = lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
+                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper \
+                      CameraLensCtrl Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper
+					  #InterferometerCtrl 
+
+SUBSYSTEMS_TO_INSTALL = MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl\
+                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper \
+                      CameraLensCtrl StartUp Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper 
+					  #InterferometerCtrl
+
+SUBSYSTEMS_TO_CLEAN =      lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
+                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper \
+                      CameraLensCtrl Arbitrator HexapodCtrl DiagnApp idl_wrapper SysCheck StartUp
+					  #InterferometerCtrl 
+
+all: 
+	for dir in ${SUBSYSTEMS_TO_BUILD}; do \
+	 (cd $$dir; ${MAKE} all) || break; \
+	done
+
+contrib:
+	(cd contrib; ${MAKE} all)
+
+install: all install-paths
+	for dir in ${SUBSYSTEMS_TO_INSTALL}; do \
+	 (cd $$dir; ${MAKE} install) || break; \
+	done
+
+
+install-paths:
+	install -d $(ADOPT_ROOT)
+	install -d $(ADOPT_ROOT)/bin
+	install -d $(ADOPT_ROOT)/idl
+	install -d $(ADOPT_ROOT)/idl/dlm
+	install -d $(ADOPT_ROOT)/conf
+	install -d $(ADOPT_ROOT)/calib
+	install -d $(ADOPT_ROOT)/py
+
+install-conf:
+	@echo "!!!WARNING!!! Installing the conf directory will overwrite your current configuration. Continue? [yes/no]"
+	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT) && cp -a $(ADOPT_SOURCE)/conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
+
+install-calib:
+	@echo "!!!WARNING!!! Installing the calib directory will overwrite your current calibration. Continue? [yes/no]"
+	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && install -d $(ADOPT_ROOT)/calib/$(ADOPT_SIDE)/WFS && cp -a $(ADOPT_SOURCE)/calib/left/WFS $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && echo "calibration installed"; else echo "Nothing done"; fi
+
+install-contrib:
+	(cd contrib; $(MAKE) install)
+
+sensor:
+	(cd SensorCheck; $(MAKE))
+
+clean:
+	rm -f *.tgz
+	for dir in ${SUBSYSTEMS_TO_CLEAN}; do \
+	 (cd $$dir; ${MAKE} clean) || break; \
+	done
+
+clean-contrib:
+	(cd contrib; ${MAKE} clean)
+
+kit:
+	./makekit.sh

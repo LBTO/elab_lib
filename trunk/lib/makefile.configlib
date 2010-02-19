@@ -1,0 +1,19 @@
+# This file can be used by client applications to link
+# this library: before using "XXX_LNK" please call the
+# "xxx_compile" target.
+
+ifndef MAKEFILECONFIGLIB
+MAKEFILECONFIGLIB=.
+
+# Supervisor general makefile
+include $(ADOPT_SOURCE)/makefile.gen
+
+# Base lib export makefile
+include $(ADOPT_LIB)/makefile.logger
+
+configlib_compile: logger_compile
+	cd $(ADOPT_LIB); make configlib.a;
+
+CONFIGLIB_LNK = $(ADOPT_LIB)/configlib.a -lstdc++ $(LOGGER_LNK)
+
+endif

@@ -1,0 +1,17 @@
+# This file can be used by client applications to link
+# this library: before using "XXX_LNK" please call the
+# "xxx_compile" target.
+
+ifndef MAKEFILEIOLIB
+MAKEFILEIOLIB=.
+
+# Supervisor general makefile
+include $(ADOPT_SOURCE)/makefile.gen
+
+iolib_compile:
+	cd $(ADOPT_LIB); make iolib.a;
+
+IOLIB_LNK = $(ADOPT_LIB)/iolib.a -lstdc++
+
+endif
+

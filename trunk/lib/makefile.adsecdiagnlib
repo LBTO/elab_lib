@@ -1,0 +1,15 @@
+# This file can be used by client applications to link
+# this library: before using "XXX_LNK" please call the
+# "xxx_compile" target.
+
+# Supervisor general makefile
+include $(ADOPT_SOURCE)/makefile.gen
+
+# Dependencies
+include $(ADOPT_LIB)/makefile.logger
+
+adsecdiagnlib_compile:
+	cd $(ADOPT_LIB); make adsecdiagnlib.a;
+
+ADSECDIAGNLIB_LNK = $(ADOPT_LIB)/adsecdiagnlib.a $(LOGGER_LNK) -lstdc++
+

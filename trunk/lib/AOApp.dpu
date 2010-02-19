@@ -1,0 +1,62 @@
+\documentclass[a4paper]{article}
+\usepackage{lbtadopt}
+
+\title{ LBT-AdOpt AOApp base class   \\
+        Annotated Source Code }
+\pagetitle{}
+
+\author{ Lorenzo Busoni }
+
+\docnumber{LBT-AdOpt.xxx}
+\version{1.0}
+\date{4 July 2006}
+
+\newcommand{\msgl}{{\tt msglib}}
+\newcommand{\msgd}{{\tt MsgD-RTDB}}
+\newcommand{\rtdbl}{{\tt rtdblib}}
+\newcommand{\bufl}{{\tt buflib}}
+\newcommand{\thrdl}{{\tt thrdlib}}
+\newcommand{\RTDBvar}{{\tt RTDBvar}}
+\newcommand{\stdconfig}{{\tt stdconfig}}
+\newcommand{\aoapp}{{\tt AOApp}}
+\newcommand{\RTDB}{{\tt RTDB}}
+
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{1mm}
+
+\raggedbottom
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report contains full documentation of \aoapp, the C++ base class 
+that LBT-AO components can derive from. 
+\end{abstract}
+
+\tableofcontents
+
+\newpage
+\vspace{5cm}
+\quad
+
+\section{Introduction}
+
+Complex LBT-AO components share a common flow structure: they need to read configuration files, 
+connect to the MsgD, setup RTDB variables, spawn a thread for handling asynchronous messages 
+and eventually (if they are not pure event-driven servers) do things in a neverending loop.
+
+This structure has been proven to satisfy all the needs of the LBT-AO components written so far.
+To avoid code duplication and improve maintenance, LBT-AO components should derive from a base class
+\aoapp\ that implements the common routines.
+
+
+\section{\aoapp}
+
+\aoapp\  implements some services.
+
+\sourceinclude{AOApp.h}
+\sourceinclude{AOApp.cpp}
+
+
+\end{document}

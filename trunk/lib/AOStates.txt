@@ -1,0 +1,31 @@
+
+# States available to all controllers. Each controller can choose to use
+# whatever states find more suitable.
+
+STATE_INVALID      -1   Invalid
+STATE_UNDEFINED     0   Undefined
+STATE_NOCONNECTION  1   No connection     # Controller up, no connection with hardware
+STATE_CONNECTED     2   Connected         # Controller up, connection OK
+STATE_CONFIGURING   3   Configuring       # Configuring hardware (uploading parameters)
+STATE_CONFIGURED    4   Configured        # Configured, but not yet ready (additional operations needed)
+STATE_OFF           5   Off               # Configured, ready but disabled
+STATE_READY         6   Ready             # Ready for operation (if applicable)
+STATE_OPERATING     7   Operating         # Normal operation, other commands accepted 
+STATE_BUSY          8   Operating, busy   # Normal operation, other commands will be queued up until current operation ends.
+STATE_ERROR         9   Error             # Error condition
+
+# States common to all movement controllers
+
+STATE_HOMING        10   Homing            # Special configuration state
+
+# State values for iDrive controllers
+
+STATE_POLEFINDING   11   Pole finding             # Special configuration state
+STATE_LMRECOVER     12   Limit switch recovering  # Special configuration state
+
+# Special enable values for iDrives
+
+ENABLE_OFF            100    Disable drive
+ENABLE_OFFAFTERMOVE   101    Turn off immediately after movement finishes
+ENABLE_ALWAYS         102    Keep active control always on
+
