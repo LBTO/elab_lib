@@ -15,6 +15,9 @@ vartypes.pro: ../lib/base/vartypes.txt
 	cp $(ADOPT_SOURCE)/lib/base/vartypes.pro .
 
 install: all
+	rm -rf  $(ADOPT_ROOT)/idl/adsec_lib
+	rm -rf  $(ADOPT_ROOT)/idl/oaa_lib
+	rm -rf  $(ADOPT_ROOT)/idl/wfs_lib
 	install -d $(ADOPT_ROOT)/idl
 	install init_idl_ao.pro $(ADOPT_ROOT)/idl
 	install errordb.pro $(ADOPT_ROOT)/idl
