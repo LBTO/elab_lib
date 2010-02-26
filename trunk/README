@@ -5,8 +5,7 @@ The installation kit is made up of two compressed tar files:
     AoSup_YYYY-MM-DD.tgz and AoConf_YYYY-MM-DD.tgz
 
 The first one includes all the source tree to build the
-Supervisor executables.The seconds holds configuration and
-calibration files.
+Supervisor executables.The seconds holds configuration files.
 
 The AO supervisor will run as a plain user, provided with sudo
 privileges as root (needed only for installation) and is to be 
@@ -39,7 +38,7 @@ Login as the AO Supervisor plain user and do the following:
 4. Logout from the account, login again and verify that the environment 
    variables are correctly defined.
 
-5. Do: "cd $ADOPT_ROOT" and extrat the AoConf tar file onto that
+5. Do: "cd $ADOPT_ROOT" and extract the AoConf tar file onto that
    directory.
 
 6. Do: "cd $ADOPT_SOURCE/contrib" and execute:
