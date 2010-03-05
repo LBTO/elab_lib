@@ -8,7 +8,7 @@ include $(ADOPT_SOURCE)/makefile.gen
 OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
           iolib.o commlib.o \
           UdpConnection.o TcpConnection.o \
-          Utils.o Reorder.o Paths.o \
+          NaNutils.o Utils.o Reorder.o Paths.o \
           AdamLib.o bcu_diag.o aoapplib.o \
           mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o
           
@@ -77,6 +77,7 @@ RTDBvar.o: RTDBvar.cpp RTDBvar.h aotypes.h
 Logger.o: Logger.cpp Logger.h AOExcept.h
 stdconfig.o: stdconfig.cpp stdconfig.h
 Utils.o: Utils.cpp Utils.h aotypes.h
+NaNutils.o: NaNutils.cpp NaNutils.h
 AdamLib.o: AdamLib.cpp AdamLib.h 
 UdpConnection.o: UdpConnection.cpp UdpConnection.h
 TcpConnection.o: TcpConnection.cpp TcpConnection.h
@@ -115,8 +116,8 @@ aoapp.a: baselib AOApp.o RTDBvar.o aoapplib.o AOStates.c AOStates.h
 	$(AR) aoapp.a AOApp.o RTDBvar.o aoapplib.o
 	$(RANLIB) aoapp.a
 
-logger.a: baselib Logger.o Utils.o 
-	$(AR) logger.a Logger.o Utils.o 
+logger.a: baselib Logger.o Utils.o NaNutils.o
+	$(AR) logger.a Logger.o Utils.o NaNutils.o
 	$(RANLIB) logger.a
 
 # NETLIB
