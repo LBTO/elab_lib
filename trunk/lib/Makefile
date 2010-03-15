@@ -10,7 +10,7 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
           UdpConnection.o TcpConnection.o \
           NaNutils.o Utils.o Reorder.o Paths.o \
           AdamLib.o bcu_diag.o aoapplib.o \
-          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o
+          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o
           
 # LIB ARCHIVES
 # Only these archives should be linked by AOApp's
@@ -91,6 +91,7 @@ bcu_diag.o: bcu_diag.cpp bcu_diag.h diagBuffer.h iolib.o
 diagBuffer.o: diagBuffer.cpp diagBuffer.h
 Reorder.o: Reorder.cpp Reorder.h
 intmatlib.o: intmatlib.cpp intmatlib.h
+telemetry.o: telemetry.c telemetry.h
 
 AOStates.c AOStates.h: AOStates.txt
 	./makerrordb.py AOStates.txt -py AOStates
