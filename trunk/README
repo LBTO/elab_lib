@@ -28,6 +28,10 @@ Login as the AO Supervisor plain user and do the following:
    As a result, the startup shell procedure file adopt_environment.sh 
    and the runtime directories are created.
 
+   You may need to edit the adopt_environment.sh file to select the proper
+   definition for the path to the QT library (see the comments into the
+   file for the details).
+
    NOTE: if something fails while creating directories (e.g.: because
    the user has no privileges to create them) you must have the sysadmin
    provide the required privileges and rerun prepare.py.
