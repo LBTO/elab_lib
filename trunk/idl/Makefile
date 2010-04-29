@@ -16,14 +16,14 @@ vartypes.pro: ../lib/base/vartypes.txt
 
 install: all
 	rm -rf  $(ADOPT_ROOT)/idl/adsec_lib
-	rm -rf  $(ADOPT_ROOT)/idl/oaa_lib
+	rm -rf  $(ADOPT_ROOT)/idl/elab_lib
 	rm -rf  $(ADOPT_ROOT)/idl/wfs_lib
 	install -d $(ADOPT_ROOT)/idl
 	install init_idl_ao.pro $(ADOPT_ROOT)/idl
 	install errordb.pro $(ADOPT_ROOT)/idl
 	install msgcodes.pro $(ADOPT_ROOT)/idl
 	install vartypes.pro $(ADOPT_ROOT)/idl
-	rsync -aC oaa_lib $(ADOPT_ROOT)/idl
+	rsync -aC elab_lib $(ADOPT_ROOT)/idl
 	rsync -aC wfs_lib $(ADOPT_ROOT)/idl
 	rsync -aC adsec_lib $(ADOPT_ROOT)/idl
 
