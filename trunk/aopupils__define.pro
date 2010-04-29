@@ -20,7 +20,8 @@ function AOpupils::Init, wfs_header, wunit
 	self._pup_tracknum = (strsplit(pp, '/', /EXTRACT))[1]
 
 	; Read first pupil index
-	indpup_file = pups_path+'pup1.fits'
+    indpup_file = pups_path+'pup1.fits'
+	if not file_test(indpup_file) then return, 0
 	indpup = readfits(indpup_file, /SILENT)
 	nsub = n_elements(indpup)
 
@@ -45,11 +46,12 @@ function AOpupils::Init, wfs_header, wunit
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOpupils', 'Represent WFS pupils') then return, 0
-    self->addMethodHelp, "indpup()", "pupil indexes  (lngarr)"
+    self->addMethodHelp, "indpup()", "pupil indexes  (lonarr)"
     self->addMethodHelp, "nsub()", "number of valid subapertures (long)"
     self->addMethodHelp, "radius()", "radius of pupils (long[4])"
     self->addMethodHelp, "cx()", "x-coord of pupils centers (long[4])"
     self->addMethodHelp, "cy()", "y-coord of pupils centers (long[4])"
+    self->addMethodHelp, "pup_tracknum()", "pupils tracking number (string)"
 
 	return, 1
 end

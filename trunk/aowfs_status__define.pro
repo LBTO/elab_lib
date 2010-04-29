@@ -95,6 +95,7 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %s")','Unit number', self->wunit() )
     print, string(format='(%"%-30s %f")','Frequency [Hz]', (self->ccd39())->framerate())
     print, string(format='(%"%-30s %d")','Binning', (self->ccd39())->binning())
+    print, string(format='(%"%-30s %s")','Pup trackn', (self->pupils())->pup_tracknum() )
     print, string(format='(%"%-30s %d")','Total num. of supabs', (self->pupils())->nsub())
     print, string(format='(%"%-30s %f")','Modulation', self->modulation() )
     print, string(format='(%"%-30s %s")','FW1', (self->filtw1())->name() )

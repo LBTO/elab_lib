@@ -53,6 +53,29 @@ function AOintmat::im
     return, im
 end
 
+; returns Sx in im matrix
+function AOintmat::sx, mode_num_idx
+	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	im = self->im()
+	nsub = ((self->wfs_status())->pupils())->nsub()
+	sx = im[mode_num_idx,*]
+	sx = sx[*,0:nsub*2-1]
+	sx = sx[*,0:*:2]
+	return, sx
+end
+
+; returns Sy in im matrix
+function AOintmat::sy, mode_num_idx
+	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	im = self->im()
+	nsub = ((self->wfs_status())->pupils())->nsub()
+	sy = im[mode_num_idx,*]
+	sy = sy[*,0:nsub*2-1]
+	sy = sy[*,1:*:2]
+	return, sy
+end
+
+
 ; number of non-null columns in im matrix
 function AOintmat::nmodes
     if (self._nmodes eq -1) then r=self->im()
@@ -91,7 +114,8 @@ end
 function AOintmat::im2d
 	if not ptr_valid(self._im2d_cube) then begin
 		mypup = 0	;use this pupil info to remap signals
-		im = self->im()
+		sx = self->sx()
+		sy = self->sy()
 		indpup = ((self->wfs_status())->pupils())->indpup()
 		nsub   = ((self->wfs_status())->pupils())->nsub()
 		fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
@@ -107,11 +131,9 @@ function AOintmat::im2d
 		s2d = fltarr(fr_sz,fr_sz)
 		im_2d = fltarr(im2d_w*2,im2d_h,self->nmodes())
 		for ii=0, self->nmodes()-1 do begin
-;			s = im[ii,self->slopes_idx()]
-			s = im[ii,0:nsub*2-1]
-			s2d[indpup[*,mypup]] = s[0:*:2]
+			s2d[indpup[*,mypup]] = sx[ii,*]
 			s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-			s2d[indpup[*,mypup]] = s[1:*:2]
+			s2d[indpup[*,mypup]] = sy[ii,*]
 			s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 			im_2d[*,*,ii] = [s2d_tmpA,s2d_tmpB]
 		endfor
