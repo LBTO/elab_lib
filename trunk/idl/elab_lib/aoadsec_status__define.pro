@@ -34,7 +34,12 @@ function AOadsec_status::Init, adsec_status_struct
    								   self._ovsamp_time = 1./time_or_freq			; it's a freq!
 	endif else self._ovsamp_time = -1.
 
-
+	; electrical index of working actuators
+	act_wcl_fname = filepath(root=ao_elabdir(), 'act_wcl.sav')	;valid for solar tower data!!!!
+	if file_test(act_wcl_fname) then begin
+		restore, act_wcl_fname
+		self._act_wcl = ptr_new(act_wcl)
+	endif
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOadsec_status', 'Represents the AdSec status') then return, 0
@@ -107,9 +112,13 @@ function AOadsec_status::ovsamp_time
     return, self._ovsamp_time
 end
 
+function AOadsec_status::act_wcl
+	if ptr_valid(self._act_wcl) then return, *self._act_wcl else return, 0
+end
 
 pro AOadsec_status::Cleanup
     self->AOhelp::Cleanup
+    ptr_free, self._act_wcl
 end
 
 pro AOadsec_status__define
@@ -125,6 +134,7 @@ pro AOadsec_status__define
         _shape_file              : "", $
         _ff_matrix_file          : "", $
         _ovsamp_time			 : 0., $
+        _act_wcl				 : ptr_new(), $
         INHERITS AOhelp $
     }
 end

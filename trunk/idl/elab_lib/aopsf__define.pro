@@ -87,6 +87,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
     self->addMethodHelp, "exptime()",		"psf exposure time [s]"
     self->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
+    self->addMethodHelp, "bias()",			"bias level of the LE image"
     self->addMethodHelp, "gaussfit()",  	"return reference to psf gaussfit object (AOgaussfit)"
     self->addMethodHelp, "sr_se([/PLOT])", 	"Strehl ratio estimated from the image"
     self->addMethodHelp, "profile()", 		"radially averaged PSF profile"
@@ -158,12 +159,36 @@ function AOpsf::longExposure
 		;Check whether the dark used to compute the saved LE PSF was the same....
 		if used_dark_fname ne current_dark_fname then $
 			message, 'WARNING: The dark used to compute the saved LE-PSF is not the same as the current dark', /info
+		if n_elements(bias_level) ne 0 then self._bias_level = bias_level
 	endif else begin
     	psf_le = (self->nframes() gt 1) ? total(self->image(), 3) / self->nframes() : self->image()
+    	self->compute_bias, psf_le
+		psf_le = psf_le - self._bias_level
     	used_dark_fname = current_dark_fname
-    	save, psf_le, used_dark_fname, filename=self._psf_le_fname, /compress
+    	bias_level = self._bias_level
+    	save, psf_le, used_dark_fname, bias_level, filename=self._psf_le_fname, /compress
     endelse
     return, psf_le
+end
+
+pro AOpsf::compute_bias, image
+	; Create four boxes close to the corners of the frame
+	; The bias level will be estimated in these ROIs.
+	box_size = 10	;size in pixels
+	pix_away = 2	;pixels away from corners
+	boxes = lonarr(self._frame_w,self._frame_h)
+	lowleft = [[pix_away,pix_away], [pix_away,self._frame_h-1-box_size-pix_away], $
+		[self._frame_w-1-box_size-pix_away,pix_away], [self._frame_w-1-box_size-pix_away,self._frame_h-1-box_size-pix_away] ]
+	for ii=0, 3 do boxes[ lowleft[0,ii]:lowleft[0,ii]+box_size-1, lowleft[1,ii]:lowleft[1,ii]+box_size-1] = 1
+	idx_boxes = where(boxes)
+
+	; Estimate bias (use median instead of mean in case isolated bad pixels exist in these ROIs):
+	bias_level = median(image[idx_boxes])
+	self._bias_level = bias_level
+end
+
+function AOpsf::bias
+	return, self._bias_level
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 2D Gaussian Fit
@@ -468,6 +493,7 @@ pro AOpsf__define
         _fitsheader     :  ptr_new()	, $
         _image          :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
+        _bias_level		:  0.			, $
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
         _pixelscale_lD  :  0d			, $  ;[in lambda/D per pixel]
         _nframes        :  0L			, $
