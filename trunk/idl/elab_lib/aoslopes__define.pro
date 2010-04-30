@@ -4,6 +4,7 @@
 ;-
 
 function AOslopes::Init, root_obj, slopes_file, fc_obj
+	if not file_test(slopes_file) then return,0
     self._file = slopes_file
     self._fc_obj = fc_obj
     self._fitsheader = ptr_new(headfits(self._file ,/SILENT), /no_copy)
