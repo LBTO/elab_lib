@@ -11,12 +11,18 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self._c_fname  = c_fname
     self._gain_fname  = gain_fname
 
-    header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT)
-    self._b0_a_fitsheader = ptr_new(header, /no_copy)
-    header = headfits(ao_datadir()+path_sep()+self->c_fname(), /SILENT)
-    self._c_fitsheader = ptr_new(header, /no_copy)
-    header = headfits(ao_datadir()+path_sep()+self->gain_fname(), /SILENT)
-    self._gain_fitsheader = ptr_new(header, /no_copy)
+	if self->b0_a_fname() ne "" then begin
+    	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT)
+    	self._b0_a_fitsheader = ptr_new(header, /no_copy)
+    endif
+    if self->c_fname() ne "" then begin
+    	header = headfits(ao_datadir()+path_sep()+self->c_fname(), /SILENT)
+    	self._c_fitsheader = ptr_new(header, /no_copy)
+    endif
+    if self->gain_fname() ne "" then begin
+    	header = headfits(ao_datadir()+path_sep()+self->gain_fname(), /SILENT)
+    	self._gain_fitsheader = ptr_new(header, /no_copy)
+    endif
 
     self._kalman     = aoget_fits_keyword(self->b0_a_header(), 'KFMODES') eq '' ? 0B : 1B
 
