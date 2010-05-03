@@ -52,6 +52,9 @@ function AOelab::Init, tracknum, $
     self._wfs_status = obj_new('AOwfs_status', self, wfs_status_file)
     if not obj_valid(self._wfs_status) then return, 0
 
+	; create telescope leaf
+	self._tel = obj_new('AOtel', wfs_status_file)
+
     ; create sanity check leaf
     crcerrors_fname = filepath(root=self._datadir,  'CrcErrors_'+tracknum+'.fits')
     fltimeout_fname = filepath(root=self._datadir,  'FlTimeout_'+tracknum+'.fits')
@@ -167,6 +170,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._obj_tracknum) then self->addleaf, self._obj_tracknum
     if obj_valid(self._adsec_status) then self->addleaf, self._adsec_status
     if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status
+    if obj_valid(self._tel) then self->addleaf, self._tel
     if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck
     if obj_valid(self._control) then self->addleaf, self._control
     if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter
@@ -187,6 +191,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
     self->addMethodHelp, "adsec_status()", "reference to adsec status object (AOadsec_status)"
     self->addMethodHelp, "wfs_status()", "reference to wfs status object (AOwfs_status)"
+    self->addMethodHelp, "tel()", "reference to telescope object (AOtel_status)"
     self->addMethodHelp, "sanity_check()", "reference to loop sanity check (AOsanitycheck)"
     self->addMethodHelp, "control()", "reference to control filter object (AOcontrol)"
     self->addMethodHelp, "frames_counter()", "reference to frames counter object (AOframes_counter)"
@@ -373,6 +378,10 @@ function AOelab::wfs_status
     IF (OBJ_VALID(self._wfs_status)) THEN return, self._wfs_status else return, obj_new()
 end
 
+function AOelab::tel
+    IF (OBJ_VALID(self._tel)) THEN return, self._tel else return, obj_new()
+end
+
 function AOelab::sanitycheck
     IF (OBJ_VALID(self._sanitycheck)) THEN return, self._sanitycheck else return, obj_new()
 end
@@ -456,6 +465,7 @@ pro AOelab::Cleanup
     obj_destroy, self._obj_tracknum
     obj_destroy, self._adsec_status
     obj_destroy, self._wfs_status
+    obj_destroy, self._tel
     obj_destroy, self._sanitycheck
     obj_destroy, self._control
     obj_destroy, self._frames_counter
@@ -486,6 +496,7 @@ pro AOelab__define
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
         _wfs_status        : obj_new(), $
+        _tel			   : obj_new(), $
         _sanitycheck       : obj_new(), $
         _control           : obj_new(), $
         _frames_counter    : obj_new(), $
