@@ -62,6 +62,7 @@ sensor:
 	(cd SensorCheck; $(MAKE))
 
 clean:
+	rm -f *.pyc
 	rm -f *.tgz
 	for dir in ${SUBSYSTEMS_TO_CLEAN}; do \
 	 (cd $$dir; ${MAKE} clean) || break; \
