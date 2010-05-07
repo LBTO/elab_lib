@@ -15,6 +15,16 @@ function AOtel::Init, fitsfile
 	istracking = long(aoget_fits_keyword(hdr, 'tel.TEL.ISTRACKING'))
 	if istracking ne -9999 then self._istracking = istracking else self._istracking = -1L
 
+;name                  type      description
+;tel.AMB.WINDSPEED     real   wind speed in m/s
+;tel.HEXAPOD.ABS_POS0  real   hexapod position X (mm)
+;tel.HEXAPOD.ABS_POS1  real   hexapod position Y (mm)
+;tel.HEXAPOD.ABS_POS2  real   hexapod position Z (mm)
+;tel.HEXAPOD.ABS_POS3  real   hexapod rotation X (arcseconds)
+;tel.HEXAPOD.ABS_POS4  real   hexapod rotation Y (arcseconds)
+;tel.HEXAPOD.ABS_POS5  real   hexapod rotation Z (arcseconds)
+;tel.HEXAPOD.STATUS    int    hexapod status (significato ignoto)
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOtel', 'Represent TELESCOPE status') then return, 0
     self->addMethodHelp, "rot_angle()", "AGW rotator angle in degrees (float)"
