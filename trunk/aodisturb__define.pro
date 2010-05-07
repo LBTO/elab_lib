@@ -97,6 +97,7 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
 			if not self->AOdisturbvib::Init(root_obj) then return,0
 			self->AOdisturbvib::addHelp, self
 			END
+		'':	message, 'Uknown type of disturbance', /info
 	ENDCASE
 
 	;Inherit time-series parameters:
