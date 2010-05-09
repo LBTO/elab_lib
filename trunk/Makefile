@@ -47,13 +47,13 @@ install-paths:
 install-conf:
 	@echo "!!!WARNING!!! Installing the conf directory will overwrite your current configuration. Continue? [yes/no]"
 	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT) && \
-             rsync -aC conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
+             rsync -aC --delete conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
 
 install-calib:
 	@echo "!!!WARNING!!! Installing the calib directory will overwrite your current calibration. Continue? [yes/no]"
 	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && \
              install -d $(ADOPT_ROOT)/calib/$(ADOPT_SIDE)/WFS && \
-             rsync -aC calib/left/WFS $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && echo "calibration installed"; else echo "Nothing done"; fi
+             rsync -aC --delete calib/left/WFS $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && echo "calibration installed"; else echo "Nothing done"; fi
 
 install-contrib:
 	(cd contrib; $(MAKE) install)
@@ -63,6 +63,8 @@ sensor:
 
 clean:
 	rm -f *.pyc
+	rm -f adopt_environment.sh
+	rm -f install_environment.sh
 	rm -f *.tgz
 	for dir in ${SUBSYSTEMS_TO_CLEAN}; do \
 	 (cd $$dir; ${MAKE} clean) || break; \
