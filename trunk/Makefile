@@ -1,21 +1,21 @@
 # Makefile for all the Adopt software
 
 SUBSYSTEMS_TO_BUILD = lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
-                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper \
                       OptLoopDiagnostic
 					  #InterferometerCtrl 
 
 SUBSYSTEMS_TO_INSTALL = MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl\
-                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl StartUp Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper \
                       OptLoopDiagnostic
 					  #InterferometerCtrl
 
 SUBSYSTEMS_TO_CLEAN =      lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
-                      SimpleMotorCtrl GUI ChUI Tester scripts MirrorDiagnostic \
+                      SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl Arbitrator HexapodCtrl DiagnApp idl_wrapper SysCheck StartUp \
                       OptLoopDiagnostic
