@@ -51,7 +51,6 @@ clean:
 	(cd IntfLib; $(MAKE) clean; cd ..)
 	(cd arblib; $(MAKE) clean; cd ..)
 	(cd drawlib; $(MAKE) clean; cd ..)
-	rm -f AOStates.h AOStates.c AOStates.pro
 	rm -f *.aux *.dvi *.log *.toc *.tmp
 	rm -f *.o *.a
 	rm -f $(ARCHIVES)

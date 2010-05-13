@@ -28,4 +28,3 @@ install: all
 	rsync -aC adsec_lib $(ADOPT_ROOT)/idl
 
 clean:
-	rm -f errordb.pro msgcodes.pro vartypes.pro
