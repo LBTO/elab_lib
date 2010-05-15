@@ -1,6 +1,12 @@
 This is the installation kit for the AO Supervisor software.
 
-The installation kit is made up of two compressed tar files:
+
+There are two methods for installation: from tarballs or from
+an svn checkout.
+
+TARBALL CONTENTS
+
+The installation kit is made up of two tarballs:
 
     AoSup_YYYY-MM-DD.tgz and AoConf_YYYY-MM-DD.tgz
 
@@ -17,9 +23,15 @@ INSTALLATION
 
 Login as the AO Supervisor plain user and do the following:
 
-1. Extract the AoSup tar file into a clean directory (source directory).
+1. TARBALL: Extract the AoSup tar file into a clean directory 
+    (source directory).
 
-2. Execute the prepare procedure:
+   or
+
+   SVN CO: Checkout a fresh source tree from the SVN repository into
+           a clean directory (source directory).
+
+2. Execute the prepare procedure from the source code directory root
 
    python prepare.py
 
@@ -31,13 +43,13 @@ Login as the AO Supervisor plain user and do the following:
    Two shell scripts are also created: adopt_environment.sh and
    install_environment.sh 
 
-   NOTE: the shell script are tailofred for bash shell and for a CentOS
+   NOTE: the shell scripts are tailored for bash shell and for a CentOS
    Linux distribution.  You may need to edit the shell scripts  if you
    installation is different (see comments into the files for hints).
 
    NOTE: if something fails while creating directories (e.g.: because
-   the user has no privileges to create them) you must have the sysadmin
-   provide the required privileges and rerun prepare.py.
+   the user has no privileges to create them) you must ask the sysadmin
+   to provide the required privileges and rerun prepare.py.
 
 3. Copy the file adopt_environment.sh in your home directory and provide
    so that it is executed whenever you login.
@@ -45,10 +57,12 @@ Login as the AO Supervisor plain user and do the following:
 4. Execute the file install_environment.sh to set up the proper environment
    for installation.
 
-   source ./temp_environment.sh
+   source ./install_environment.sh
 
-5. Do: "cd $ADOPT_ROOT" and extract the AoConf tar file onto that
-   directory.
+5. TARBALL: Do: "cd $ADOPT_ROOT" and extract the AoConf tar file onto that
+            directory.
+
+   SVN CO:  Do: make install-conf ; make install-calib
 
 6. Do: "cd $ADOPT_SOURCE/contrib" and execute:
 
@@ -65,7 +79,8 @@ Congratulations! You've a freshly made AO Supervisor installation. The
 source directory can now be deleted, if you want, and the $ADOPT_SOURCE
 definition removed from ~/adopt_environment.sh.
 
-Do not forget to redefine the run-time environment variables by
+
+NOTE: Do not forget to redefine the run-time environment variables by
 executing:
 
       source adopt_environment.sh
