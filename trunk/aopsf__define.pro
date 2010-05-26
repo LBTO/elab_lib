@@ -195,7 +195,7 @@ end
 function AOpsf::gaussfit, debug=debug
     IF not OBJ_VALID(self._gaussfit) THEN  begin
         self._gaussfit = obj_new('AOgaussfit', self->longExposure(), self._pixelscale, debug=debug)
-        self->addleaf, self._gaussfit
+        self->addleaf, self._gaussfit, 'gaussfit'
     endif
     return, self._gaussfit
 end

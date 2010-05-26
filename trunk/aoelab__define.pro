@@ -167,26 +167,26 @@ function AOelab::Init, tracknum, $
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOElab', 'Represents an AO measure') then return, 0
-    if obj_valid(self._obj_tracknum) then self->addleaf, self._obj_tracknum
-    if obj_valid(self._adsec_status) then self->addleaf, self._adsec_status
-    if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status
-    if obj_valid(self._tel) then self->addleaf, self._tel
-    if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck
-    if obj_valid(self._control) then self->addleaf, self._control
-    if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter
-    if obj_valid(self._slopes) then self->addleaf, self._slopes
-    if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec
-    if obj_valid(self._residual_modes) then self->addleaf, self._residual_modes
-    if obj_valid(self._modes) then self->addleaf, self._modes
-    if obj_valid(self._commands) then self->addleaf, self._commands
-    if obj_valid(self._positions) then self->addleaf, self._positions
-    if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions
-    if obj_valid(self._psf) then self->addleaf, self._psf
-    if obj_valid(self._frames) then self->addleaf, self._frames
-    if obj_valid(self._disturb) then self->addleaf, self._disturb
-    if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb
-    if obj_valid(self._irtc) then self->addleaf, self._irtc
-    if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes
+    if obj_valid(self._obj_tracknum) then self->addleaf, self._obj_tracknum, 'obj_tracknum'
+    if obj_valid(self._adsec_status) then self->addleaf, self._adsec_status, 'adsec_status'
+    if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
+    if obj_valid(self._tel) then self->addleaf, self._tel, 'tel'
+    if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck, 'sanity_check'
+    if obj_valid(self._control) then self->addleaf, self._control, 'control'
+    if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter, 'frames_counter'
+    if obj_valid(self._slopes) then self->addleaf, self._slopes, 'slopes'
+    if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
+    if obj_valid(self._residual_modes) then self->addleaf, self._residual_modes, 'residual_modes'
+    if obj_valid(self._modes) then self->addleaf, self._modes, 'modes'
+    if obj_valid(self._commands) then self->addleaf, self._commands, 'commands'
+    if obj_valid(self._positions) then self->addleaf, self._positions, 'positions'
+    if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions, 'modalpositions'
+    if obj_valid(self._psf) then self->addleaf, self._psf, 'tv'
+    if obj_valid(self._frames) then self->addleaf, self._frames, 'frames'
+    if obj_valid(self._disturb) then self->addleaf, self._disturb, 'disturb'
+    if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
+    if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
+    if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes, 'offloadmodes'
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
     self->addMethodHelp, "adsec_status()", "reference to adsec status object (AOadsec_status)"

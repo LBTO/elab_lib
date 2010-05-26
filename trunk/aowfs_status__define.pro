@@ -48,10 +48,10 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "modulation()",  "TT modulation (lambda/D)"
     self->addMethodHelp, "stages()", "Position [x,y,z] of stages"
     self->addMethodHelp, "summary", "Summary of WFS status"
-    if obj_valid(self._ccd39) then self->addleaf, self._ccd39
-    if obj_valid(self._pupils) then self->addleaf, self._pupils
-    if obj_valid(self._filtw1) then self->addleaf, self._filtw1
-    if obj_valid(self._filtw2) then self->addleaf, self._filtw2
+    if obj_valid(self._ccd39) then self->addleaf, self._ccd39, 'ccd39'
+    if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
+    if obj_valid(self._filtw1) then self->addleaf, self._filtw1, 'filtw1'
+    if obj_valid(self._filtw2) then self->addleaf, self._filtw2, 'filtw2'
     return, 1
 end
 
