@@ -5,6 +5,7 @@ function find_irtc_dark, root_obj, irtc_fname
     fitsheader = headfits(irtc_fname, /SILENT)
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
 	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6
+    filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
 
 	; Verify that the dark and the psf image were taken with the same exposure time!
 	if exptime ne 0. then begin
@@ -33,10 +34,11 @@ function find_irtc_dark, root_obj, irtc_fname
 				closest_av_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, file_basename(all_darks_fname[idx_closest[dd]], '_cube.fits'))
 				dark_header = headfits(closest_av_dark_fname)
 				dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))*1e-6	;in seconds
-				if dark_exptime eq exptime then dark_found=1B else dd+=1
+				dark_filter_number = long(aoget_fits_keyword(dark_header, 'FILTRNR'))
+				if (dark_exptime eq exptime) and (filter_number eq dark_filter_number) then dark_found=1B else dd+=1
 			endwhile
 			if dark_found then dark_fname = all_darks_fname[idx_closest[dd]] else begin
-				message, 'No compatible (i.e. same exposure time) IRTC dark found', /info
+				message, 'No compatible (i.e. same exposure time or filter) IRTC dark found', /info
 			endelse
 		endif else begin
 			message, 'No darks found in the specified directory', /info
