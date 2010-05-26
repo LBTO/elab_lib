@@ -410,11 +410,13 @@ pro AOpsf::show_profile, _extra=ex, show_rms=show_rms
 	winsize = get_screen_size()/2
 	window, /free, xsize=winsize[0], ysize=winsize[1], title='PSF profile'
 	!P.MULTI = [0, 1, 2]
+	!Y.MARGIN = [4,3]
 	plot_oo, *self._psfprof_dist_lD, *self._psfprofile, xtitle='angular separation'+textoidl('(\lambda/D)') $
 	, ytitle='normalized intensity', xrange=prof_xrange_lD, yrange=[1e-5,1], xstyle=8, _extra=ex
 	if keyword_set(show_rms) then errplot, *self._psfprof_dist_lD, *self._psfprofile-sqrt(*self._psfprofvar), *self._psfprofile+sqrt(*self._psfprofvar)
 	oplot, airysep_lD, airyprof, linestyle=1
 	axis, xaxis=1, xtitle='angular separation (mas)', /xlog, xrange=prof_xrange_arcsec*1e3, charsize=1.2, xstyle=1
+	!Y.MARGIN = [4,2]
 	!P.MULTI = [2, 2, 2]
 	psf_le = self->longExposure()
 	image_show, psf_le/max(psf_le) > 0.0001, /as, /log, xtitle='pixels', _extra=ex
