@@ -322,7 +322,7 @@ pro AOelab::modalplot
     	yrange = sqrt(minmax([clvar,olvar]))
     endif
 
-	loadct,39
+	loadct,39, /silent
 	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 	if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color=250
 	if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=[250,!P.color], psym=-[2,1], /right
@@ -331,11 +331,11 @@ end
 
 pro AOelab::estimate_r0, lambda=lambda
 	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
-	nmodes = (self->modalpositions())->nmodes()
+	nmodes = (self->modal_rec())->nmodes()
 	clvar  = (self->modalpositions())->time_variance() * (self._reflcoef*2.*!PI/lambda)^2.
 
-	loadct,39
-	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+	loadct,39, /silent
+	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 
 end
 
