@@ -306,7 +306,8 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     if not keyword_set(PARAMS_ONLY) then begin
     	print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self._irtc) then begin
-    		print, string(format='(%"%-30s %f")','SR@H  SE' ,(self->irtc())->sr_se())
+    		print, string(format='(%"%-30s %f")','lambda [um]',(self->irtc())->lambda()*1e6)
+    		print, string(format='(%"%-30s %f")','SR SE',(self->irtc())->sr_se())
     		print, string(format='(%"%-30s %s")','IRTC dark', (self->irtc())->dark_fname())
     	endif
     endif
