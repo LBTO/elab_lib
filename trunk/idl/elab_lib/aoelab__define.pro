@@ -15,11 +15,6 @@ function AOelab::Init, tracknum, $
     self._datadir = filepath(root=ao_datadir(), sub=['adsec_data', date, 'Data_'+tracknum], '')
     self._elabdir = filepath(root=ao_elabdir(), sub=[date, 'Data_'+tracknum], '')
 
-	;working in Solar Test Tower
-	;self._reflcoef = 4.
-
-	;working @ the Telescope
-	self._reflcoef = 2.
 
 	;verify that the datadir exists before anything.
 	if not FILE_TEST(self._datadir, /DIR) then begin
@@ -233,7 +228,7 @@ function AOelab::recompute
 end
 
 function AOelab::reflcoef
-	return, self._reflcoef
+	return, ao_reflcoef()
 end
 
 function AOelab::n_periods
@@ -271,7 +266,7 @@ end
 
 function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
-	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self._reflcoef/lambda_perf)^2. ;in rad^2 @ lambda_perf
+	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
 	return, exp(-total(pos_coef_var))
 end
 
@@ -307,7 +302,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     	print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self._irtc) then begin
     		print, string(format='(%"%-30s %f")','lambda [um]',(self->irtc())->lambda()*1e6)
-    		print, string(format='(%"%-30s %f")','SR SE',(self->irtc())->sr_se())
+    		print, string(format='(%"%-30s %f")','SR SE' ,(self->irtc())->sr_se())
     		print, string(format='(%"%-30s %s")','IRTC dark', (self->irtc())->dark_fname())
     	endif
     endif
@@ -316,10 +311,10 @@ end
 pro AOelab::modalplot
 
 	nmodes = (self->modalpositions())->nmodes()
-	clvar  = (self->modalpositions())->time_variance() * (1e9*self._reflcoef)^2.
+	clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
 	yrange = sqrt(minmax(clvar))
     if obj_valid(self._disturb) then begin
-    	olvar  = (self->modaldisturb())->time_variance() * (1e9*self._reflcoef)^2.
+    	olvar  = (self->modaldisturb())->time_variance() * (1e9*self->reflcoef())^2.
     	yrange = sqrt(minmax([clvar,olvar]))
     endif
 
@@ -333,7 +328,7 @@ end
 pro AOelab::estimate_r0, lambda=lambda
 	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
 	nmodes = (self->modal_rec())->nmodes()
-	clvar  = (self->modalpositions())->time_variance() * (self._reflcoef*2.*!PI/lambda)^2.
+	clvar  = (self->modalpositions())->time_variance() * (self->reflcoef()*2.*!PI/lambda)^2.
 
 	loadct,39, /silent
 	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
@@ -355,13 +350,13 @@ pro AOelab::modalSpecPlot, modenum
 
 	; corrected PSD
 	freq   = (self->modalpositions())->freq()
-	psd    = (self->modalpositions())->psd() * (1e9*self._reflcoef)^2.
+	psd    = (self->modalpositions())->psd() * (1e9*self->reflcoef())^2.
 
 	; disturbance PSD
 	if obj_valid(self._disturb) then $
 	  if (self->disturb())->dist_freq() ne -1 then begin
 		olfreq = (self->modaldisturb())->freq()
-		olpsd  = (self->modaldisturb())->psd() * (1e9*self._reflcoef)^2.
+		olpsd  = (self->modaldisturb())->psd() * (1e9*self->reflcoef())^2.
 		yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
 	  endif else begin
 	  	message, 'disturbance frequency data not available', /info
@@ -507,7 +502,6 @@ pro AOelab__define
         _datadir           : "",        $
         _elabdir           : "",        $
         _recompute         : 0B,        $
-        _reflcoef		   : 0.,		$
         _n_periods		   : 0L,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
