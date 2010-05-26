@@ -20,7 +20,13 @@ pro AO_init, rootdir=rootdir
 ; environment string definitions
 ;
 
-    if not keyword_set(rootdir) then  rootdir = getenv('ADOPT_DATA')
+    if not keyword_set(rootdir) then  begin
+        if getenv('ADOPT_DATA') ne '' then begin
+            rootdir = getenv('ADOPT_DATA')
+        endif else begin
+            rootdir = '/adopt_data'
+        endelse
+    endif
     if rootdir eq "" then message, 'Root dir not specified. Is environment variable ADOPT_DATA set?'
 
     ao_env = {       $

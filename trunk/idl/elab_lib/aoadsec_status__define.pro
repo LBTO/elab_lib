@@ -64,8 +64,8 @@ pro AOadsec_status::ConvertFilePath, struct
     if FILE_BASENAME(struct.g_gain_a) eq 'tmp_gain.fits' then struct.g_gain_a = ""
     if struct.g_gain_a  ne "" then struct.g_gain_a       = 'adsec_calib/'+strjoin((strsplit(struct.g_gain_a, '/', /extr))[6:*], '/')
     if struct.disturb   ne "" then struct.disturb        = 'adsec_calib/'+strjoin((strsplit(struct.disturb, '/', /extr))[6:*], '/')
-    if struct.shape     ne "" then struct.shape          = 'adsec_calib/'+strjoin((strsplit(struct.shape, '/', /extr))[6:*], '/')
-    if struct.ff_matrix ne "" then struct.ff_matrix      =  'adsec_calib/'+strjoin((strsplit(struct.ff_matrix, '/', /extr))[6:*], '/')
+    ;if struct.shape     ne "" then struct.shape          = 'adsec_calib/'+strjoin((strsplit(struct.shape, '/', /extr))[6:*], '/')
+    ;if struct.ff_matrix ne "" then struct.ff_matrix      =  'adsec_calib/'+strjoin((strsplit(struct.ff_matrix, '/', /extr))[6:*], '/')
 end
 
 function AOadsec_status::fsm_state
