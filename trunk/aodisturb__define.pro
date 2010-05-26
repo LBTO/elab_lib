@@ -13,7 +13,7 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
 
     self._store_fname       = filepath(root=root_obj->elabdir(), 'disturb.sav')
     self._store_psd_fname   = filepath(root=root_obj->elabdir(), 'disturb_psd.sav')
-    if n_elements(recompute) ne 0 then begin
+    if keyword_set(recompute) then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
     endif
