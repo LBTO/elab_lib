@@ -27,7 +27,7 @@
 ;end
 
 ; from Simone's calc_sr1 17 nov 09
-function sr_esposito, ima_bs, psf_difflim, plot=plot
+function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot
 ;irtc_pix = 0.01 ;;; arcsec
 ;data_dir = 'C:\simone_work\FLAO\calcolo psf\Data_20091117_114815\'
 ;bg_file = data_dir+'20091117_114104.fits_cube.fits'
@@ -67,9 +67,9 @@ for i= 1, nside do begin
   ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
   flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i))
 endfor
-irtc_sampling = 0.01 ;;;; arcsec
-lambda = 1.6 ;;; filtro H 1.6 micron
-D = 8.25 ;;; diametro di LBT in m
+;irtc_sampling = 0.01 ;;;; arcsec
+;lambda = 1.6 ;;; filtro H 1.6 micron
+D = 8.22 ;;; diametro di LBT in m
 np_psf = 5000  ;;; punti della psf_difflim
 
 dx = 5-abs(coeff(4)-round(coeff(4)))*10
