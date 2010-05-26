@@ -17,10 +17,14 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
     self._pixelscale = pixelscale
-    lim = 1.65e-6	;imaging central wavelength
+
+	; Detect filter:
+    filter_number = long(aoget_fits_keyword(self->header(), 'FILTRNR'))
+    self._lambda_im = irtc_filter_lambda(filter_number)
+
     DpupM = 8.222	;m
 	sec2rad = 4.85*1.e-6	;	rad2sec = 206265.
-	self._pixelscale_lD = self._pixelscale / ((lim/DpupM)/sec2rad)	;l/D per pixel
+	self._pixelscale_lD = self._pixelscale / ((self->lambda()/DpupM)/sec2rad)	;l/D per pixel
 	self._exptime = float(aoget_fits_keyword(self->header(), 'EXPTIME'))*1e-6	;in seconds
 	if self._exptime eq 0 then message, 'PSF image exposure time not known', /info
 
@@ -87,6 +91,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self->addMethodHelp, "nframes()", 		"number of frames saved (long)"
     self->addMethodHelp, "frame_w()", 		"frame width [px] (long)"
     self->addMethodHelp, "frame_h()", 		"frame height [px] (long)"
+    self->addMethodHelp, "lambda()", 		"central filter wavelength [m]"
     self->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
     self->addMethodHelp, "exptime()",		"psf exposure time [s]"
     self->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
@@ -212,14 +217,14 @@ function AOpsf::SR_se, plot=plot
 			self._sr_se = sr_se
 		endif else begin
     		ima = self->longExposure()
-    		psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl.sav')
+    		psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(fix(self->lambda()*1e9),2)+'.sav')
     		if file_test(psf_dl_fname) then begin
         		restore, psf_dl_fname
     		endif else begin
-        		psf_dl_ima = psf_dl_esposito(1.6d-6, self->pixelscale()) ; wl [m] and scala [arcsec/pixel]
+        		psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale()) ; wl [m] and scala [arcsec/pixel]
         		save, psf_dl_ima, file=psf_dl_fname
     		endelse
-    		sr_se = sr_esposito(ima, psf_dl_ima, plot=plot)
+    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot)
     		save, sr_se, filename=self._sr_se_fname
     		self._sr_se = sr_se
     	endelse
@@ -404,13 +409,12 @@ pro AOpsf::show_profile, _extra=ex, show_rms=show_rms
 	;airy disk:
 	airysep_lD = findgen(1000)/(1000.-1.)*100.
 	oc = 0.111
-    lim = 1.65e-6	;imaging central wavelength
 	DpupM = 8.22	;m
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
 	prof_xrange_lD = [0.1,1e2]
-	prof_xrange_arcsec = prof_xrange_lD * ((lim/DpupM)/sec2rad)
+	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/DpupM)/sec2rad)
 
 	winsize = get_screen_size()/2
 	window, /free, xsize=winsize[0], ysize=winsize[1], title='PSF profile'
@@ -456,6 +460,10 @@ end
 
 function AOpsf::frame_h
 	return, self._frame_h
+end
+
+function AOpsf::lambda
+	return, self._lambda_im
 end
 
 function AOpsf::pixelscale
@@ -505,6 +513,7 @@ pro AOpsf__define
         _image          :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
         _bias_level		:  0.			, $
+        _lambda_im		:  0.			, $	 ;[meters]
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
         _pixelscale_lD  :  0d			, $  ;[in lambda/D per pixel]
         _nframes        :  0L			, $
