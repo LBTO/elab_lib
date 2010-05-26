@@ -124,7 +124,18 @@ end
 pro AOpsf::compute
     psf = float(readfits(self->fname(), header, /SILENT))
     dark = self->dark_image()
-    for i=0L, self->nframes()-1 do psf[*,*,i] = psf[*,*,i]-dark
+	for i=0L, self->nframes()-1 do begin
+    	; subtract dark from frames
+		psf[*,*,i] = psf[*,*,i]-dark
+		; determine mask = points where signal > median(frame)+3*rms(frame)
+		threshold = median(psf[*,*,i]) + 3 * rms(psf[*,*,i])
+		self->set_threshold, threshold
+        ; subtract from each column its median computed on points outside the mask
+		for j=0L, self->frame_w()-1 do begin
+			mask = where(psf[j,*,i] lt threshold, cnt)
+			psf[j,*,i] -= median(psf[j,mask,i])
+		endfor
+	endfor 
     self._image = ptr_new(psf, /no_copy)
 end
 
@@ -198,6 +209,13 @@ end
 
 function AOpsf::bias
 	return, self._bias_level
+end
+
+function AOpsf::shiftAndAdd
+    for i=0L, self->n_frames()-1 do begin
+        cc = (self->centroid())[i,*]
+    endfor
+    ;TODO
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 2D Gaussian Fit
@@ -347,10 +365,10 @@ pro AOpsf::compute_centroid
         restore, self._centroid_fname
         self._threshold = thr
 	endif else begin
-		if not (PTR_VALID(self._image)) THEN self->compute
+		image = self->image()
 		centr = fltarr(self->nframes(),2)
 		for ii=0L, self->nframes()-1 do begin
-			im = (*self._image)[*,*,ii]
+			im = image[*,*,ii]
 			im[where(im lt self._threshold)] = 0.
 			centr[ii,*] = calc_centroid(im)
 		endfor
@@ -543,3 +561,4 @@ pro AOpsf__define
         INHERITS AOhelp $
     }
 end
+
