@@ -24,8 +24,11 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
 	self._exptime = float(aoget_fits_keyword(self->header(), 'EXPTIME'))*1e-6	;in seconds
 	if self._exptime eq 0 then message, 'PSF image exposure time not known', /info
 
+	self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
+	if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
+
 	;Time series for psf centroid analysis
-	if self._exptime eq 0 then dt=1. else dt=self._exptime
+	if self._framerate eq 0 then dt=1. else dt=1./self._framerate
     if not self->AOtime_series::Init(dt, fftwindow="hamming") then return,0
 ;	self._norm_factor   = .......
 	self._spectra_units = textoidl('[pix Hz^{-1/2}]')
@@ -105,6 +108,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self->addMethodHelp, "threshold()",		"returns the threshold applied to images in the computation of the centroid (float)"
     self->addMethodHelp, "set_threshold, thr", "Sets the threshold value mentioned above"
     self->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
+    self->AOtime_series::addHelp, self
     return, 1
 end
 
@@ -383,9 +387,10 @@ pro AOpsf::show_psf, wait=wait
     if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
     loadct,3,/silent
     print, 'Type "s" to stop!'
-    maxval = max(*self._image)
+    image = self->image()
+    maxval = max(image)
 	for ii=0, self->nframes()-1 do begin
-		image_show, (*self._image)[*,*,ii]/maxval > 0.0001, /as, title='frame '+strtrim(ii,2), /log
+		image_show, (image)[*,*,ii]/maxval > 0.0001, /as, title='frame '+strtrim(ii,2), /log
 		oplot, [(*self._centroid)[ii,0]], [(*self._centroid)[ii,1]], psym=1, symsize=1.5
 		wait, wait
 		key = get_kbrd(0.01)
@@ -465,6 +470,10 @@ function AOpsf::exptime
 	return, self._exptime
 end
 
+function AOpsf::framerate
+	return, self._framerate
+end
+
 pro AOpsf::free
     if ptr_valid(self._image)      then ptr_free, self._image
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
@@ -502,6 +511,7 @@ pro AOpsf__define
         _frame_w        :  0L			, $
         _frame_h        :  0L			, $
         _exptime	    :  0.			, $
+        _framerate		:  0.			, $	  ;Hz
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
         _threshold      :  0.			, $

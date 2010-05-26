@@ -16,7 +16,10 @@ function AOelab::Init, tracknum, $
     self._elabdir = filepath(root=ao_elabdir(), sub=[date, 'Data_'+tracknum], '')
 
 	;working in Solar Test Tower
-	self._reflcoef = 4.
+	;self._reflcoef = 4.
+
+	;working @ the Telescope
+	self._reflcoef = 2.
 
 	;verify that the datadir exists before anything.
 	if not FILE_TEST(self._datadir, /DIR) then begin
@@ -302,7 +305,10 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     print, string(format='(%"%-30s %s")','Modal rec', (self->modal_rec())->fname())
     if not keyword_set(PARAMS_ONLY) then begin
     	print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
-    	if obj_valid(self._irtc) then print, string(format='(%"%-30s %f")','SR@H  SE' ,(self->irtc())->sr_se())
+    	if obj_valid(self._irtc) then begin
+    		print, string(format='(%"%-30s %f")','SR@H  SE' ,(self->irtc())->sr_se())
+    		print, string(format='(%"%-30s %s")','IRTC dark', (self->irtc())->dark_fname())
+    	endif
     endif
 end
 
@@ -323,6 +329,15 @@ pro AOelab::modalplot
 
 end
 
+pro AOelab::estimate_r0, lambda=lambda
+	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
+	nmodes = (self->modalpositions())->nmodes()
+	clvar  = (self->modalpositions())->time_variance() * (self._reflcoef*2.*!PI/lambda)^2.
+
+	loadct,39
+	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+
+end
 
 pro AOelab::modalSpecPlot, modenum
 
