@@ -35,8 +35,8 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     ; centroid is compute as arcsec from the long-exposure PSF center
 	if self._framerate eq 0 then dt=1. else dt=1./self._framerate
     if not self->AOtime_series::Init(dt, fftwindow="") then return,0
- 	self._norm_factor   = 1.0   ;self->pixelscale() 
-	self._spectra_units = 'arcsec';  
+ 	self._norm_factor   = 1.0   ;self->pixelscale()
+	self._spectra_units = 'arcsec';
 	self._plots_title = 'centroid'
 
     self._threshold = -1.
@@ -58,7 +58,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     if root_obj->recompute() eq 1B then begin
         file_delete, self._psf_elab_fname, /allow_nonexistent
     endif
-	
+
     ;SR estimation from the PSF:
 	self._sr_se = -1.
 	self._sr_se_fname = filepath(root=root_obj->elabdir(), 'sr_se.sav')
@@ -190,7 +190,7 @@ function AOpsf::badPixelMap
         	message, 'BadPixelMap file not existing. Assume all pixel good', /info
         	self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()))
         endelse
-    
+
     return, *(self._badpixelmap)
 end
 
@@ -240,16 +240,16 @@ function AOpsf::longExposure
         psf = float(readfits(self->fname(), header, /SILENT))
     	psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
         psf_le = self->maneggiaFrame(psf_le, self->dark_image(), self->badPixelMap())
-    	
+
         ; compute bias
         self->compute_bias, psf_le
 		psf_le = psf_le - self->bias()
     	bias_level = self->bias()
-    	
+
         ; compute threshold
-	    threshold = median(psf[self->badpixelmap()]) + 1.5 * rms(psf[self->badpixelmap()])
+	    threshold = median(psf_le[self->badpixelmap()]) + 1.5 * rms(psf_le[self->badpixelmap()])
         self->set_threshold, threshold
-        
+
         ;
         used_dark_fname = current_dark_fname
     	save, psf_le, used_dark_fname, bias_level, threshold, filename=self._psf_le_fname, /compress
