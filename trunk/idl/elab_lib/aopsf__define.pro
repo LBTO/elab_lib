@@ -10,7 +10,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)
 
     self._dark_fname = dark_fname
-   	if not file_test(self._dark_fname) then message, 'Dark file does not exist', /info
+   	if not file_test(self->dark_fname()) then message, 'Dark file does not exist', /info
 
     naxis = long(aoget_fits_keyword(self->header(), 'NAXIS'))
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
@@ -51,7 +51,13 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
         file_delete, self._psf_le_fname, /allow_nonexistent
     endif
 
-	;SR estimation from the PSF:
+	;PSF cube elaborated (dark-subtracted, badpixel corrected)
+	self._psf_elab_fname = filepath(root=root_obj->elabdir(), 'psf_elab.sav')
+    if root_obj->recompute() eq 1B then begin
+        file_delete, self._psf_elab_fname, /allow_nonexistent
+    endif
+	
+    ;SR estimation from the PSF:
 	self._sr_se = -1.
 	self._sr_se_fname = filepath(root=root_obj->elabdir(), 'sr_se.sav')
     if root_obj->recompute() eq 1B then begin
@@ -87,7 +93,10 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self->addMethodHelp, "image()",  		"psf frames [frame_w, frame_h, nframes]"
     self->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
     self->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
+    self->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
     self->addMethodHelp, "dark_image()", 	"psf dark image (float)"
+    self->addMethodHelp, "badpixelmap_fname()", 	"psf bad pixel map file name [string]"
+    self->addMethodHelp, "badpixelmap()", 	"bad pixel mask image [frame_w, frame_h]"
     self->addMethodHelp, "nframes()", 		"number of frames saved (long)"
     self->addMethodHelp, "frame_w()", 		"frame width [px] (long)"
     self->addMethodHelp, "frame_h()", 		"frame height [px] (long)"
@@ -122,21 +131,65 @@ end
 ;===================================================================================
 
 pro AOpsf::compute
-    psf = float(readfits(self->fname(), header, /SILENT))
-    dark = self->dark_image()
-	for i=0L, self->nframes()-1 do begin
-    	; subtract dark from frames
-		psf[*,*,i] = psf[*,*,i]-dark
-		; determine mask = points where signal > median(frame)+3*rms(frame)
-		threshold = median(psf[*,*,i]) + 3 * rms(psf[*,*,i])
-		self->set_threshold, threshold
-        ; subtract from each column its median computed on points outside the mask
-		for j=0L, self->frame_w()-1 do begin
-			mask = where(psf[j,*,i] lt threshold, cnt)
-			psf[j,*,i] -= median(psf[j,mask,i])
-		endfor
-	endfor 
+
+	if file_test(self._psf_elab_fname) then begin
+		restore, self._psf_elab_fname
+    endif else begin
+        psf = float(readfits(self->fname(), header, /SILENT))
+        for i=0L, self->nframes()-1 do begin
+            if (i+1) mod 10 eq 0 then print, string(format='(%"%d of %d ")', i+1, self->nframes() )
+            psf[*,*,i] = self->maneggiaFrame(psf[*,*,i], self->dark_image(), self->badPixelMap())
+        endfor
+        print, 'saving data...'
+    	save, psf, filename=self._psf_elab_fname, /compress
+        print, 'done'
+    endelse
     self._image = ptr_new(psf, /no_copy)
+end
+
+function AOpsf::maneggiaFrame, psf_in, dark, badpixelmap
+    sz = size(psf_in,/dim)
+    frame_w = sz[0]
+    frame_h = sz[1]
+    ; subtract dark from frames
+	psf = psf_in-dark
+    ; determine mask = points where signal > median(frame)+3*rms(frame)
+	threshold = median(psf[badpixelmap]) + 1 * rms(psf[badpixelmap])
+    ;;;;self->set_threshold, threshold
+    ; subtract from each column its median computed on points outside the mask
+    for j=0L, frame_w-1 do begin
+        mask = where(psf[j,*] lt threshold, cnt) * (~(badpixelmap[j,*]))
+        psf[j,*] -= median(psf[j,mask])
+    endfor
+    ; subtract from each row its median computed on points outside the mask
+    ;for j=0L, self->frame_h()-1 do begin
+    ;	mask = where(psf[*,j,i] lt threshold, cnt)
+    ;	psf[*,j,i] -= median(psf[mask,j,i])
+    ;endfor
+    ; remove bad pixels interpolating with neighbours
+    psf = mad_correct_bad_pixel(~badpixelmap, psf)
+    return, psf
+end
+
+function AOpsf::badPixelMap
+    if not (PTR_VALID(self._badpixelmap)) then $
+    	if file_test(self->badpixelmap_fname()) then begin
+            badmap = readfits(self->badpixelmap_fname(), bpm_header, /SILENT)
+            naxis = long(aoget_fits_keyword(bpm_header, 'NAXIS'))
+            bmp_frame_w = long(aoget_fits_keyword(bpm_header, 'NAXIS1'))
+            bmp_frame_h = long(aoget_fits_keyword(bpm_header, 'NAXIS2'))
+            if (bmp_frame_w ne self->frame_w()) or (bmp_frame_h ne self->frame_h()) then begin
+                message, 'BadPixelMap and PSF images do not have the same dimensions!!', /info
+                self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
+            endif else begin
+                self._badpixelmap = ptr_new(badmap, /no_copy)
+            endelse
+        endif else begin
+        	message, 'BadPixelMap file not existing. Assume all pixel good', /info
+        	self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()))
+        endelse
+    
+    return, *(self._badpixelmap)
 end
 
 function AOpsf::image
@@ -156,11 +209,11 @@ function AOpsf::dark_image
     			self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
     		endif else begin
     			dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
-        		if dark_nframes gt 1 then self._dark_image = ptr_new(total(dark,3)/dark_nframes) else $
+        		if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
         								  self._dark_image = ptr_new(dark)
         	endelse
         endif else begin
-        	message, 'Dark file not existing', /info
+        	message, 'Dark file not existing. Assuming it zero', /info
         	self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
         endelse
     return, *(self._dark_image)
@@ -181,11 +234,13 @@ function AOpsf::longExposure
 			message, 'WARNING: The dark used to compute the saved LE-PSF is not the same as the current dark', /info
 		if n_elements(bias_level) ne 0 then self._bias_level = bias_level
 	endif else begin
-    	psf_le = (self->nframes() gt 1) ? total(self->image(), 3) / self->nframes() : self->image()
+        psf = float(readfits(self->fname(), header, /SILENT))
+    	psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
+        psf_le = self->maneggiaFrame(psf_le, self->dark_image(), self->badPixelMap())
     	self->compute_bias, psf_le
-		psf_le = psf_le - self._bias_level
+		psf_le = psf_le - self->bias()
     	used_dark_fname = current_dark_fname
-    	bias_level = self._bias_level
+    	bias_level = self->bias()
     	save, psf_le, used_dark_fname, bias_level, filename=self._psf_le_fname, /compress
     endelse
     return, psf_le
@@ -228,13 +283,13 @@ function AOpsf::gaussfit, debug=debug
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio
-function AOpsf::SR_se, plot=plot
+function AOpsf::SR_se, plot=plot, ima=ima
 	if self._sr_se eq -1. then begin
 		if file_test(self._sr_se_fname) then begin
 			restore, self._sr_se_fname
 			self._sr_se = sr_se
 		endif else begin
-    		ima = self->longExposure()
+            if not keyword_set(ima) then ima = self->longExposure()
     		psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(fix(self->lambda()*1e9),2)+'.sav')
     		if file_test(psf_dl_fname) then begin
         		restore, psf_dl_fname
@@ -464,8 +519,21 @@ function AOpsf::dark_fname
     return, self._dark_fname
 end
 
+function AOpsf::badpixelmap_fname
+    return, filepath(root=file_dirname(self->dark_fname()) , 'badpixelmap.fits')
+end
+
 function AOpsf::header
-    if (PTR_VALID(self._fitsheader)) THEN return, *(self._fitsheader) else return, 0d
+    if (PTR_VALID(self._fitsheader)) THEN return, *(self._fitsheader) else return, ""
+end
+
+function AOpsf::dark_header
+   	if not file_test(self->dark_fname()) then begin
+        message, 'Dark file does not exist', /info
+        return, ""
+    endif
+    self._dark_fitsheader = ptr_new(headfits(self->dark_fname(), /SILENT), /no_copy)
+    if (PTR_VALID(self._dark_fitsheader)) THEN return, *(self._dark_fitsheader) else return, ""
 end
 
 function AOpsf::nframes
@@ -508,8 +576,10 @@ end
 
 pro AOpsf::Cleanup
     ptr_free, self._fitsheader
+    ptr_free, self._dark_fitsheader
     if ptr_valid(self._image)      then ptr_free, self._image
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
+    if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
     if ptr_valid(self._centroid)   then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then obj_destroy, self._gaussfit
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -528,8 +598,10 @@ pro AOpsf__define
         _fname          :  ""			, $
         _dark_fname     :  ""			, $
         _fitsheader     :  ptr_new()	, $
+        _dark_fitsheader:  ptr_new()	, $
         _image          :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
+        _badpixelmap    :  ptr_new()	, $
         _bias_level		:  0.			, $
         _lambda_im		:  0.			, $	 ;[meters]
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
@@ -544,6 +616,7 @@ pro AOpsf__define
         _threshold      :  0.			, $
         _centroid_fname :  ""			, $
         _psf_le_fname	:  ""			, $
+        _psf_elab_fname	:  ""			, $
         _sr_se		    :  0.			, $
         _sr_se_fname    :  ""			, $
 		_psfprofile	    :  ptr_new()	, $
