@@ -434,10 +434,13 @@ pro AOpsf::compute_centroid
         long_exp_center = (self->gaussfit())->center()
 		image = self->image()
 		centr = fltarr(self->nframes(),2)
+		square = 0.6	;arcsec
+		sz = square/2./self->pixelscale()
 		for ii=0L, self->nframes()-1 do begin
 			im = image[*,*,ii]
 			im[where(im lt self->threshold())] = 0.
-			centr[ii,*] = (calc_centroid(im) - long_exp_center) * self->pixelscale()
+			im = im[long_exp_center[0]-sz:long_exp_center[0]+sz-1, long_exp_center[1]-sz:long_exp_center[1]+sz-1]
+			centr[ii,*] = (calc_centroid(im) - sz) * self->pixelscale()
 		endfor
 		thr = self->threshold()
 		save, centr, thr, long_exp_center, file=self._centroid_fname
@@ -486,7 +489,7 @@ pro AOpsf::show_psf, wait=wait
     centroid_fr = self->centroid() / self->pixelscale() + transpose(rebin((self->gaussfit())->center(), 2, self->nframes(), /samp))
 	for ii=0, self->nframes()-1 do begin
 		image_show, (image)[*,*,ii]/maxval > 0.0001, /as, title='frame '+strtrim(ii,2), /log
-		oplot, [centroid_fr[ii,0]], [centroid_fr[ii,1]], psym=1, symsize=1.5
+		oplot, [centroid_fr[ii,0]], [centroid_fr[ii,1]], psym=1, symsize=2, color=0
 		wait, wait
 		key = get_kbrd(0.01)
 		if STRLOWCASE(key) eq 's' then break
