@@ -31,13 +31,15 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
 	self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
 	if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
 
-	;Time series for psf centroid analysis
+	; Time series for psf centroid analysis
+    ; centroid is compute as arcsec from the long-exposure PSF center
 	if self._framerate eq 0 then dt=1. else dt=1./self._framerate
-    if not self->AOtime_series::Init(dt, fftwindow="hamming") then return,0
-;	self._norm_factor   = .......
-	self._spectra_units = textoidl('[pix Hz^{-1/2}]')
+    if not self->AOtime_series::Init(dt, fftwindow="") then return,0
+ 	self._norm_factor   = 1.0   ;self->pixelscale() 
+	self._spectra_units = 'arcsec';  
 	self._plots_title = 'centroid'
 
+    self._threshold = -1.
     self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
     if root_obj->recompute() eq 1B then begin
@@ -118,7 +120,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self->addMethodHelp, "enc_ene()",		"encircled energy"
     self->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
     self->addMethodHelp, "enc_ene_dist_lD()", "circle radius in arcsec in lambda/D units"
-    self->addMethodHelp, "centroid()", 		"returns centroids of psf images [pix]"
+    self->addMethodHelp, "centroid()", 		"returns centroids of psf images in arcsec from longExposure PSF center"
     self->addMethodHelp, "threshold()",		"returns the threshold applied to images in the computation of the centroid (float)"
     self->addMethodHelp, "set_threshold, thr", "Sets the threshold value mentioned above"
     self->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
@@ -233,15 +235,24 @@ function AOpsf::longExposure
 		if used_dark_fname ne current_dark_fname then $
 			message, 'WARNING: The dark used to compute the saved LE-PSF is not the same as the current dark', /info
 		if n_elements(bias_level) ne 0 then self._bias_level = bias_level
+        if n_elements(threshold) ne 0 then  self._threshold = threshold
 	endif else begin
         psf = float(readfits(self->fname(), header, /SILENT))
     	psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
         psf_le = self->maneggiaFrame(psf_le, self->dark_image(), self->badPixelMap())
-    	self->compute_bias, psf_le
+    	
+        ; compute bias
+        self->compute_bias, psf_le
 		psf_le = psf_le - self->bias()
-    	used_dark_fname = current_dark_fname
     	bias_level = self->bias()
-    	save, psf_le, used_dark_fname, bias_level, filename=self._psf_le_fname, /compress
+    	
+        ; compute threshold
+	    threshold = median(psf[self->badpixelmap()]) + 1.5 * rms(psf[self->badpixelmap()])
+        self->set_threshold, threshold
+        
+        ;
+        used_dark_fname = current_dark_fname
+    	save, psf_le, used_dark_fname, bias_level, threshold, filename=self._psf_le_fname, /compress
     endelse
     return, psf_le
 end
@@ -420,25 +431,30 @@ pro AOpsf::compute_centroid
         restore, self._centroid_fname
         self._threshold = thr
 	endif else begin
+        long_exp_center = (self->gaussfit())->center()
 		image = self->image()
 		centr = fltarr(self->nframes(),2)
 		for ii=0L, self->nframes()-1 do begin
 			im = image[*,*,ii]
-			im[where(im lt self._threshold)] = 0.
-			centr[ii,*] = calc_centroid(im)
+			im[where(im lt self->threshold())] = 0.
+			centr[ii,*] = (calc_centroid(im) - long_exp_center) * self->pixelscale()
 		endfor
-		thr = self._threshold
-		save, centr, thr, file=self._centroid_fname
+		thr = self->threshold()
+		save, centr, thr, long_exp_center, file=self._centroid_fname
 	endelse
 	self._centroid = ptr_new(centr, /no_copy)
 end
 
+;
+; centroid of short-exposures in arcsec
+;
 function AOpsf::centroid
     if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
 	return, *(self._centroid)
 end
 
 function AOpsf::threshold
+    if self._threshold eq -1 then longexp = self->LongExposure()
 	return, self._threshold
 end
 
@@ -467,9 +483,10 @@ pro AOpsf::show_psf, wait=wait
     print, 'Type "s" to stop!'
     image = self->image()
     maxval = max(image)
+    centroid_fr = self->centroid() / self->pixelscale() + transpose(rebin((self->gaussfit())->center(), 2, self->nframes(), /samp))
 	for ii=0, self->nframes()-1 do begin
 		image_show, (image)[*,*,ii]/maxval > 0.0001, /as, title='frame '+strtrim(ii,2), /log
-		oplot, [(*self._centroid)[ii,0]], [(*self._centroid)[ii,1]], psym=1, symsize=1.5
+		oplot, [centroid_fr[ii,0]], [centroid_fr[ii,1]], psym=1, symsize=1.5
 		wait, wait
 		key = get_kbrd(0.01)
 		if STRLOWCASE(key) eq 's' then break

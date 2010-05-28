@@ -194,7 +194,7 @@ pro AOtime_series::set_fftwindow, fftwindow
 	endif
 	if fftwindow eq self._window then return else begin
 		self._window = fftwindow
-		self->ForceCompute
+		self->AOtime_series::ForceCompute
 	endelse
 end
 
@@ -227,7 +227,33 @@ pro AOtime_series::SpecPlot, elemnum, _extra=ex
 	loadct,39,/silent
 	!X.MARGIN = [12, 3]
 	title =self._plots_title+', element '+strtrim(elemnum,2)
-	plot_oo, freq[1:*], sqrt(psd[1:*,elemnum]), charsize=1.2, xtitle=xtitle, ytitle=self._spectra_units $
+	plot_oo, freq[1:*], sqrt(psd[1:*,elemnum]), charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'  Hz^{-1/2}]') $
+		, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
+
+end
+
+pro AOtime_series::PowerPlot, elemnum, _extra=ex
+
+	if n_params() ne 1 then begin
+		message, 'Missing parameter. Usage: ...->SpecPlot, elemnum', /info
+		return
+	endif
+
+	nspectra = self->nspectra()
+	if elemnum ge nspectra then begin
+		message, 'Element number requested not available. The last element available is '+strtrim(nspectra-1,2), /info
+		return
+	endif
+
+	freq = self->freq()
+	if freq[1]-freq[0] eq 1 then xtitle='frequency bin' else xtitle='frequency [Hz]'
+	data = self->power(0, /cum) * (self._norm_factor)^2.
+  	yrange = minmax(data)
+
+	;loadct,39,/silent
+	!X.MARGIN = [12, 3]
+	title =self._plots_title+', element '+strtrim(elemnum,2)
+	plot_oo, freq[1:*], data, charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'^2]') $
 		, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
 
 end
@@ -286,7 +312,7 @@ end
 
 pro AOtime_series::forceCompute
     file_delete, self._store_psd_fname, /allow_nonexistent
-    self->free
+    self->AOtime_series::free
 end
 
 
