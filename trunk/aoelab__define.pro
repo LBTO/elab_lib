@@ -328,10 +328,21 @@ end
 pro AOelab::estimate_r0, lambda=lambda
 	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
 	nmodes = (self->modal_rec())->nmodes()
-	clvar  = (self->modalpositions())->time_variance() * (self->reflcoef()*2.*!PI/lambda)^2.
+	clvar  = (self->modalpositions())->time_variance() * (10*self->reflcoef()*2.*!PI/lambda)^2.
 
+	; Compare with Zernike variance:
+	;Zernike number (1->piston, 2->tip, ...)
+	zern_number = indgen(nmodes)+1
+	DpupM = 8.22	;m
+	r0aso = 0.020	;m
+	sec2rad = 4.85*1.e-6
+
+	armando			= (4.*!pi^2)*(DpupM/r0aso)^(5./3.)*diag_matrix(kolm_mcovar(nmodes+1))
+;	zern_num, indgen(nmodes)+2, n=nn
+;	varNoll         = varzern_turb(nn, DRO = DpupM/r0aso)
 	loadct,39, /silent
 	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+	oplot, lindgen(nmodes)+1, armando, psym=-2, color=250
 
 end
 
