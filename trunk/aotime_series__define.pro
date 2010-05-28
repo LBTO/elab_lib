@@ -29,7 +29,6 @@ function AOtime_series::Init, dt, fftwindow=fftwindow, nwindows=nwindows;, nospe
 end
 
 
-
 pro AOtime_series::Compute
     dati = self->GetDati()
     if test_type(dati, /pointer) ne 0 then message, 'AOtime_series subclass::GetDati must return a pointer to float 1/2D array'
@@ -234,7 +233,7 @@ pro AOtime_series::SpecPlot, elemnum, _extra=ex
 end
 
 ;
-function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_freq
+function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_freq, cumulative=cumulative
     IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
     IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
@@ -251,9 +250,9 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
 
     df=1./self._dt/(2*self._nfreqs) ; see fft1.pro for total power computation
     if n_elements(spectrum_idx) eq 0 then begin
-        return, total( (*(self._psd))[idx_from:idx_to, *] ) * df
+        return, total( (*(self._psd))[idx_from:idx_to, *], cumulative=cumulative ) * df
     endif else begin
-        return, total( (*(self._psd))[idx_from:idx_to, spectrum_idx],1 ) * df
+        return, total( (*(self._psd))[idx_from:idx_to, spectrum_idx],1, cumulative=cumulative ) * df
     endelse
 end
 
@@ -270,7 +269,8 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "psd(spectrum_idx)",   "return psd of spectra identified by the index vector idx. All spectra if index is not present"
     obj->addMethodHelp, "fftwindow()", "returns the type of apodization window applied in the computation of the PSD."
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
-    obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to)", "return power of idx-th spectrum between frequencies from_freq and to_freq"
+    obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative)", "return power of idx-th spectrum between frequencies from_freq and to_freq"
+    obj->addMethodHelp, "specPlot(idx)", "plot psd of idx-th spectrum"
 end
 
 

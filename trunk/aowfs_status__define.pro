@@ -30,6 +30,15 @@ function AOwfs_status::Init, root_obj, fitsfile
     self._stages[1] = float(aoget_fits_keyword(self->header(), 'stagey.POSITION'))
     self._stages[2] = float(aoget_fits_keyword(self->header(), 'stagez.POSITION'))
 
+    self._rerotator = float(aoget_fits_keyword(self->header(), 'rerot.POSITION'))
+    
+    self._camera_lens[0] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_X'))
+    self._camera_lens[1] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_Y'))
+    
+    self._lamp = float(aoget_fits_keyword(self->header(), 'lamp.INTENSITY'))
+    self._cuberot   = float(aoget_fits_keyword(self->header(), 'cuberot.POSITION'))
+    self._cubestage = float(aoget_fits_keyword(self->header(), 'cubestage.POSITION'))
+    
     self._ccd39  = obj_new('AOccd39',  self._header, self._wunit)
     self._pupils = obj_new('AOpupils', self._header, self._wunit)
     self._filtw1 = obj_new('AOfiltw' , self._header, '1')
@@ -46,7 +55,12 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "filtw1()", "reference to filter wheel 1 object"
     self->addMethodHelp, "filtw2()", "reference to filter wheel 2 object"
     self->addMethodHelp, "modulation()",  "TT modulation (lambda/D)"
-    self->addMethodHelp, "stages()", "Position [x,y,z] of stages"
+    self->addMethodHelp, "rerotator()",  "rirotator angle (degrees)"
+    self->addMethodHelp, "camera_lens()", "Position [x,y] of camera lens (mm)"
+    self->addMethodHelp, "stages()", "Position [x,y,z] of stages (mm)"
+    self->addMethodHelp, "lamp()",  "lamp intensity (a.u.)"
+    self->addMethodHelp, "cube_angle()",  "cube rotator angle (degree)"
+    self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "summary", "Summary of WFS status"
     if obj_valid(self._ccd39) then self->addleaf, self._ccd39, 'ccd39'
     if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
@@ -87,8 +101,28 @@ function AOwfs_status::modulation
 	return, self._modulation
 end
 
+function AOwfs_status::rerotator
+	return, self._rerotator
+end
+
+function AOwfs_status::camera_lens
+	return, self._camera_lens
+end
+
 function AOwfs_status::stages
 	return, self._stages
+end
+
+function AOwfs_status::lamp_intensity
+	return, self._lamp
+end
+
+function AOwfs_status::cube_angle
+	return, self._cuberot
+end
+
+function AOwfs_status::cube_stage
+	return, self._cubestage
 end
 
 pro AOwfs_status::summary
@@ -98,8 +132,14 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %s")','Pup trackn', (self->pupils())->pup_tracknum() )
     print, string(format='(%"%-30s %d")','Total num. of supabs', (self->pupils())->nsub())
     print, string(format='(%"%-30s %f")','Modulation', self->modulation() )
+    print, string(format='(%"%-30s %f")','Rerotator', self->rerotator() )
     print, string(format='(%"%-30s %s")','FW1', (self->filtw1())->name() )
     print, string(format='(%"%-30s %s")','FW2', (self->filtw2())->name() )
+    print, string(format='(%"%-30s %f  %f")','Camera lens', self->camera_lens() )
+    print, string(format='(%"%-30s %f  %f  %f")','Stages XYZ', self->stages() )
+    print, string(format='(%"%-30s %f")','Lamp', self->lamp_intensity() )
+    print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
+    print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
 end
 
 pro AOwfs_status::Cleanup
@@ -113,15 +153,20 @@ end
 
 pro AOwfs_status__define
     struct = { AOwfs_status, $
-        _fitsfile   : "",    $
-        _modulation : 0d,    $
-        _stages : [0.0, 0.0, 0.0],    $
-        _header : ptr_new(), $
-        _ccd39  : obj_new(), $
-        _pupils : obj_new(), $
-        _filtw1 : obj_new(), $
-        _filtw2 : obj_new(), $
-        _wunit  : ""	   , $
+        _fitsfile       : "",    $
+        _modulation     : 0d,    $
+        _rerotator      : 0d,    $
+        _lamp           : 0d,    $
+        _cuberot        : 0d,    $
+        _cubestage      : 0d,    $
+        _stages         : [0.0, 0.0, 0.0],    $
+        _camera_lens    : [0.0, 0.0],    $
+        _header         : ptr_new(), $
+        _ccd39          : obj_new(), $
+        _pupils         : obj_new(), $
+        _filtw1         : obj_new(), $
+        _filtw2         : obj_new(), $
+        _wunit          : ""	   , $
         INHERITS    AOhelp  $
     }
 
