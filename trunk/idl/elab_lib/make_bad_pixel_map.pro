@@ -46,7 +46,7 @@ pro make_bad_pixel_map
     if count ge 1 then  badpixels[index] = 1
     index = where(median_im eq 0,count)
     if count ge 1 then badpixels[index] = 1
-    stop
+    
     writefits,filepath(root=path, 'badpixelmap.fits'),badpixels
     return
 end
