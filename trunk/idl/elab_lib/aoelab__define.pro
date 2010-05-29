@@ -42,7 +42,7 @@ function AOelab::Init, tracknum, $
     	return,0
     endif
     restore, tmp ; restore status
-    self._adsec_status = obj_new('AOadsec_status', status)
+    self._adsec_status = obj_new('AOadsec_status', self, status)
     if not obj_valid(self._adsec_status) then return, 0
 
     ; create wfs_status leaf
@@ -247,6 +247,10 @@ function AOelab::isOK, cause=cause
     imok *= (self->sanitycheck())->isOK(cause=cause)
     imok *= (self->frames_counter())->isok(cause=cause)
     if OBJ_VALID(self->disturb()) then imok *= (self->disturb())->isok(cause=cause)
+    if round((self->wfs_status())->modulation()) ne round(((self->intmat())->wfs_status())->modulation()) then begin
+    	imok*=0B
+    	cause += ' - Pyramid modulation mismatch'
+    endif
     return, imok
 end
 
