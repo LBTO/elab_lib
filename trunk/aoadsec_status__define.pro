@@ -6,7 +6,7 @@
 
 
 
-function AOadsec_status::Init, adsec_status_struct
+function AOadsec_status::Init, root_obj, adsec_status_struct
     ; convert filepaths /usr/local/adopt/calib/left/adsec/*  in adsec_calib/*
     tmp_struct = adsec_status_struct
     self->ConvertFilePath, tmp_struct
@@ -34,11 +34,23 @@ function AOadsec_status::Init, adsec_status_struct
    								   self._ovsamp_time = 1./time_or_freq			; it's a freq!
 	endif else self._ovsamp_time = -1.
 
-	; electrical index of working actuators
-	act_wcl_fname = filepath(root=ao_elabdir(), 'act_wcl.sav')	;valid for solar tower data!!!!
-	if file_test(act_wcl_fname) then begin
-		restore, act_wcl_fname
-		self._act_wcl = ptr_new(act_wcl)
+	;Search for struct containing information on adsec (used mainly for display of positions)
+	files = filepath("adsec_struct_*.sav", root_dir=ao_elabdir())
+	all_files = file_search(files, count=nfiles)
+	if nfiles gt 0 then begin
+		thisJulday = (root_obj->obj_tracknum())->julday()
+		all_files_julday = dblarr(nfiles)
+		for ii=0, nfiles-1 do begin
+			file_date = strmid(file_basename(all_files[ii]), 13, 8)
+			y = fix(strmid(file_date, 0, 4))
+			m = fix(strmid(file_date, 4, 2))
+			d = fix(strmid(file_date, 6, 2))
+			all_files_julday[ii] = julday(m,d,y,0,0,0)
+		endfor
+		diffJulday = thisJulday - all_files_julday
+		idx = where(diffJulday  ge 0d)
+		idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
+		self._adsec_struct_file = all_files[idx1]
 	endif
 
     ; initialize help object and add methods and leafs
@@ -53,6 +65,7 @@ function AOadsec_status::Init, adsec_status_struct
     self->addMethodHelp, "disturb_status()", "return disturb enable/disable (int)"
     self->addMethodHelp, "shape_file()", "return shape filename (string)"
     self->addMethodHelp, "ff_matrix_file()", "return ff matrix filename (string)"
+    self->addMethodHelp, "adsec_struct_file()", "return adsec_struct filename (string)"
     return, 1
 end
 
@@ -112,13 +125,12 @@ function AOadsec_status::ovsamp_time
     return, self._ovsamp_time
 end
 
-function AOadsec_status::act_wcl
-	if ptr_valid(self._act_wcl) then return, *self._act_wcl else return, 0
-end
-
 pro AOadsec_status::Cleanup
     self->AOhelp::Cleanup
-    ptr_free, self._act_wcl
+end
+
+function AOadsec_status::adsec_struct_file
+	return, self._adsec_struct_file
 end
 
 pro AOadsec_status__define
@@ -134,7 +146,7 @@ pro AOadsec_status__define
         _shape_file              : "", $
         _ff_matrix_file          : "", $
         _ovsamp_time			 : 0., $
-        _act_wcl				 : ptr_new(), $
+        _adsec_struct_file		 : "", $
         INHERITS AOhelp $
     }
 end
