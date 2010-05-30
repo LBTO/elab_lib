@@ -521,8 +521,8 @@ pro AOpsf::show_profile, _extra=ex, show_rms=show_rms
 	!Y.MARGIN = [4,2]
 	!P.MULTI = [2, 2, 2]
 	psf_le = self->longExposure()
-	image_show, psf_le/max(psf_le) > 0.0001, /as, /log, xtitle='pixels', _extra=ex
-	image_show, self->sym_psf() > 0.0001, /as, /log, xtitle='pixels', _extra=ex
+	image_show, psf_le/max(psf_le) > 0.0001, /as, /log, /inv, xtitle='pixels', _extra=ex
+	image_show, self->sym_psf() > 0.0001, /as, /log, /inv, xtitle='pixels', _extra=ex
 	!P.MULTI = 0
 end
 
