@@ -1,4 +1,3 @@
-<<<<<<< .mine
 
 ;+
 ; AOpsf object initialization
