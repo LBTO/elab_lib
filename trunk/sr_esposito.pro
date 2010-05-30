@@ -19,7 +19,7 @@
 ;    psf_dl = fltarr(np_psf, np_psf)
 ;    for i=0,np_psf-1 do begin
 ;        for j=0,np_psf-1 do begin
-;        teta1 =  sqrt((1.*i-np_psf/2)^2+(1.*J-np_psf/2)^2)*irtc_sampling/10.
+;        teta1 = sqrt((1.*i-np_psf/2)^2+(1.*J-np_psf/2)^2)*irtc_sampling/10.
 ;        psf_dl(i,j) = airy(lambda, D, teta1)
 ;        endfor
 ;    endfor
@@ -42,6 +42,9 @@ function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot
 ;ima_bs = ima1-bg1
 ima_bs(319,255)= 0 ;;; set the bad pixel to zero
 max_ima = max(ima_bs,h)
+
+
+
 if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/320,h-h/320*320
 ima_fit = gauss2dfit(double(ima_bs),coeff)
 xc = round(coeff(4))
@@ -97,5 +100,6 @@ endif
 
 return, sr
 end
+
 
 
