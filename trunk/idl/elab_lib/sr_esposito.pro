@@ -19,7 +19,7 @@
 ;    psf_dl = fltarr(np_psf, np_psf)
 ;    for i=0,np_psf-1 do begin
 ;        for j=0,np_psf-1 do begin
-;        teta1 = sqrt((1.*i-np_psf/2)^2+(1.*J-np_psf/2)^2)*irtc_sampling/10.
+;        teta1 =  sqrt((1.*i-np_psf/2)^2+(1.*J-np_psf/2)^2)*irtc_sampling/10.
 ;        psf_dl(i,j) = airy(lambda, D, teta1)
 ;        endfor
 ;    endfor
