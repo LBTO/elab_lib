@@ -332,7 +332,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
 		endif else begin
             if not keyword_set(ima) then ima = self->longExposure()
     		psf_dl_fname = filepath( root=ao_elabdir(), $
-                'psf_dl_'+strtrim(fix(self->lambda()*1e9),2)+'_scale'+strtrim(fix(self->pixelscale()*1e3),2)+'.sav')
+                'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'.sav')
     		if file_test(psf_dl_fname) then begin
         		restore, psf_dl_fname
     		endif else begin
