@@ -1,9 +1,10 @@
+<<<<<<< .mine
 
 ;+
 ; AOpsf object initialization
 ;-
 
-function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
+function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
 
 	if not file_test(psf_fname) then return,0
     self._fname = psf_fname
@@ -16,11 +17,34 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
     self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
-    self._pixelscale = pixelscale
-
-	; Detect filter:
+    
+    if not keyword_set(pixelscale) then begin 
+        apertnr = long(aoget_fits_keyword(self->header(), 'APERTNR'))
+        case apertnr of
+            1: pixelscale = 0.010
+            2: pixelscale = 0.020
+            3: pixelscale = 0.100
+        else: begin
+                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 1.0', /info 
+                pixelscale=1.0
+              end
+        endcase
+    endif
+    self._pixelscale = pixelscale 
+	
+    ; Detect filter:
     filter_number = long(aoget_fits_keyword(self->header(), 'FILTRNR'))
     self._lambda_im = irtc_filter_lambda(filter_number)
+	
+	; ROI
+    str = aoget_fits_keyword(self->header(), 'DETSEC')
+    temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
+    xra = strsplit( temp[0], ":", /ext)
+    yra = strsplit( temp[1], ":", /ext)
+	self._roi[0] = xra[0]-1 ; xmin
+	self._roi[1] = xra[1]-1 ; xmax
+	self._roi[2] = yra[0]-1 ; ymin
+	self._roi[3] = yra[1]-1 ; ymax
 
     DpupM = 8.222	;m
 	sec2rad = 4.85*1.e-6	;	rad2sec = 206265.
@@ -31,13 +55,15 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale
 	self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
 	if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
 
+    self._framerate =  self._framerate < 1./self._exptime 
+
 	; Time series for psf centroid analysis
     ; centroid is compute as arcsec from the long-exposure PSF center
 	if self._framerate eq 0 then dt=1. else dt=1./self._framerate
     if not self->AOtime_series::Init(dt, fftwindow="") then return,0
  	self._norm_factor   = 1.0   ;self->pixelscale()
 	self._spectra_units = 'arcsec';
-	self._plots_title = 'centroid'
+	self._plots_title = root_obj->tracknum()+' centroid'
 
     self._threshold = -1.
     self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
@@ -143,7 +169,7 @@ pro AOpsf::compute
             psf[*,*,i] = self->maneggiaFrame(psf[*,*,i], self->dark_image(), self->badPixelMap())
         endfor
         print, 'saving data...'
-    	save, psf, filename=self._psf_elab_fname, /compress
+    	save, psf, filename=self._psf_elab_fname ;, /compress
         print, 'done'
     endelse
     self._image = ptr_new(psf, /no_copy)
@@ -169,28 +195,30 @@ function AOpsf::maneggiaFrame, psf_in, dark, badpixelmap
     ;	psf[*,j,i] -= median(psf[mask,j,i])
     ;endfor
     ; remove bad pixels interpolating with neighbours
-    psf = mad_correct_bad_pixel(~badpixelmap, psf)
+    ; TODO UNCOMMENT THIS psf = mad_correct_bad_pixel(~badpixelmap, psf)
     return, psf
 end
 
 function AOpsf::badPixelMap
-    if not (PTR_VALID(self._badpixelmap)) then $
+    if not PTR_VALID(self._badpixelmap) then begin
     	if file_test(self->badpixelmap_fname()) then begin
             badmap = readfits(self->badpixelmap_fname(), bpm_header, /SILENT)
-            naxis = long(aoget_fits_keyword(bpm_header, 'NAXIS'))
             bmp_frame_w = long(aoget_fits_keyword(bpm_header, 'NAXIS1'))
             bmp_frame_h = long(aoget_fits_keyword(bpm_header, 'NAXIS2'))
             if (bmp_frame_w ne self->frame_w()) or (bmp_frame_h ne self->frame_h()) then begin
                 message, 'BadPixelMap and PSF images do not have the same dimensions!!', /info
                 self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
             endif else begin
-                self._badpixelmap = ptr_new(badmap, /no_copy)
+    	        self._badpixelmap = ptr_new(badmap,  /no_copy)
             endelse
         endif else begin
         	message, 'BadPixelMap file not existing. Assume all pixel good', /info
-        	self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()))
+            self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
+        	;badmap = fltarr(self->frame_w(), self->frame_h())
         endelse
-
+		;roi = self->roi()
+    	;self._badpixelmap = ptr_new(badmap[ roi[0]:roi[1], roi[2]:roi[3] ],  /no_copy)
+	endif
     return, *(self._badpixelmap)
 end
 
@@ -221,6 +249,9 @@ function AOpsf::dark_image
     return, *(self._dark_image)
 end
 
+function AOpsf::roi
+	return, self._roi
+end
 
 ;===================================================================================
 ;		 		L O N G - E X P O S U R E   P S F   A N A L Y S I S
@@ -301,7 +332,8 @@ function AOpsf::SR_se, plot=plot, ima=ima
 			self._sr_se = sr_se
 		endif else begin
             if not keyword_set(ima) then ima = self->longExposure()
-    		psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(fix(self->lambda()*1e9),2)+'.sav')
+    		psf_dl_fname = filepath( root=ao_elabdir(), $
+                'psf_dl_'+strtrim(fix(self->lambda()*1e9),2)+'_scale'+strtrim(fix(self->pixelscale()*1e3),2)+'.sav')
     		if file_test(psf_dl_fname) then begin
         		restore, psf_dl_fname
     		endif else begin
@@ -434,7 +466,8 @@ pro AOpsf::compute_centroid
         long_exp_center = (self->gaussfit())->center()
 		image = self->image()
 		centr = fltarr(self->nframes(),2)
-		square = 0.6	;arcsec
+		; compute centroid in a small (0.6") field centered on the long-exp PSF
+		square = 0.6	; arcsec
 		sz = square/2./self->pixelscale()
 		for ii=0L, self->nframes()-1 do begin
 			im = image[*,*,ii]
@@ -474,6 +507,16 @@ function AOpsf::GetDati
   	return, self._centroid
 end
 
+pro AOpsf::plotJitter
+plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title
+oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
+oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
+
+sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
+DpupM = 8.22	;m
+ldmas = self->lambda() / DpupM / 4.848d-6 ; l/D in arcsec
+print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+end
 
 ;===================================================================================
 ;					P S F   D I S P L A Y   R O U T I N E S
@@ -622,6 +665,7 @@ pro AOpsf__define
         _image          :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
         _badpixelmap    :  ptr_new()	, $
+		_roi            :  [0,0,0,0]    , $
         _bias_level		:  0.			, $
         _lambda_im		:  0.			, $	 ;[meters]
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
@@ -654,4 +698,5 @@ pro AOpsf__define
         INHERITS AOhelp $
     }
 end
+
 
