@@ -110,6 +110,7 @@ function AOcontrol::m2c
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
     if OBJ_VALID(m2ccobj) then return, m2cobj->m2c() else return, -1
     ;return, readfits(ao_datadir()+path_sep()+self->m2c_fname(), header, /SILENT)
+;FQP rompipalle
 end
 
 function AOcontrol::c2m
