@@ -108,13 +108,13 @@ end
 
 function AOcontrol::m2c
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    return, m2cobj->m2c()
+    if OBJ_VALID(m2ccobj) then return, m2cobj->m2c() else return, -1
     ;return, readfits(ao_datadir()+path_sep()+self->m2c_fname(), header, /SILENT)
 end
 
 function AOcontrol::c2m
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    return, m2cobj->c2m()
+    if OBJ_VALID(m2ccobj) then return, m2cobj->c2m() else return, -1
 end
 
 function AOcontrol::gain
