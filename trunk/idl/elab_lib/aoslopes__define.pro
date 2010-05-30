@@ -102,7 +102,7 @@ function AOslopes::remap2d, slvec
 	mypup = 0	;use this pupil info to remap signals
 	indpup = ((self->wfs_status())->pupils())->indpup()
 	nsub   = ((self->wfs_status())->pupils())->nsub()
-	fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
+	fr_sz =80/((self->wfs_status())->ccd39())->binning()		;pixels
 
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
