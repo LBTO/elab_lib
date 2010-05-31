@@ -281,51 +281,8 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 end
 
 
-pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
-    print, string(format='(%"%-30s %s")','Tracknum',self->tracknum() )
-    print, string(format='(%"%-30s %f")','Closed Loop', self->closedloop()  )
-    print, string(format='(%"%-30s %s %s")','Is OK?', ( self->isOK(cause=cause) eq 1L) ? "OK" :  "No", cause  )
-    if obj_valid(self._disturb) then begin
-      if strmatch((self->disturb())->type(),'*atm*') then begin
-        print, string(format='(%"%-30s %f")','seeing [arcsec]',(self->disturb())->seeing() )
-	    print, string(format='(%"%-30s %f")','Vwind [m/s]',(self->disturb())->vwind() )
-	    if (self->disturb())->cor_nmodes() ne 0 then $
-	      print, 'Modal pre-correction: '+string((self->disturb())->cor_nmodes())+' modes, starting from mode number '+strtrim((self->disturb())->cor_first_mode(),2)
-	  endif
-	  if strmatch((self->disturb())->type(),'*vib*') then begin
-		print, string(format='(%"%-30s %f")','number of vibrations',(self->disturb())->totnvib() )
-		print, string(format='(%"%-30s %f")','type of vibration',(self->disturb())->casevib() )
-	  endif
-    endif
-    print, string(format='(%"%-30s %f")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())
-    print, string(format='(%"%-30s %f")','Magnitude', self->mag())
-    print, string(format='(%"%-30s %d")','# Modes', (self->modal_rec())->nmodes())
-    print, string(format='(%"%-30s %d")','Binning', ((self->wfs_status())->ccd39())->binning())
-    print, string(format='(%"%-30s %d")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())
-    gaintemp = minmax( ((self->control())->gain())[(self->modal_rec())->modes_idx()] )
-    if gaintemp[0] eq -1 then print, 'Gain: AUTO' else $
-    print, string(format='(%"%-30s %f %f")','Gain minmax', gaintemp)
-    print, string(format='(%"%-30s %f")','Modulation', (self->wfs_status())->modulation() )
-    print, string(format='(%"%-30s %s")','B0_a matrix', (self->control())->b0_a_fname())
-    print, string(format='(%"%-30s %s")','Modal rec', (self->modal_rec())->fname())
-    print, string(format='(%"%-30s %s")','FW1', ((self->wfs_status())->filtw1())->name() )
-    print, string(format='(%"%-30s %s")','FW2', ((self->wfs_status())->filtw2())->name() )
-    
-    print, string(format='(%"%-30s %f")','Telescope elevation', (self->tel())->el()/3600. )
-    print, string(format='(%"%-30s %f")','Wind speed', (self->tel())->wind_speed() )
-    
-    if not keyword_set(PARAMS_ONLY) then begin
-    	;print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
-    	if obj_valid(self._irtc) then begin
-    		print, string(format='(%"%-30s %f")','lambda [um]',(self->irtc())->lambda()*1e6)
-    		print, string(format='(%"%-30s %f")','exptime [s]',(self->irtc())->exptime())
-    		print, string(format='(%"%-30s %f")','SR SE' ,(self->irtc())->sr_se())
-    		print, string(format='(%"%-30s %s")','IRTC dark', (self->irtc())->dark_fname())
-    	endif
-    endif
-end
 
-pro AOelab::summary_twiki, PARAMS_ONLY=PARAMS_ONLY
+pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     print, string(format='(%"| %-30s | %s |")','Tracknum',self->tracknum() )
     print, string(format='(%"| %-30s | %s |")','Closed Loop', self->closedloop() ? 'Yes' : 'No' )
     print, string(format='(%"| %-30s | %s %s |")','Is OK?', ( self->isOK(cause=cause) eq 1L) ? "OK" :  "No", cause  )
