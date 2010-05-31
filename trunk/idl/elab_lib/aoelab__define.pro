@@ -247,10 +247,12 @@ function AOelab::isOK, cause=cause
     imok *= (self->sanitycheck())->isOK(cause=cause)
     imok *= (self->frames_counter())->isok(cause=cause)
     if OBJ_VALID(self->disturb()) then imok *= (self->disturb())->isok(cause=cause)
-    if round((self->wfs_status())->modulation()) ne round(((self->intmat())->wfs_status())->modulation()) then begin
-    	imok*=0B
-    	cause += ' - Pyramid modulation mismatch'
-    endif
+    if obj_valid(self->intmat()) and obj_valid(self->wfs_status()) and obj_valid( (self->intmat())->wfs_status() )  then begin
+    	if round((self->wfs_status())->modulation()) ne round(((self->intmat())->wfs_status())->modulation()) then begin
+    		imok*=0B
+    		cause += ' - Pyramid modulation mismatch'
+    	endif
+	endif
     return, imok
 end
 
@@ -597,5 +599,6 @@ pro AOelab__define
         INHERITS AOhelp $
     }
 end
+
 
 
