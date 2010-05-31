@@ -19,7 +19,7 @@ function AOm2c::Init, fname, recompute=recompute
     endif
 
     self._store_c2m_fname     = filepath(root=store_dir, file_basename(fname)+'.sav')
-    if n_elements(recompute) ne 0 then begin
+    if keyword_set(recompute) then begin
         file_delete, self._store_c2m_fname, /allow_nonexistent
     endif
 

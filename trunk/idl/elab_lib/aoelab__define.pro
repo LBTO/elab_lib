@@ -9,7 +9,7 @@ function AOelab::Init, tracknum, $
             modal_reconstructor_file = modal_reconstructor_file, $	; this is used in case of kalman filter
             dark_fname = dark_fname								    ; override IRTC dark filename
 
-    self._recompute = n_elements(recompute) eq 0 ? 0B : 1B
+    self._recompute = keyword_set(recompute)
 
     date = strmid(tracknum, 0, 8)
     self._datadir = filepath(root=ao_datadir(), sub=['adsec_data', date, 'Data_'+tracknum], '')
@@ -306,10 +306,10 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     print, string(format='(%"%-30s %s")','Modal rec', (self->modal_rec())->fname())
     print, string(format='(%"%-30s %s")','FW1', ((self->wfs_status())->filtw1())->name() )
     print, string(format='(%"%-30s %s")','FW2', ((self->wfs_status())->filtw2())->name() )
-    
+
     print, string(format='(%"%-30s %f")','Telescope elevation', (self->tel())->el()/3600. )
     print, string(format='(%"%-30s %f")','Wind speed', (self->tel())->wind_speed() )
-    
+
     if not keyword_set(PARAMS_ONLY) then begin
     	;print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self._irtc) then begin
@@ -350,10 +350,10 @@ pro AOelab::summary_twiki, PARAMS_ONLY=PARAMS_ONLY
     print, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )
     print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
     print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
-    
+
     print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el()/3600. )
     print, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )
-    
+
     if not keyword_set(PARAMS_ONLY) then begin
     	;print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self._irtc) then begin
