@@ -24,8 +24,8 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
             2: pixelscale = 0.020
             3: pixelscale = 0.100
         else: begin
-                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 1.0', /info 
-                pixelscale=1.0
+                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 0.010', /info 
+                pixelscale = 0.010
               end
         endcase
     endif
