@@ -71,6 +71,18 @@ function AOresidual_modes::nmodes
     return, self->AOtime_series::nseries()
 end
 
+pro AOresidual_modes::plotJitter
+    plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title
+    oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
+    oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
+
+    ;sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
+    ;DpupM = 8.22	;m
+    ;ldmas = self->lambda() / DpupM / 4.848d-6 ; l/D in arcsec
+    ;print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+end
+
+
 ; to be implemented in AOtime_series subclasses
 function AOresidual_modes::GetDati
     if not ptr_valid(self._modes) then self->datiProducer
