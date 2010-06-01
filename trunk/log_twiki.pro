@@ -7,30 +7,39 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     for i=0, aodataset->Count()-1 do begin
         ee = objref[i]
-        gaintemp = minmax( ((ee->control())->gain())[(ee->modal_rec())->modes_idx()] )
-        if gaintemp[0] eq -1 then gaintemp=[-1, -1] 
-        case round( (ee->irtc())->lambda()*1e9) of
-            1070: band = 'J'
-            1600: band = 'H'
-            else: band = '?'
-        endcase
+        
+        gaintemp = [-1, -1]
+        if obj_valid(ee->modal_rec()) then $
+            if obj_valid(ee->control()) then begin
+                gaintemp = minmax( ((ee->control())->gain())[(ee->modal_rec())->modes_idx()] )
+                if gaintemp[0] eq -1 then gaintemp=[-1, -1]
+            endif
+        if obj_valid(ee->irtc()) then begin
+            case round( (ee->irtc())->lambda()*1e9) of
+                1070: band = 'J'
+                1600: band = 'H'
+                else: band = '?'
+            endcase
+        endif else begin
+            band = '?'
+        endelse
         print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %d | %s | %d | %d | ")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
-            round( (ee->tel())->el()/3600.), $
-            round( (ee->tel())->wind_speed() ),$
-            strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) , $
-            ((ee->wfs_status())->ccd39())->binning(), $
-            round((ee->modal_rec())->nmodes()), $
-            round(((ee->wfs_status())->ccd39())->framerate()), $
+            obj_valid(ee->tel()) ? round( (ee->tel())->el()/3600.) : -1 , $
+            obj_valid(ee->tel()) ? round( (ee->tel())->wind_speed() ) : -1 , $
+            obj_valid(ee->modal_rec()) ? strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) : ' ', $
+            obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->ccd39())->binning() : -1, $
+            obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
+            obj_valid(ee->wfs_status()) ?  round(((ee->wfs_status())->ccd39())->framerate()) : -1, $
             gaintemp[0], gaintemp[1] ,$
-            (ee->wfs_status())->modulation(), $
-            round((ee->frames())->nphsub_per_int_av()), $
-            round( (ee->irtc())->sr_se()*100), $
+            obj_valid(ee->wfs_status()) ? (ee->wfs_status())->modulation() : -1, $
+            obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
+            obj_valid(ee->irtc()) ? round( (ee->irtc())->sr_se()*100) : -1, $
             band , $
-            round( (ee->irtc())->exptime()*1e3) , $
-    		(ee->irtc())->nframes() $
+            obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
+    		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 $
 
         )
     endfor
