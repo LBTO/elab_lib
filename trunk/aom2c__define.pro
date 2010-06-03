@@ -7,7 +7,10 @@ function AOm2c::Init, fname, recompute=recompute
 
     self._m2c_fname  = ao_datadir()+path_sep()+fname
 
-    if not file_test(self._m2c_fname) then return, 0
+    if not file_test(self._m2c_fname) then begin
+        message, 'M2C file '+self._m2c_fname+' not existing', /info 
+        return, 0
+    endif
 
     header = headfits(self._m2c_fname, /SILENT)
     self._m2c_fname_fitsheader = ptr_new(header, /no_copy)
