@@ -55,7 +55,7 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
     self->addMethodHelp, "b0_a_header()",     "header of b0_a fitsfile (strarr)"
     self->addMethodHelp, "c_header()",      "header of c fitsfile (strarr)"
-    self->addMethodHelp, "m2c_header()", "header of m2c fitsfile (tipically = c_header) (strarr)"
+    ;self->addMethodHelp, "m2c_header()", "header of m2c fitsfile (tipically = c_header) (strarr)"
     self->addMethodHelp, "gain_header()",     "header of gain fitsfile (strarr)"
     self->addMethodHelp, "isKalman()",     "tell if Kalman filter is used"
     self->addMethodHelp, "intmat_fname()",     "interaction matrix filename (from which b0_a has been derived)"
@@ -108,13 +108,13 @@ end
 
 function AOcontrol::m2c
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    if OBJ_VALID(m2ccobj) then return, m2cobj->m2c() else return, -1
+    if OBJ_VALID(m2cobj) then return, m2cobj->m2c() else return, -1
     ;return, readfits(ao_datadir()+path_sep()+self->m2c_fname(), header, /SILENT)
 end
 
 function AOcontrol::c2m
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    if OBJ_VALID(m2ccobj) then return, m2cobj->c2m() else return, -1
+    if OBJ_VALID(m2cobj) then return, m2cobj->c2m() else return, -1
 end
 
 function AOcontrol::gain
