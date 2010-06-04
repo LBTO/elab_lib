@@ -41,6 +41,10 @@ function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot
 ;bg1 = total(float(bg),3)/nbg
 ;ima_bs = ima1-bg1
 ima_bs(319,255)= 0 ;;; set the bad pixel to zero
+ima_bs[0:1,*] = 0
+ima_bs[318:319,*] = 0
+ima_bs[*,0:1] = 0
+ima_bs[*,254:255] = 0
 max_ima = max(ima_bs,h)
 
 
