@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     objref =  aodataset->Get(/all)
     
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | "
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
         ee = objref[i]
@@ -23,7 +23,7 @@ pro log_twiki, aodataset, ref_star=ref_star
         endif else begin
             band = '?'
         endelse
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %d | %s | %d | %d | ")', $
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %d | %s | %d | %d |  |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
