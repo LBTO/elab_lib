@@ -174,9 +174,26 @@ function AOtime_series::psd, spectrum_idx
     if n_elements(spectrum_idx) eq 0 then return, *(self._psd) else return,  (*(self._psd))[*,spectrum_idx]
 end
 
-function AOtime_series::freq
+function AOtime_series::freq, from_freq=from_freq, to_freq=to_freq
     IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
-    IF (PTR_VALID(self._freq)) THEN return, *(self._freq) else return, 0d
+    IF (PTR_VALID(self._freq)) THEN begin
+        
+        if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
+        if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+        if from_freq ge to_freq then message, "from_freq must be less than to_freq"
+        if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
+        if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
+        if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
+        if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
+
+        idx_from = closest(from_freq, *(self._freq))
+        idx_to   = closest(to_freq, *(self._freq))
+
+        return, (*(self._freq))[idx_from:idx_to] 
+        
+    endif else begin
+        return, 0d
+    endelse
 end
 
 function AOtime_series::fftwindow
@@ -232,31 +249,31 @@ pro AOtime_series::SpecPlot, elemnum, _extra=ex
 
 end
 
-pro AOtime_series::PowerPlot, elemnum, _extra=ex
-
-	if n_params() ne 1 then begin
-		message, 'Missing parameter. Usage: ...->SpecPlot, elemnum', /info
-		return
-	endif
-
-	nspectra = self->nspectra()
-	if elemnum ge nspectra then begin
-		message, 'Element number requested not available. The last element available is '+strtrim(nspectra-1,2), /info
-		return
-	endif
-
-	freq = self->freq()
-	if freq[1]-freq[0] eq 1 then xtitle='frequency bin' else xtitle='frequency [Hz]'
-	data = self->power(0, /cum) * (self._norm_factor)^2.
-  	yrange = minmax(data)
-
-	;loadct,39,/silent
-	!X.MARGIN = [12, 3]
-	title =self._plots_title+', element '+strtrim(elemnum,2)
-	plot_oo, freq[1:*], data, charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'^2]') $
-		, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
-
-end
+;pro AOtime_series::PowerPlot, elemnum, _extra=ex
+;
+;	if n_params() ne 1 then begin
+;		message, 'Missing parameter. Usage: ...->SpecPlot, elemnum', /info
+;		return
+;	endif
+;
+;	nspectra = self->nspectra()
+;	if elemnum ge nspectra then begin
+;		message, 'Element number requested not available. The last element available is '+strtrim(nspectra-1,2), /info
+;		return
+;	endif
+;
+;	freq = self->freq()
+;	if freq[1]-freq[0] eq 1 then xtitle='frequency bin' else xtitle='frequency [Hz]'
+;	data = self->power(0, /cum) * (self._norm_factor)^2.
+;  	yrange = minmax(data)
+;
+;	;loadct,39,/silent
+;	!X.MARGIN = [12, 3]
+;	title =self._plots_title+', element '+strtrim(elemnum,2)
+;	plot_oo, freq[1:*], data, charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'^2]') $
+;		, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
+;
+;end
 
 ;
 function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_freq, cumulative=cumulative
@@ -274,7 +291,7 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     idx_from = closest(from_freq, *(self._freq))
     idx_to   = closest(to_freq, *(self._freq))
 
-    df=1./self._dt/(2*self._nfreqs) ; see fft1.pro for total power computation
+    df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
     if n_elements(spectrum_idx) eq 0 then begin
         return, total( (*(self._psd))[idx_from:idx_to, *], cumulative=cumulative ) * df
     endif else begin
