@@ -16,6 +16,9 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
 # Only these archives should be linked by AOApp's
 ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a libdrawobjects.a
 
+CC = gcc $(LIB_INCLUDE) 
+CPP = g++ $(LIB_INCLUDE) 
+
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) -c $<
 

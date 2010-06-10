@@ -637,7 +637,7 @@ int GetPacketNum( int opcode, int firstDSP, int lastDSP, int BCU_address, int le
 
 void my_sleep2()
 {
-	int dummy;
+	int dummy=0;
 
 	dummy++;
 }
