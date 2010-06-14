@@ -71,8 +71,8 @@ function AOresidual_modes::nmodes
     return, self->AOtime_series::nseries()
 end
 
-pro AOresidual_modes::plotJitter
-    plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title
+pro AOresidual_modes::plotJitter, _extra=ex
+    plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title, _extra=ex
     oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
     oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
 
