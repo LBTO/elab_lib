@@ -10,7 +10,7 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
           UdpConnection.o TcpConnection.o \
           NaNutils.o Utils.o Reorder.o Paths.o \
           AdamLib.o bcu_diag.o aoapplib.o \
-          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o
+          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o nLogger.o
           
 # LIB ARCHIVES
 # Only these archives should be linked by AOApp's
