@@ -75,7 +75,7 @@ pro AOdataset::merge, dataset2
         if obj_valid(self->GetFromTracknum(elem2tracknum)) then continue
         ; tracknum not present in this dataset: add it
         self->add, elem2[i]
-        self._tracknums = ptr_new( [ *(self._tracknums), elem2tracknum], /no_copy )
+        self._tracknums = ptr_new( [ self->tracknums(), elem2tracknum], /no_copy )
         ; now remove elem2 from dataset2. Otherwise if in the future dataset2 is destroyed
         ; the referenced objects (that are now referenced also in this dataset) are destroyed
         dataset2->remove, elem2[i]
@@ -91,14 +91,14 @@ end
 ; tracknum : string or string array
 ;
 function AOdataset::GetFromTracknum, tracknum, idx=idx
-    if not ptr_valid(self._tracknums) then return, obj_new()
-
+    ;if not ptr_valid(self._tracknums) then return, obj_new()
+    
     if n_elements(tracknum) eq 1 then begin
-        tidx = where(*(self._tracknums) eq tracknum, count)
+        tidx = where(self->tracknums() eq tracknum, count)
         if count ne 0 then idx=tidx
     endif else begin
         for i=0L, n_elements(tracknum)-1 do begin
-            tidx = where(*(self._tracknums) eq tracknum[i], count)
+            tidx = where(self->tracknums() eq tracknum[i], count)
             if count ne 0 then idx = n_elements(idx) eq 0 ? tidx : [idx, tidx]
         endfor
     endelse
@@ -108,6 +108,10 @@ function AOdataset::GetFromTracknum, tracknum, idx=idx
         message, 'tracknum not found in dataset', /informational, /continue, BLOCK='elab', name='ao_oaa_dataset'
         return, obj_new()
     endelse
+end
+
+pro AOdataset::RemoveFromTracknum, tracknum
+    self->Remove, self->GetFromTracknum( tracknum )
 end
 
 ;
