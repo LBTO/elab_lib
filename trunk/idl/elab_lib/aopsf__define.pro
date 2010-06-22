@@ -1,9 +1,24 @@
 
 ;+
 ; AOpsf object initialization
+;
+; INPUT
+;   root_obj
+;   psf_fname            images cube fits file name (absolute path) 
+;   dark_fname           dark fits file name (absolute path)
+;   pixelscale           [arcsec/px]
+;   lambda               [m]
+;   exptime              [s]
+;   framerate            [Hz]
+;
+; KEYWORD
+;   binning              default = 1
+;   roi                  array [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame 
 ;-
 
-function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
+;function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
+function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
+        binning=binning, roi=roi
 
 	if not file_test(psf_fname) then return,0
     self._fname = psf_fname
@@ -17,44 +32,47 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
     self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
     
-    if not keyword_set(pixelscale) then begin 
-        apertnr = long(aoget_fits_keyword(self->header(), 'APERTNR'))
-        case apertnr of
-            1: pixelscale = 0.010
-            2: pixelscale = 0.020
-            3: pixelscale = 0.100
-        else: begin
-                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 0.010', /info 
-                pixelscale = 0.010
-              end
-        endcase
-    endif
+;    if not keyword_set(pixelscale) then begin 
+;        apertnr = long(aoget_fits_keyword(self->header(), 'APERTNR'))
+;        case apertnr of
+;            1: pixelscale = 0.010
+;            2: pixelscale = 0.020
+;            3: pixelscale = 0.100
+;        else: begin
+;                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 0.010', /info 
+;                pixelscale = 0.010
+;              end
+;        endcase
+;    endif
     self._pixelscale = pixelscale 
 	
     ; Detect filter:
-    filter_number = long(aoget_fits_keyword(self->header(), 'FILTRNR'))
-    self._lambda_im = irtc_filter_lambda(filter_number)
+    ;filter_number = long(aoget_fits_keyword(self->header(), 'FILTRNR'))
+    ;self._lambda_im = irtc_filter_lambda(filter_number)
+    self._lambda_im = lambda
 	
-	; ROI
-    str = aoget_fits_keyword(self->header(), 'DETSEC')
-    temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
-    xra = strsplit( temp[0], ":", /ext)
-    yra = strsplit( temp[1], ":", /ext)
-	self._roi[0] = xra[0]-1 ; xmin
-	self._roi[1] = xra[1]-1 ; xmax
-	self._roi[2] = yra[0]-1 ; ymin
-	self._roi[3] = yra[1]-1 ; ymax
+    ; Exposure time
+	;self._exptime = float(aoget_fits_keyword(self->header(), 'EXPTIME'))*1e-6	;in seconds
+	;if self._exptime eq 0 then message, 'PSF image exposure time not known', /info
+	self._exptime = exptime
 
-    DpupM = 8.222	;m
-	sec2rad = 4.85*1.e-6	;	rad2sec = 206265.
-	self._pixelscale_lD = self._pixelscale / ((self->lambda()/DpupM)/sec2rad)	;l/D per pixel
-	self._exptime = float(aoget_fits_keyword(self->header(), 'EXPTIME'))*1e-6	;in seconds
-	if self._exptime eq 0 then message, 'PSF image exposure time not known', /info
+    ;Framerate
+	;self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
+	;if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
+    ;self._framerate =  self._framerate < 1./self._exptime 
+    self._framerate = framerate
 
-	self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
-	if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
+    ; binning
+    if not keyword_set(binning) then binning = 1
+    self._binning = binning
+	
+    ; ROI
+    if not keyword_set(roi) then roi = [0, self->frame_w()-1, 0, self->frame_h()-1]
+    self._roi = roi
 
-    self._framerate =  self._framerate < 1./self._exptime 
+    
+	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
+
 
 	; Time series for psf centroid analysis
     ; centroid is compute as arcsec from the long-exposure PSF center
@@ -65,41 +83,41 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
 	self._plots_title = root_obj->tracknum()+' centroid'
 
     self._threshold = -1.
-    self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
-    self._store_psd_fname = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
+    ;self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
+    ;self._store_psd_fname = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._centroid_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
     endif
 
 	;Long-exposure PSF
-	self._psf_le_fname = filepath(root=root_obj->elabdir(), 'psf_le.sav')
+	;self._psf_le_fname = filepath(root=root_obj->elabdir(), 'psf_le.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._psf_le_fname, /allow_nonexistent
     endif
 
 	;PSF cube elaborated (dark-subtracted, badpixel corrected)
-	self._psf_elab_fname = filepath(root=root_obj->elabdir(), 'psf_elab.sav')
+	;self._psf_elab_fname = filepath(root=root_obj->elabdir(), 'psf_elab.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._psf_elab_fname, /allow_nonexistent
     endif
 
     ;SR estimation from the PSF:
 	self._sr_se = -1.
-	self._sr_se_fname = filepath(root=root_obj->elabdir(), 'sr_se.sav')
+	;self._sr_se_fname = filepath(root=root_obj->elabdir(), 'sr_se.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._sr_se_fname, /allow_nonexistent
     endif
 
 	;PSF profile evaluation:
 	self._prof_binsize = 0.5
-	self._profile_fname = filepath(root=root_obj->elabdir(), 'psf_profile.sav')
+	;self._profile_fname = filepath(root=root_obj->elabdir(), 'psf_profile.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._profile_fname, /allow_nonexistent
     endif
 
 	;Encircled energy computation:
-	self._enc_ene_fname = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
+	;self._enc_ene_fname = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._enc_ene_fname, /allow_nonexistent
     endif
@@ -113,44 +131,45 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
     ;self._image = ptr_new(totpsf, /no_copy)
     ;self._gaussfit = obj_new('AOgaussfit', *self._image, self._pixelscale)
 
-    ; initialize help object and add methods and leafs
-    if not self->AOhelp::Init('AOpsf', 'PSF image') then return, 0
-    ;self->addleaf, self._gaussfit
-    self->addMethodHelp, "fname()",      	"psf file name(s) [string or strarr]"
-    self->addMethodHelp, "image()",  		"psf frames [frame_w, frame_h, nframes]"
-    self->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
-    self->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
-    self->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
-    self->addMethodHelp, "dark_image()", 	"psf dark image (float)"
-    self->addMethodHelp, "badpixelmap_fname()", 	"psf bad pixel map file name [string]"
-    self->addMethodHelp, "badpixelmap()", 	"bad pixel mask image [frame_w, frame_h]"
-    self->addMethodHelp, "nframes()", 		"number of frames saved (long)"
-    self->addMethodHelp, "frame_w()", 		"frame width [px] (long)"
-    self->addMethodHelp, "frame_h()", 		"frame height [px] (long)"
-    self->addMethodHelp, "lambda()", 		"central filter wavelength [m]"
-    self->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
-    self->addMethodHelp, "exptime()",		"psf exposure time [s]"
-    self->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
-    self->addMethodHelp, "bias()",			"bias level of the LE image"
-    self->addMethodHelp, "gaussfit()",  	"return reference to psf gaussfit object (AOgaussfit)"
-    self->addMethodHelp, "sr_se([/PLOT])", 	"Strehl ratio estimated from the image"
-    self->addMethodHelp, "profile()", 		"radially averaged PSF profile"
-    self->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
-    self->addMethodHelp, "prof_dist()", 	"profile distance vector in arcsec"
-    self->addMethodHelp, "prof_dist_lD()", 	"profile distance vector in lambda/D units"
-    self->addMethodHelp, "prof_binsize()", 	"radial bin size [in pixels] used in the computation of the PSF profile"
-    self->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
-    self->addMethodHelp, "sym_psf()",		"radial-symmetrical PSF image"
-    self->addMethodHelp, "show_profile, [/SHOW_RMS, _EXTRA=EX]", "show PSF profile"
-    self->addMethodHelp, "enc_ene()",		"encircled energy"
-    self->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
-    self->addMethodHelp, "enc_ene_dist_lD()", "circle radius in arcsec in lambda/D units"
-    self->addMethodHelp, "centroid()", 		"returns centroids of psf images in arcsec from longExposure PSF center"
-    self->addMethodHelp, "threshold()",		"returns the threshold applied to images in the computation of the centroid (float)"
-    self->addMethodHelp, "set_threshold, thr", "Sets the threshold value mentioned above"
-    self->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
-    self->AOtime_series::addHelp, self
     return, 1
+end
+
+pro AOpsf::addHelp, obj
+    ; initialize help object and add methods and leafs
+    obj->addMethodHelp, "fname()",      	"psf file name(s) [string or strarr]"
+    obj->addMethodHelp, "image()",  		"psf frames [frame_w, frame_h, nframes]"
+    obj->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
+    obj->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
+    obj->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
+    obj->addMethodHelp, "dark_image()", 	"psf dark image (float)"
+    obj->addMethodHelp, "badpixelmap_fname()", 	"psf bad pixel map file name [string]"
+    obj->addMethodHelp, "badpixelmap()", 	"bad pixel mask image [frame_w, frame_h]"
+    obj->addMethodHelp, "nframes()", 		"number of frames saved (long)"
+    obj->addMethodHelp, "frame_w()", 		"frame width [px] (long)"
+    obj->addMethodHelp, "frame_h()", 		"frame height [px] (long)"
+    obj->addMethodHelp, "lambda()", 		"central filter wavelength [m]"
+    obj->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
+    obj->addMethodHelp, "exptime()",		"psf exposure time [s]"
+    obj->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
+    obj->addMethodHelp, "bias()",			"bias level of the LE image"
+    obj->addMethodHelp, "gaussfit()",  	"return reference to psf gaussfit object (AOgaussfit)"
+    obj->addMethodHelp, "sr_se([/PLOT])", 	"Strehl ratio estimated from the image"
+    obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
+    obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
+    obj->addMethodHelp, "prof_dist()", 	"profile distance vector in arcsec"
+    obj->addMethodHelp, "prof_dist_lD()", 	"profile distance vector in lambda/D units"
+    obj->addMethodHelp, "prof_binsize()", 	"radial bin size [in pixels] used in the computation of the PSF profile"
+    obj->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
+    obj->addMethodHelp, "sym_psf()",		"radial-symmetrical PSF image"
+    obj->addMethodHelp, "show_profile, [/SHOW_RMS, _EXTRA=EX]", "show PSF profile"
+    obj->addMethodHelp, "enc_ene()",		"encircled energy"
+    obj->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
+    obj->addMethodHelp, "enc_ene_dist_lD()", "circle radius in arcsec in lambda/D units"
+    obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in arcsec from longExposure PSF center"
+    obj->addMethodHelp, "threshold()",		"returns the threshold applied to images in the computation of the centroid (float)"
+    obj->addMethodHelp, "set_threshold, thr", "Sets the threshold value mentioned above"
+    obj->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
+    obj->AOtime_series::addHelp, obj
 end
 
 ;===================================================================================
@@ -246,10 +265,6 @@ function AOpsf::dark_image
         	self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
         endelse
     return, *(self._dark_image)
-end
-
-function AOpsf::roi
-	return, self._roi
 end
 
 ;===================================================================================
@@ -512,8 +527,7 @@ oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
 oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
 
 sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
-DpupM = 8.22	;m
-ldmas = self->lambda() / DpupM / 4.848d-6 ; l/D in arcsec
+ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
 print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
 end
 
@@ -544,12 +558,11 @@ pro AOpsf::show_profile, _extra=ex, show_rms=show_rms
 	;airy disk:
 	airysep_lD = findgen(1000)/(1000.-1.)*100.
 	oc = 0.111
-	DpupM = 8.22	;m
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
 	prof_xrange_lD = [0.1,1e2]
-	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/DpupM)/sec2rad)
+	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
 
 	winsize = get_screen_size()/2
 	window, /free, xsize=winsize[0], ysize=winsize[1], title='PSF profile'
@@ -630,6 +643,14 @@ function AOpsf::framerate
 	return, self._framerate
 end
 
+function AOpsf::binning
+	return, self._binning
+end
+
+function AOpsf::roi
+	return, self._roi
+end
+
 pro AOpsf::free
     if ptr_valid(self._image)      then ptr_free, self._image
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
@@ -674,6 +695,7 @@ pro AOpsf__define
         _frame_h        :  0L			, $
         _exptime	    :  0.			, $
         _framerate		:  0.			, $	  ;Hz
+        _binning 		:  0.			, $	  
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
         _threshold      :  0.			, $
@@ -693,8 +715,7 @@ pro AOpsf__define
 		_enc_ene_dist	:  ptr_new()	, $
 		_enc_ene_dist_lD:  ptr_new()	, $
 		_enc_ene_fname	:  ""			, $
-        INHERITS AOtime_series			, $
-        INHERITS AOhelp $
+        INHERITS AOtime_series			  $
     }
 end
 
