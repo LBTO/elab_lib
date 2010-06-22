@@ -23,7 +23,7 @@ pro log_twiki, aodataset, ref_star=ref_star
         endif else begin
             band = '?'
         endelse
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %d | %s | %d | %d |  |")', $
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d |  |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -34,9 +34,9 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
             obj_valid(ee->wfs_status()) ?  round(((ee->wfs_status())->ccd39())->framerate()) : -1, $
             gaintemp[0], gaintemp[1] ,$
-            obj_valid(ee->wfs_status()) ? (ee->wfs_status())->modulation() : -1, $
+            obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
-            obj_valid(ee->irtc()) ? round( (ee->irtc())->sr_se()*100) : -1, $
+            obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se()*100 : -1, $
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
     		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 $
