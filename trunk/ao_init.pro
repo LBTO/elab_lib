@@ -20,6 +20,10 @@ function ao_reflcoef
     return, !ao_env.reflcoef
 end
 
+function ao_pupil_diameter
+    return, 8.22  ; LBT
+end
+
 pro AO_init, rootdir=rootdir
 ; environment string definitions
 ;
