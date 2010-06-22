@@ -1,3 +1,4 @@
+
 ;+
 ;
 ;-
@@ -145,8 +146,10 @@ function AOelab::Init, tracknum, $
     self._frames = obj_new('AOframes', self, frames_fname)
 
     ; TV
- ;   psf_fnames=file_search(filepath(root=self._datadir, 'psf*.fits'))
- ;   self._psf = obj_new('AOpsf', self, psf_fnames, 13./1800)
+    tv_fnames=file_search(filepath(root=self._datadir, 'psf*.fits'))
+    ; TODO ADD TV DARK
+    tv_dark_fname = ' '
+    self._tv  = obj_new('AOTV', self, tv_fnames, tv_dark_fname )
 
     ; IRTC
     irtc_fname = file_search(filepath(root=self._datadir, 'irtc.fits'))
@@ -156,7 +159,7 @@ function AOelab::Init, tracknum, $
         dark_subdir = ['wfs_calib_'+(self->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
 		full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
 	endelse
-    self._irtc = obj_new('AOpsf', self, irtc_fname, full_dark_fname);, pixelscale =0.010)
+    self._irtc = obj_new('AOIRTC', self, irtc_fname, full_dark_fname);, pixelscale =0.010)
 
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
@@ -178,7 +181,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._commands) then self->addleaf, self._commands, 'commands'
     if obj_valid(self._positions) then self->addleaf, self._positions, 'positions'
     if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions, 'modalpositions'
-    if obj_valid(self._psf) then self->addleaf, self._psf, 'tv'
+    if obj_valid(self._tv ) then self->addleaf, self._tv , 'tv'
     if obj_valid(self._frames) then self->addleaf, self._frames, 'frames'
     if obj_valid(self._disturb) then self->addleaf, self._disturb, 'disturb'
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
@@ -475,7 +478,7 @@ function AOelab::modalpositions
 end
 
 function AOelab::tv
-    IF (OBJ_VALID(self._psf)) THEN return, self._psf else return, obj_new()
+    IF (OBJ_VALID(self._tv )) THEN return, self._tv  else return, obj_new()
 end
 
 function AOelab::irtc
@@ -510,6 +513,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._positions)) THEN  self._positions->free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
+    IF (OBJ_VALID(self._tv)) THEN  self._tv->free
     IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
 end
 
@@ -527,7 +531,7 @@ pro AOelab::Cleanup
     obj_destroy, self._commands
     obj_destroy, self._positions
     obj_destroy, self._modalpositions
-    obj_destroy, self._psf
+    obj_destroy, self._tv 
     obj_destroy, self._irtc
 ;    obj_destroy, self._modal_rec
 ;    obj_destroy, self._intmat
@@ -557,7 +561,7 @@ pro AOelab__define
         _commands          : obj_new(), $
         _positions         : obj_new(), $
         _modalpositions    : obj_new(), $
-        _psf               : obj_new(), $
+        _tv                : obj_new(), $
         _irtc              : obj_new(), $
         _modal_rec         : obj_new(), $
         _intmat			   : obj_new(), $
