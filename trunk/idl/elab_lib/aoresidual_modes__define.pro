@@ -2,6 +2,10 @@
 ;+
 ;
 ; Residual modes m=Rs
+;
+; modes are in meter rms, surface.
+; To convert to wavefront use self->reflcoef()
+; 
 ;-
 
 function AOresidual_modes::Init, root_obj, slopes, rec
@@ -14,9 +18,11 @@ function AOresidual_modes::Init, root_obj, slopes, rec
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
     endif
+    
+    self._root_obj = root_obj
 
     if not self->AOtime_series::Init((root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
-	self._norm_factor   = 1e9 * root_obj->reflcoef()	;nm wf
+	self._norm_factor   = 1e9 * self._root_obj->reflcoef()	;nm wf
 	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
 	self._plots_title = root_obj->tracknum()
 
@@ -28,7 +34,7 @@ function AOresidual_modes::Init, root_obj, slopes, rec
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
-    self->addMethodHelp, "modes()", "modal residue [niter, nmodes]"
+    self->addMethodHelp, "modes()", "modal residue (m rms, surface) [niter, nmodes]"
     self->addMethodHelp, "slopes()", "reference to slopes object"
     self->addMethodHelp, "rec()", "reference to modal reconstructor object"
     self->addMethodHelp, "nmodes()", "number of residual modes"
@@ -71,15 +77,21 @@ function AOresidual_modes::nmodes
     return, self->AOtime_series::nseries()
 end
 
-pro AOresidual_modes::plotJitter, _extra=ex
-    plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title, _extra=ex
-    oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
-    oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
+pro AOresidual_modes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
+    coeff2arcsec = self._root_obj->reflcoef() * 4 / DpupM / 4.848d-6  	
+    freq = self->freq(from=from_freq, to=to_freq)
+    tip  = self->power(0, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
+    tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2 
+    plot, freq, sqrt(tip + tilt), $ 
+        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
+    oplot, freq, sqrt(tip), col='0000ff'x
+    oplot, freq, sqrt(tilt), col='00ff00'x
+    legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
 
-    ;sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
-    ;DpupM = 8.22	;m
-    ;ldmas = self->lambda() / DpupM / 4.848d-6 ; l/D in arcsec
-    ;print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+    sigmatot2 = max ( tip + tilt)  / 2
+    DpupM = 8.22	;m
+    ldmas = 1.6d-6 / DpupM / 4.848d-6 ; l/D in arcsec
+    print, 'SR attenuation in H band due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
 end
 
 
@@ -108,6 +120,7 @@ pro AOresidual_modes__define
         _slopes        : ptr_new(), $
         _rec           : ptr_new(), $
         _store_fname   : "" ,       $
+        _root_obj      : obj_new(), $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }

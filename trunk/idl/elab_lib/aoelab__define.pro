@@ -343,6 +343,7 @@ end
 
 pro AOelab::modalplot
 
+    ;;; THIS IS THE ONE USED IN THE TOWER
 	nmodes = (self->modalpositions())->nmodes()
 	clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
 	yrange = sqrt(minmax(clvar))
@@ -355,6 +356,12 @@ pro AOelab::modalplot
 	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 	if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color=250
 	if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=[250,!P.color], psym=-[2,1], /right
+	
+    ; THIS COULD BE USED ON SKY BUT RESIDUAL MODES HAVE TO BE CALIBRATED
+    ;nmodes = (self->residual_modes())->nmodes()
+	;clvar  = (self->residual_modes())->time_variance() 
+	;yrange = sqrt(minmax(clvar))
+	;plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='ampl rms', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 
 end
 
@@ -374,7 +381,8 @@ pro AOelab::estimate_r0, lambda=lambda
 ;	zern_num, indgen(nmodes)+2, n=nn
 ;	varNoll         = varzern_turb(nn, DRO = DpupM/r0aso)
 	loadct,39, /silent
-	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, $ 
+            ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 	oplot, lindgen(nmodes)+1, armando, psym=-2, color=250
 
 end

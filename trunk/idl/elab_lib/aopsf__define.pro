@@ -69,7 +69,6 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
     ; ROI
     if not keyword_set(roi) then roi = [0, self->frame_w()-1, 0, self->frame_h()-1]
     self._roi = roi
-
     
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
 
@@ -478,6 +477,13 @@ pro AOpsf::compute_centroid
         self._threshold = thr
 	endif else begin
         long_exp_center = (self->gaussfit())->center()
+        longexp = self->longexposure()
+        dx = n_elements(longexp[*,0])
+        dy = n_elements(longexp[0,*])
+        if ((long_exp_center[0] lt 0) or (long_exp_center[1] lt 1) or (long_exp_center[0] ge dx) or (long_exp_center[1] ge dy)) then begin
+            long_exp_center[0] = dx/2
+            long_exp_center[1] = dy/2
+        endif
 		image = self->image()
 		centr = fltarr(self->nframes(),2)
 		; compute centroid in a small (0.6") field centered on the long-exp PSF
@@ -491,6 +497,7 @@ pro AOpsf::compute_centroid
 		endfor
 		thr = self->threshold()
 		save, centr, thr, long_exp_center, file=self._centroid_fname
+        self->free
 	endelse
 	self._centroid = ptr_new(centr, /no_copy)
 end
@@ -521,14 +528,20 @@ function AOpsf::GetDati
   	return, self._centroid
 end
 
-pro AOpsf::plotJitter
-plot, self->freq(), sqrt(self->power(0, /cum)+self->power(1, /cum)), title=self._plots_title
-oplot, self->freq(), sqrt(self->power(0, /cum)), col=255
-oplot, self->freq(), sqrt(self->power(1, /cum)), col=255L*256
+pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
 
-sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
-ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
-print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+    freq = self->freq(from=from_freq, to=to_freq)
+    tip  = self->power(0, from=from_freq, to=to_freq, /cum)
+    tilt = self->power(1, from=from_freq, to=to_freq, /cum)
+    plot, freq, sqrt(tip + tilt), $ 
+        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [mas]', _extra=ex
+    oplot, freq, sqrt(tip), col='0000ff'x
+    oplot, freq, sqrt(tilt), col='00ff00'x
+    legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
+    
+    sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
+    ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
+    print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
 end
 
 ;===================================================================================
