@@ -10,8 +10,8 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
           UdpConnection.o TcpConnection.o \
           NaNutils.o Utils.o Reorder.o Paths.o \
           AdamLib.o bcu_diag.o aoapplib.o \
-          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o nLogger.o
-          
+          mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o 
+
 # LIB ARCHIVES
 # Only these archives should be linked by AOApp's
 ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a libdrawobjects.a
@@ -24,7 +24,7 @@ CPP = g++ $(LIB_INCLUDE)
 
 .cpp.o:
 	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -c $<
-	
+
 %.o:%.h
 
 ################## TARGETS ###################
@@ -42,7 +42,6 @@ otherlibs:
 	(cd IntfLib; $(MAKE) all; cd ..)
 	(cd arblib; $(MAKE) all; cd ..;)
 	(cd drawlib; $(MAKE) all; cd ..;)
-	
 
 
 clean:
@@ -57,7 +56,7 @@ clean:
 	rm -f *.aux *.dvi *.log *.toc *.tmp
 	rm -f *.o *.a
 	rm -f $(ARCHIVES)
-	
+
 tags:
 	ctags -t *.[ch]
 
@@ -65,7 +64,7 @@ docs: AOApp.pdf
 
 AOApp.pdf:  AOApp.cpp AOApp.h AOApp.dpu
 	dpu -pdf AOApp
-	
+
 
 ################### OBJECTS ##################
 
@@ -98,7 +97,7 @@ telemetry.o: telemetry.c telemetry.h
 AOStates.c AOStates.h: AOStates.txt
 	./makerrordb.py AOStates.txt -py AOStates
 	mv -f AOStates.py ../PyModules/AdOpt
-	
+
 
 ################## LIBRARY ARCHIVES ###################
 # Creates some library archives that can used (compiled and 
@@ -127,7 +126,7 @@ logger.a: baselib Logger.o Utils.o NaNutils.o
 netlib.a: baselib TcpConnection.o UdpConnection.o
 	$(AR) netlib.a TcpConnection.o UdpConnection.o
 	$(RANLIB) netlib.a
-	
+
 # ADAMLIB
 adamlib.a: baselib AdamLib.o
 	$(AR) adamlib.a AdamLib.o
@@ -137,7 +136,7 @@ adamlib.a: baselib AdamLib.o
 iolib.a: baselib iolib.o
 	$(AR) iolib.a iolib.o
 	$(RANLIB) iolib.a
-	
+
 # MASTDIAGNLIB
 mastdiagnlib.a: baselib mastdiagnlib.o
 	$(AR) mastdiagnlib.a mastdiagnlib.o
