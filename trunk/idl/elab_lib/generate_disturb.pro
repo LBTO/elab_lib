@@ -25,7 +25,7 @@ function generate_dampvib, damp, fvib, fc, nstep, seed=seed
     z1[i+1] = z2[i] -viba1*out[i]
     z2[i+1] = viba2*out[i]  
   endfor
-  fft1, out0, 1/fc, SPEC=spec, /NOPLOT
+  fft1, out, 1/fc, SPEC=spec, /NOPLOT
   out = real_part(fft(abs(spec),1))
   return, out
 end
