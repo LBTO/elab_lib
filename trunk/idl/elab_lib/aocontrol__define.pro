@@ -50,9 +50,9 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self->addMethodHelp, "m2c()", "m2c matrix (modal -> zonal) "
     self->addMethodHelp, "c2m()", "c2m matrix (zonal -> modal) "
     self->addMethodHelp, "gain()", "gain vector"
-    self->addMethodHelp, "nmodes()", "number of non-null row in b0_a matrix"
-    self->addMethodHelp, "modes_idx()", "index vector of non-null row in b0_a matrix"
-    self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
+    ;self->addMethodHelp, "nmodes()", "number of non-null row in b0_a matrix"
+    ;self->addMethodHelp, "modes_idx()", "index vector of non-null row in b0_a matrix"
+    ;self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
     self->addMethodHelp, "b0_a_header()",     "header of b0_a fitsfile (strarr)"
     self->addMethodHelp, "c_header()",      "header of c fitsfile (strarr)"
     ;self->addMethodHelp, "m2c_header()", "header of m2c fitsfile (tipically = c_header) (strarr)"
@@ -92,9 +92,11 @@ end
 
 function AOcontrol::b0_a
     _b0_a = readfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT)
-    if not ptr_valid(self._modes_idx) then self._modes_idx = ptr_new(where(total(_b0_a,1) ne 0, t_nmodes), /no_copy)
-    if t_nmodes eq 0 then message, 'Matrix b0_a is null'
-    self._nmodes = t_nmodes
+    if not ptr_valid(self._modes_idx) then begin
+        self._modes_idx = ptr_new(where(total(_b0_a,1) ne 0, t_nmodes), /no_copy)
+        if t_nmodes eq 0 then message, 'Matrix b0_a is null'
+        self._nmodes = t_nmodes
+    endif
     return, _b0_a
 end
 
@@ -128,19 +130,25 @@ end
 
 ; number of non-null rows in b0_a matrix
 function AOcontrol::nmodes
-    if (self._nmodes eq 0L) then r=self->b0_a()
-    return, self._nmodes
+    message, 'control->nmodes() is obsolete. Use (ee->modal_rec())->nmodes() instead'
+    return, 0
+    ;if (self._nmodes eq 0L) then r=self->b0_a()
+    ;return, self._nmodes
 end
 
 ; indexes of non-null rows in rec matrix
 function AOcontrol::modes_idx
-    if not ptr_valid(self._modes_idx) then r=self->b0_a()
-    if (PTR_VALID(self._modes_idx)) THEN return, *(self._modes_idx) else return, 0d
+    message, 'control->modes_idx() is obsolete. Use (ee->modal_rec())->modes_idx() instead'
+    return, 0
+    ;if not ptr_valid(self._modes_idx) then r=self->b0_a()
+    ;if (PTR_VALID(self._modes_idx)) THEN return, *(self._modes_idx) else return, 0d
 end
 
 ; alias
 function AOcontrol::rec
-    return, self->b0_a()
+    message, 'control->rec() is obsolete. Use (ee->modal_rec())->rec() instead'
+    return, 0
+    ;return, self->b0_a()
 end
 
 ;function AOadsec_status::gain, header=header
