@@ -52,7 +52,6 @@ name = ['DATASET', 'AOELAB', 'BIPBIP']
 fmt  = ['Dataset error: %s.', 'AOelab error: %s.', 'Road Runner not captured.']
 DEFINE_MSGBLK, PREFIX = 'AO_OAA_', 'ELAB', name, fmt , /IGNORE_DUPLICATE
 
-print, 'caca'
 ;pathsep = PATH_SEP(/SEARCH_PATH)
 ;!PATH = EXPAND_PATH('+'+rootdir+path_sep()+'elab_lib') + pathsep + !PATH
 
