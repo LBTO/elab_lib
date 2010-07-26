@@ -4,7 +4,10 @@
 ;-
 
 function AOslopes::Init, root_obj, slopes_file, fc_obj
-	if not file_test(slopes_file) then return,0
+	if not file_test(slopes_file) then begin
+        message, slopes_file + ' not found', /info
+        return,0
+    endif
     self._file = slopes_file
     self._fc_obj = fc_obj
 	self._wfs_status = root_obj->wfs_status()

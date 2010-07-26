@@ -20,12 +20,15 @@
 function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
         binning=binning, roi=roi
 
-	if not file_test(psf_fname) then return,0
+	if not file_test(psf_fname) then begin
+        message, psf_fname + ' not found', /info
+        return,0
+    endif
     self._fname = psf_fname
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)
 
     self._dark_fname = dark_fname
-   	if not file_test(self->dark_fname()) then message, 'Dark file does not exist', /info
+   	if not file_test(self->dark_fname()) then message, self->dark_fname() + ' Dark file does not exist', /info
 
     naxis = long(aoget_fits_keyword(self->header(), 'NAXIS'))
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
@@ -617,7 +620,7 @@ end
 
 function AOpsf::dark_header
    	if not file_test(self->dark_fname()) then begin
-        message, 'Dark file does not exist', /info
+        message, self->dark_fname() + ' Dark file does not exist', /info
         return, ""
     endif
     self._dark_fitsheader = ptr_new(headfits(self->dark_fname(), /SILENT), /no_copy)

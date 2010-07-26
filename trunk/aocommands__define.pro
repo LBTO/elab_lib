@@ -5,7 +5,10 @@
 ;-
 
 function AOcommands::Init, root_obj, commands_file, fc_obj
-	if not file_test(commands_file) then return,0
+	if not file_test(commands_file) then begin
+        message, commands_file + ' not found', /info
+        return,0
+    endif
     self._fname = commands_file
     self._fc_obj = fc_obj
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)

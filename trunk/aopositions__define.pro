@@ -5,7 +5,10 @@
 ;-
 
 function AOpositions::Init, root_obj, positions_file, fc_obj
-	if not file_test(positions_file) then return,0
+	if not file_test(positions_file) then begin
+        message, positions_file + ' not found', /info
+        return,0
+    endif
     self._fname = positions_file
     self._fc_obj = fc_obj
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)

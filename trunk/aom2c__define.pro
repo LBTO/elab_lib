@@ -12,7 +12,8 @@ function AOm2c::Init, fname, recompute=recompute
         return, 0
     endif
 
-    header = headfits(self._m2c_fname, /SILENT)
+    header = headfits(self._m2c_fname, /SILENT, errmsg)
+    if errmsg ne '' then message, self._m2c_fname+ ': '+ errmsg, /info 
     self._m2c_fname_fitsheader = ptr_new(header, /no_copy)
 
     store_dir = filepath(root=ao_elabdir(), sub=[file_dirname(fname)], '')

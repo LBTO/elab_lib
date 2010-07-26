@@ -1,6 +1,12 @@
 function AOtel::Init, fitsfile
-    if not file_test(fitsfile) then return,0
-	hdr = headfits(fitsfile, /SILENT)
+    if not file_test(fitsfile) then begin
+        message, fitsfile + ' not found', /info
+        return,0
+    endif
+
+	hdr = headfits(fitsfile, /SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, fitsfile+ ': '+ errmsg, /info 
+
 
 	angle_arcsec = float(aoget_fits_keyword(hdr, 'tel.ROTATOR.ANGLE'))
 	if angle_arcsec ne -9999. then self._rot_angle = (angle_arcsec/206264.806)*(180./!PI) else $

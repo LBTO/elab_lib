@@ -12,15 +12,18 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self._gain_fname  = gain_fname
 
 	if self->b0_a_fname() ne "" then begin
-    	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT)
+    	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT, errmsg=errmsg)
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->b0_a_fname()+ ': '+ errmsg, /info 
     	self._b0_a_fitsheader = ptr_new(header, /no_copy)
     endif
     if self->c_fname() ne "" then begin
-    	header = headfits(ao_datadir()+path_sep()+self->c_fname(), /SILENT)
+    	header = headfits(ao_datadir()+path_sep()+self->c_fname(), /SILENT, errmsg=errmsg)
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->c_fname()+ ': '+ errmsg, /info 
     	self._c_fitsheader = ptr_new(header, /no_copy)
     endif
     if self->gain_fname() ne "" then begin
-    	header = headfits(ao_datadir()+path_sep()+self->gain_fname(), /SILENT)
+    	header = headfits(ao_datadir()+path_sep()+self->gain_fname(), /SILENT, errmsg=errmsg)
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->gain_fname()+ ': '+ errmsg, /info 
     	self._gain_fitsheader = ptr_new(header, /no_copy)
     endif
 

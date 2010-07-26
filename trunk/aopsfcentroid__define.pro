@@ -1,7 +1,10 @@
 
 function AOpsfcentroid::Init, psf_fname, pixelscale, dark_fname=dark_fname
 
-	if not file_test(psf_fname) then return,0
+	if not file_test(psf_fname) then begin
+        message, psf_fname + ' not found', /info
+        return,0
+    endif
     self._fname = psf_fname
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)
 
@@ -19,7 +22,7 @@ function AOpsfcentroid::Init, psf_fname, pixelscale, dark_fname=dark_fname
 ;	self._dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
 	self._dark_fname = dark_fname
     if not file_test(self._dark_fname) then begin
-    	message, 'Dark file not existing', /info
+    	message, self._dark_fname + ' Dark file not existing', /info
     endif else begin
     	dark_fitsheader = headfits(self._dark_fname, /SILENT)
     	naxis = long(aoget_fits_keyword(dark_fitsheader, 'NAXIS'))
