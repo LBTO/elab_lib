@@ -4,9 +4,16 @@
 ;-
 
 function AOTV::Init, root_obj, psf_fname, dark_fname
+    ; maybe tv frames were not saved. Simply exit
+    if psf_fname eq '' then return,0
 
-	if not file_test(psf_fname) then return,0
-    fitsheader = headfits(psf_fname, /SILENT)
+	if not file_test(psf_fname) then  begin
+        message, psf_fname + 'file not found', /info
+        return,0
+    endif
+    fitsheader = headfits(psf_fname, /SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, psf_fname+ ': '+ errmsg, /info 
+    
 
     ; Binning
     binning = long(aoget_fits_keyword(fitsheader, 'ccd47.BINNING'))
@@ -29,6 +36,7 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
     ; Exposure time
     exptime =   1./framerate 
     
+
     ; ROI
     ;str = aoget_fits_keyword(self->header(), 'DETSEC')
     ;temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
@@ -39,6 +47,12 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
 	;oi[2] = yra[0]-1 ; ymin
 	;roi[3] = yra[1]-1 ; ymax
 
+    ; Dark fname
+    if not arg_present(dark_fname) then begin
+        dark_basename = string(aoget_fits_keyword(fitsheader, 'ccd47.DARK_FILENAME'))
+        dark_subdir   =  ['wfs_calib_'+(root_obj->wfs_status())->wunit(), 'ccd47', 'backgrounds', 'bin'+strtrim(string(binning),2)]
+        dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, dark_basename) 
+    endif
 
     self._centroid_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcentroid.sav')
     self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_psd.sav')
