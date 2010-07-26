@@ -1,7 +1,10 @@
 
 function find_irtc_dark, root_obj, irtc_fname
 
-	if not file_test(irtc_fname) then return,""
+	if not file_test(irtc_fname) then begin
+        message, irtc_fname + ' not found', /info
+        return,""
+    endif
     fitsheader = headfits(irtc_fname, /SILENT)
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
 	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6
@@ -41,7 +44,7 @@ function find_irtc_dark, root_obj, irtc_fname
 				message, 'No compatible (i.e. same exposure time or filter) IRTC dark found', /info
 			endelse
 		endif else begin
-			message, 'No darks found in the specified directory', /info
+			message, 'No darks found matching '+all_darks_search, /info
 			return, ""
 		endelse
 	endif else message, 'No IRTC exposure time available. Cannot find the closest dark...', /info
