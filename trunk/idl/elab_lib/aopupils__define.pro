@@ -19,9 +19,24 @@ function AOpupils::Init, wfs_header, wunit
 
 	self._pup_tracknum = (strsplit(pp, '/', /EXTRACT))[1]
 
+    
+    ; test pupil files: 'pup[1234].fits' and 'pupdata.txt'
+    for i=1,4 do begin
+        fname=filepath(root=pups_path, 'pup'+strtrim(string(i),2)+'.fits')
+	    if not file_test(fname) then begin 
+            message, 'File not found:'+fname
+            return, 0
+        endif
+    endfor
+    fname=filepath(root=pups_path, 'pupdata.txt')
+	if not file_test(fname) then begin 
+        message, 'File not found:'+fname
+        return, 0
+    endif
+
+
 	; Read first pupil index
     indpup_file = pups_path+'pup1.fits'
-	if not file_test(indpup_file) then return, 0
 	indpup = readfits(indpup_file, /SILENT)
 	nsub = n_elements(indpup)
 

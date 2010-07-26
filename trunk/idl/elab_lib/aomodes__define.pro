@@ -5,7 +5,10 @@
 ;-
 
 function AOmodes::Init, root_obj, modes_file, fc_obj
-    if not file_test(modes_file) then return, 0
+    if not file_test(modes_file) then begin
+        message, modes_file + ' not found', /info
+        return, 0
+    endif
     self._fname = modes_file
     self._fc_obj = fc_obj
     self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)

@@ -4,7 +4,10 @@
 ;-
 
 function AOwfs_status::Init, root_obj, fitsfile
-    if not file_test(fitsfile) then return,0
+    if not file_test(fitsfile) then begin
+        message, fitsfile + ' not found', /info
+        return,0
+    endif
     self._fitsfile   = fitsfile
     self._header = ptr_new(headfits(fitsfile, /SILENT), /no_copy)
 

@@ -1,3 +1,4 @@
+
 ;+
 ;
 ;-
@@ -5,7 +6,8 @@
 function AOintmat::Init, fname
     self._im_file  = fname
     full_fname = ao_datadir()+path_sep()+self->fname()
-    header = headfits(full_fname ,/SILENT)
+    header = headfits(full_fname ,/SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info 
 
     self._basis = strtrim(aoget_fits_keyword(header, 'M2C'))
     self._nmodes  = -1

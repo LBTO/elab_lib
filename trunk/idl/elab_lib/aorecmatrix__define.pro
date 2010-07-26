@@ -6,7 +6,8 @@
 function AOrecmatrix::Init, fname
     self._rec_file  = fname
 
-    header = headfits(ao_datadir()+path_sep()+self->fname() ,/SILENT)
+    header = headfits(ao_datadir()+path_sep()+self->fname() ,/SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, ao_datadir()+path_sep()+self->fname()+ ': '+ errmsg, /info 
 
     self._nmodes = -1
 	self._filt_modes_svd = long(aoget_fits_keyword(header, 'CT_MODES'))

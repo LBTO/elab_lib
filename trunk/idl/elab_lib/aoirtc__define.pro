@@ -4,9 +4,15 @@
 ;-
 
 function AOIRTC::Init, root_obj, psf_fname, dark_fname ;, pixelscale=pixelscale
-
-	if not file_test(psf_fname) then return,0
-    fitsheader = headfits(psf_fname, /SILENT)
+    ; maybe irtc frames were not saved. Simply exit
+    if psf_fname eq '' then return,0
+	
+    if not file_test(psf_fname) then begin
+        message, psf_fname + ' not found', /info
+        return,0
+    endif
+    fitsheader = headfits(psf_fname, /SILENT, errmsg=errmsg)
+    if errmsg ne ''  then message, psf_fname+ ': '+ errmsg, /info 
 
     ; Binning
     binning = 1

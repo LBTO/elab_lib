@@ -5,7 +5,10 @@
 
 function AOdisturb::Init, root_obj, fname, recompute=recompute
     self._disturb_fname  = ao_datadir()+path_sep()+fname
-    if not file_test(self._disturb_fname) then return, 0
+    if not file_test(self._disturb_fname) then begin
+        message, self._disturb_fname + ' not found ', /info
+        return, 0
+    endif
 	if strmatch(self._disturb_fname,'*intmatAcq*') then begin
 		message, 'disturbance for intmat acquisition ignored.',/info
 		return,0
