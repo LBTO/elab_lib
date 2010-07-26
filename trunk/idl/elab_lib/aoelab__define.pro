@@ -147,9 +147,7 @@ function AOelab::Init, tracknum, $
 
     ; TV
     tv_fnames=file_search(filepath(root=self._datadir, 'psf*.fits'))
-    ; TODO ADD TV DARK
-    tv_dark_fname = ' '
-    self._tv  = obj_new('AOTV', self, tv_fnames, tv_dark_fname )
+    self._tv  = obj_new('AOTV', self, tv_fnames)
 
     ; IRTC
     irtc_fname = file_search(filepath(root=self._datadir, 'irtc.fits'))
