@@ -70,15 +70,47 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
 end
 
 pro AOadsec_status::ConvertFilePath, struct
-    if struct.b0_a      ne "" then struct.b0_a           = 'adsec_calib/'+strjoin((strsplit(struct.b0_a, '/', /extr))[6:*], '/')
-    if struct.a_delay   ne "" then struct.a_delay        = 'adsec_calib/'+strjoin((strsplit(struct.a_delay, '/', /extr))[6:*], '/')
-    if struct.b_delay_a ne "" then struct.b_delay_a      = 'adsec_calib/'+strjoin((strsplit(struct.b_delay_a, '/', /extr))[6:*], '/')
-    if struct.m2c       ne "" then struct.m2c            = 'adsec_calib/'+strjoin((strsplit(struct.m2c, '/', /extr))[6:*], '/')
+    ; NB this conversion is critical when the folder scheme is messed up
+    ; search for /bla/bla/bla/adsec/foo1/foo2/... and convert into adsec_calib/foo1/foo2/...
+    if struct.b0_a  ne "" then begin
+        extr = strsplit(struct.b0_a, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.b0_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
+    if struct.a_delay  ne "" then begin
+        extr = strsplit(struct.a_delay, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.a_delay  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
+    if struct.b_delay_a  ne "" then begin
+        extr = strsplit(struct.b_delay_a, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.b_delay_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
+    if struct.m2c  ne "" then begin
+        extr = strsplit(struct.m2c, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.m2c  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
     if FILE_BASENAME(struct.g_gain_a) eq 'tmp_gain.fits' then struct.g_gain_a = ""
-    if struct.g_gain_a  ne "" then struct.g_gain_a       = 'adsec_calib/'+strjoin((strsplit(struct.g_gain_a, '/', /extr))[6:*], '/')
-    if struct.disturb   ne "" then struct.disturb        = 'adsec_calib/'+strjoin((strsplit(struct.disturb, '/', /extr))[6:*], '/')
-    ;if struct.shape     ne "" then struct.shape          = 'adsec_calib/'+strjoin((strsplit(struct.shape, '/', /extr))[6:*], '/')
-    ;if struct.ff_matrix ne "" then struct.ff_matrix      =  'adsec_calib/'+strjoin((strsplit(struct.ff_matrix, '/', /extr))[6:*], '/')
+    if struct.g_gain_a  ne "" then begin
+        extr = strsplit(struct.g_gain_a, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.g_gain_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
+    if struct.disturb  ne "" then begin
+        extr = strsplit(struct.disturb, '/', /extr)
+        idx = where(extr eq 'adsec',count)
+        if count gt 0 then struct.disturb  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
+    endif
+
+    ;if struct.a_delay   ne "" then struct.a_delay        = 'adsec_calib/'+strjoin((strsplit(struct.a_delay, '/', /extr))[6:*], '/')
+    ;if struct.b_delay_a ne "" then struct.b_delay_a      = 'adsec_calib/'+strjoin((strsplit(struct.b_delay_a, '/', /extr))[6:*], '/')
+    ;if struct.m2c       ne "" then struct.m2c            = 'adsec_calib/'+strjoin((strsplit(struct.m2c, '/', /extr))[6:*], '/')
+    ;if struct.g_gain_a  ne "" then struct.g_gain_a       = 'adsec_calib/'+strjoin((strsplit(struct.g_gain_a, '/', /extr))[6:*], '/')
+    ;if struct.disturb   ne "" then struct.disturb        = 'adsec_calib/'+strjoin((strsplit(struct.disturb, '/', /extr))[6:*], '/')
+    ;;if struct.shape     ne "" then struct.shape          = 'adsec_calib/'+strjoin((strsplit(struct.shape, '/', /extr))[6:*], '/')
+    ;;if struct.ff_matrix ne "" then struct.ff_matrix      =  'adsec_calib/'+strjoin((strsplit(struct.ff_matrix, '/', /extr))[6:*], '/')
 end
 
 function AOadsec_status::fsm_state
