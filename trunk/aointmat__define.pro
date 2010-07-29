@@ -7,7 +7,7 @@ function AOintmat::Init, fname
     self._im_file  = fname
     full_fname = ao_datadir()+path_sep()+self->fname()
     header = headfits(full_fname ,/SILENT, errmsg=errmsg)
-    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info 
+    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
 
     self._basis = strtrim(aoget_fits_keyword(header, 'M2C'))
     self._nmodes  = -1
@@ -153,6 +153,7 @@ pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
 	imcube = self->im2d()
 	sz = size(imcube, /dim)
 
+	if nsig eq 1 then ncol=1 & nrows=1
 	if ( (not keyword_set(nrows)) AND (not keyword_set(ncol)) ) then ncol=nsig/3
 	if not keyword_set(ncol)  then ncol  = ceil(nsig/float(nrows))
 	if not keyword_set(nrows) then nrows = ceil(nsig/float(ncol))
