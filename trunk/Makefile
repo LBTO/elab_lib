@@ -3,21 +3,21 @@
 SUBSYSTEMS_TO_BUILD = lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
                       SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper \
+                      CameraLensCtrl DiagnApp Arbitrator HexapodCtrl SysCheck idl_wrapper \
                       OptLoopDiagnostic
 					  #InterferometerCtrl 
 
 SUBSYSTEMS_TO_INSTALL = MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl\
                       SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl StartUp Arbitrator HexapodCtrl DiagnApp SysCheck idl_wrapper \
+                      CameraLensCtrl StartUp DiagnApp Arbitrator HexapodCtrl SysCheck idl_wrapper \
                       OptLoopDiagnostic
 					  #InterferometerCtrl
 
 SUBSYSTEMS_TO_CLEAN =      lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
                       SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl Arbitrator HexapodCtrl DiagnApp idl_wrapper SysCheck StartUp \
+                      CameraLensCtrl DiagnApp Arbitrator HexapodCtrl idl_wrapper SysCheck StartUp \
                       OptLoopDiagnostic
 					  #InterferometerCtrl 
 
@@ -47,13 +47,13 @@ install-paths:
 install-conf:
 	@echo "!!!WARNING!!! Installing the conf directory will overwrite your current configuration. Continue? [yes/no]"
 	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT) && \
-             rsync -avC --delete conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
+             rsync -avC conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
 
 install-calib:
 	@echo "!!!WARNING!!! Installing the calib directory will overwrite your current calibration. Continue? [yes/no]"
-	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT)/calib/$(ADOPT_SIDE) && \
+	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT)/calib && \
              install -d $(ADOPT_ROOT)/calib && \
-             rsync -avC --delete calib $(ADOPT_ROOT) && echo "calibration installed"; else echo "Nothing done"; fi
+             rsync -aC calib $(ADOPT_ROOT) && echo "calibration installed"; else echo "Nothing done"; fi
 
 install-contrib:
 	(cd contrib; $(MAKE) install)
