@@ -41,7 +41,11 @@ install-paths:
 	install -d $(ADOPT_ROOT)/idl
 	install -d $(ADOPT_ROOT)/idl/dlm
 	install -d $(ADOPT_ROOT)/conf
+	install -d $(ADOPT_ROOT)/conf/adsec
+	install -d $(ADOPT_ROOT)/conf/wfs
 	install -d $(ADOPT_ROOT)/calib
+	install -d $(ADOPT_ROOT)/calib/adsec
+	install -d $(ADOPT_ROOT)/calib/wfs
 	install -d $(ADOPT_ROOT)/py
 
 install-conf:
