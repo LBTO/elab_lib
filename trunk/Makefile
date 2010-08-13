@@ -51,7 +51,7 @@ install-paths:
 install-conf:
 	@echo "!!!WARNING!!! Installing the conf directory will overwrite your current configuration. Continue? [yes/no]"
 	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT) && \
-             rsync -avC conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
+             rsync -avC --delete conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
 
 install-calib:
 	@echo "!!!WARNING!!! Installing the calib directory will overwrite your current calibration. Continue? [yes/no]"
