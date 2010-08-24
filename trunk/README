@@ -30,6 +30,8 @@ Login as the AO Supervisor plain user and do the following:
 
    SVN CO: Checkout a fresh source tree from the SVN repository into
            a clean directory (source directory).
+   SVN CO: remember to check out the calibration data if needed:
+           svn co svn+ssh://username@obelix.arcetri.astro.it/4lbt/svn/AOCalib/trunk release-full-path/calib/adsec/
 
 2. Execute the prepare procedure from the source code directory root
 
