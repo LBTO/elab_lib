@@ -12,7 +12,7 @@ include $(ADOPT_SOURCE)/makefile.gen
 include $(ADOPT_LIB)/base/makefile.base
 
 logger_compile:
-	cd $(ADOPT_LIB); make logger.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) logger.a
 
 LOGGER_LNK = $(ADOPT_LIB)/logger.a $(THRDLIB_LNK) -lstdc++
 

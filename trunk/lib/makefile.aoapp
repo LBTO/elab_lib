@@ -11,7 +11,7 @@ include $(ADOPT_LIB)/makefile.logger
 include $(ADOPT_LIB)/makefile.configlib
 
 aoapp_compile: logger_compile configlib_compile
-	cd $(ADOPT_LIB); make aoapp.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) aoapp.a
 
 AOAPP_LNK = $(ADOPT_LIB)/aoapp.a $(THRDLIB_LNK) $(LOGGER_LNK) $(CONFIGLIB_LNK) -lstdc++ -lboost_serialization
 

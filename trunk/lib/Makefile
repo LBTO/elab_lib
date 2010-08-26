@@ -16,8 +16,28 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
 # Only these archives should be linked by AOApp's
 ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a libdrawobjects.a
 
-CC = gcc $(LIB_INCLUDE) 
-CPP = g++ $(LIB_INCLUDE) 
+
+# BASE FILES
+# When one of these changes, all libraries must be recompiled
+BASE_FILES =  base/msgcodes.txt \
+              base/build_time.c \
+              base/errordb.c \
+              base/rtdblib.h \
+              base/buflib.c \
+              base/common.h \
+              base/msglib.c \
+              base/msgtxt.h \
+              base/timelib.c \
+              base/errlib.c \
+              base/thrdlib.c \
+              base/buflib.h \
+              base/errlib.h \
+              base/errordb.txt \
+              base/msglib.h \
+              base/rtdblib.c \
+              base/thrdlib.h \
+              base/vartypes.txt
+
 
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) -c $<
@@ -30,32 +50,36 @@ CPP = g++ $(LIB_INCLUDE)
 ################## TARGETS ###################
 
 all: baselib $(OBJECTS) otherlibs AOStates.h AOStates.c $(ARCHIVES)
+	@:
 
-baselib:
-	(cd base; ${MAKE} all; cd ..;)
+install:
+	@:
+
+baselib: $(BASE_FILES)
+	$(Q)$(MAKE) $(MAKEOPTS) -C base
 
 otherlibs:
-	(cd aoslib; ${MAKE} all; cd ..;)
-	(cd BcuLib; ${MAKE} all; cd ..;)
-	(cd hwlib; ${MAKE} all; cd ..;)
-	(cd idllib; $(MAKE) all; cd ..)
-	(cd IntfLib; $(MAKE) all; cd ..)
-	(cd arblib; $(MAKE) all; cd ..;)
-	(cd drawlib; $(MAKE) all; cd ..;)
+	$(Q)$(MAKE) $(MAKEOPTS) -C aoslib
+	$(Q)$(MAKE) $(MAKEOPTS) -C BcuLib
+	$(Q)$(MAKE) $(MAKEOPTS) -C hwlib
+	$(Q)$(MAKE) $(MAKEOPTS) -C idllib
+	$(Q)$(MAKE) $(MAKEOPTS) -C IntfLib
+	$(Q)$(MAKE) $(MAKEOPTS) -C arblib
+	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib
 
 
 clean:
-	(cd base; $(MAKE) clean; cd ..)
-	(cd aoslib; $(MAKE) clean; cd ..)
-	(cd BcuLib; $(MAKE) clean; cd ..)
-	(cd hwlib; $(MAKE) clean; cd ..)
-	(cd idllib; $(MAKE) clean; cd ..)
-	(cd IntfLib; $(MAKE) clean; cd ..)
-	(cd arblib; $(MAKE) clean; cd ..)
-	(cd drawlib; $(MAKE) clean; cd ..)
-	rm -f *.aux *.dvi *.log *.toc *.tmp
-	rm -f *.o *.a
-	rm -f $(ARCHIVES)
+	$(Q)$(MAKE) $(MAKEOPTS) -C base clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C aoslib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C BcuLib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C hwlib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C idllib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C IntfLib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C arblib clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib clean
+	$(Q)rm -f *.aux *.dvi *.log *.toc *.tmp
+	$(Q)rm -f *.o *.a
+	$(Q)rm -f $(ARCHIVES)
 
 tags:
 	ctags -t *.[ch]
@@ -109,41 +133,41 @@ AOStates.c AOStates.h: AOStates.txt
 #		  created header files (i.e. errordb.h, msgcodes.h, ...)
 
 # Configlib
-configlib.a: baselib stdconfig.o Paths.o
+configlib.a: stdconfig.o Paths.o
 	$(AR) configlib.a stdconfig.o Paths.o
 	$(RANLIB) configlib.a
 
 # AOAPP 
-aoapp.a: baselib AOApp.o RTDBvar.o aoapplib.o AOStates.c AOStates.h
+aoapp.a: AOApp.o RTDBvar.o aoapplib.o AOStates.c AOStates.h
 	$(AR) aoapp.a AOApp.o RTDBvar.o aoapplib.o
 	$(RANLIB) aoapp.a
 
-logger.a: baselib Logger.o Utils.o NaNutils.o
+logger.a: Logger.o Utils.o NaNutils.o
 	$(AR) logger.a Logger.o Utils.o NaNutils.o
 	$(RANLIB) logger.a
 
 # NETLIB
-netlib.a: baselib TcpConnection.o UdpConnection.o
+netlib.a: TcpConnection.o UdpConnection.o
 	$(AR) netlib.a TcpConnection.o UdpConnection.o
 	$(RANLIB) netlib.a
 
 # ADAMLIB
-adamlib.a: baselib AdamLib.o
+adamlib.a: AdamLib.o
 	$(AR) adamlib.a AdamLib.o
 	$(RANLIB) adamlib.a
 
 # IOLIB
-iolib.a: baselib iolib.o
+iolib.a: iolib.o
 	$(AR) iolib.a iolib.o
 	$(RANLIB) iolib.a
 
 # MASTDIAGNLIB
-mastdiagnlib.a: baselib mastdiagnlib.o
+mastdiagnlib.a: mastdiagnlib.o
 	$(AR) mastdiagnlib.a mastdiagnlib.o
 	$(RANLIB) mastdiagnlib.a
 
 # ADSECDIAGNLIB
-adsecdiagnlib.a: baselib AdsecDiagnLib.o
+adsecdiagnlib.a: AdsecDiagnLib.o
 	$(AR) adsecdiagnlib.a AdsecDiagnLib.o
 	$(RANLIB) adsecdiagnlib.a
 

@@ -11,7 +11,7 @@ include $(ADOPT_LIB)/makefile.logger
 include $(ADOPT_LIB)/makefile.configlib
 
 mastdiagnlib_compile: configlib_compile logger_compile 
-	cd $(ADOPT_LIB); make mastdiagnlib.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) mastdiagnlib.a
 
 MASTDIAGNLIB_LNK = $(ADOPT_LIB)/mastdiagnlib.a $(THRDLIB_LNK) $(CONFIGLIB_LNK) $(LOGGER_LNK) -lstdc++
 

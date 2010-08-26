@@ -9,7 +9,7 @@ MAKEFILEIOLIB=.
 include $(ADOPT_SOURCE)/makefile.gen
 
 iolib_compile:
-	cd $(ADOPT_LIB); make iolib.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) iolib.a
 
 IOLIB_LNK = $(ADOPT_LIB)/iolib.a -lstdc++
 

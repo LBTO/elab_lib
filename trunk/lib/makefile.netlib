@@ -9,7 +9,7 @@ include $(ADOPT_SOURCE)/makefile.gen
 include $(ADOPT_LIB)/makefile.logger
 
 netlib_compile:
-	cd $(ADOPT_LIB); make netlib.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) netlib.a
 
 NETLIB_LNK = $(ADOPT_LIB)/netlib.a $(LOGGER_LNK) -lstdc++
 

@@ -1,39 +1,33 @@
 # Makefile for all the Adopt software
 
-SUBSYSTEMS_TO_BUILD = lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
+include makefile.gen
+
+SUBSYSTEMS =          MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl DiagnApp \
                       SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl DiagnApp Arbitrator HexapodCtrl SysCheck idl_wrapper \
+                      CameraLensCtrl Arbitrator HexapodCtrl SysCheck idl_wrapper \
                       OptLoopDiagnostic
 					  #InterferometerCtrl 
 
-SUBSYSTEMS_TO_INSTALL = MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl\
-                      SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
-                      PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl StartUp DiagnApp Arbitrator HexapodCtrl SysCheck idl_wrapper \
-                      OptLoopDiagnostic
-					  #InterferometerCtrl
 
-SUBSYSTEMS_TO_CLEAN =      lib MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl \
-                      SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
-                      PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
-                      CameraLensCtrl DiagnApp Arbitrator HexapodCtrl idl_wrapper SysCheck StartUp \
-                      OptLoopDiagnostic
-					  #InterferometerCtrl 
 
-all: 
-	for dir in ${SUBSYSTEMS_TO_BUILD}; do \
-	 (cd $$dir; ${MAKE} all) || break; \
-	done
+all: $(SUBSYSTEMS)
+	@:
 
-contrib:
-	(cd contrib; ${MAKE} all)
-
-install: all install-paths
-	for dir in ${SUBSYSTEMS_TO_INSTALL}; do \
+install: install-paths
+	for dir in ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} install) || break; \
 	done
 
+$(SUBSYSTEMS): lib
+
+lib $(SUBSYSTEMS):
+	$(Q)$(MAKE) $(MAKEOPTS) -C $@
+
+.PHONY:  install lib $(SUBSYSTEMS)
+
+contrib:
+	$(Q)$(MAKE) $(MAKEOPTS) -C contrib all
 
 install-paths:
 	install -d $(ADOPT_ROOT)
@@ -65,17 +59,17 @@ install-contrib:
 sensor:
 	(cd SensorCheck; $(MAKE))
 
-clean:
+clean: 
 	rm -f *.pyc
 	rm -f adopt_environment.sh
 	rm -f install_environment.sh
 	rm -f *.tgz
-	for dir in ${SUBSYSTEMS_TO_CLEAN}; do \
+	for dir in lib ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} clean) || break; \
 	done
 
 clean-contrib:
-	(cd contrib; ${MAKE} clean)
+	$(Q)$(MAKE) $(MAKEOPTS) -C contrib clean
 
 kit:
 	./makekit.sh

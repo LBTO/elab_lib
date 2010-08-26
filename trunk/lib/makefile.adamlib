@@ -11,7 +11,7 @@ include $(ADOPT_LIB)/makefile.logger
 include $(ADOPT_LIB)/makefile.configlib
 
 adamlib_compile: logger_compile netlib_compile
-	cd $(ADOPT_LIB); make adamlib.a;
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) adamlib.a
 
 ADAMLIB_LNK = $(ADOPT_LIB)/adamlib.a $(LOGGER_LNK) $(NETLIB_LNK) $(CONFIGLIB_LNK) -lstdc++ -lboost_thread
 
