@@ -11,7 +11,7 @@ SUBSYSTEMS =          MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl DiagnApp \
 
 
 
-all: $(SUBSYSTEMS)
+all: lib $(SUBSYSTEMS)
 	@:
 
 install: install-paths

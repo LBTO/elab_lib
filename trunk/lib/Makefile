@@ -173,4 +173,4 @@ adsecdiagnlib.a: AdsecDiagnLib.o
 
 # LIBDRAWOBJECTS
 libdrawobjects.a: drawlib
-	mv ./drawlib/drawlib.a .
+	$(Q)mv ./drawlib/drawlib.a .
