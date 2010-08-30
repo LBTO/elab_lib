@@ -5,13 +5,12 @@
 ifndef MAKEFILELOGGER
 MAKEFILELOGGER=.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
-
 # Base lib export makefile
 include $(ADOPT_LIB)/base/makefile.base
 
-logger_compile:
+LOGGER_COMPILE = $(call test_uptodate,$(ADOPT_LIB),logger.a,do_logger) $(BASE_COMPILE)
+
+do_logger:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) logger.a
 
 LOGGER_LNK = $(ADOPT_LIB)/logger.a $(THRDLIB_LNK) -lstdc++

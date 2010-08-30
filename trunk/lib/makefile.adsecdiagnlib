@@ -2,14 +2,18 @@
 # this library: before using "XXX_LNK" please call the
 # "xxx_compile" target.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
+ifndef MAKEFILEADSECDIAGNLIB
+MAKEFILEADSECDIAGNLIB=.
 
 # Dependencies
 include $(ADOPT_LIB)/makefile.logger
 
-adsecdiagnlib_compile:
+ADSECDIAGNLIB_COMPILE = $(call test_uptodate,$(ADOPT_LIB),adsecdiagnlib.a,do_adsecdiagnlib)
+
+
+do_adsecdiagnlib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) adsecdiagnlib.a
 
 ADSECDIAGNLIB_LNK = $(ADOPT_LIB)/adsecdiagnlib.a $(LOGGER_LNK) -lstdc++
 
+endif

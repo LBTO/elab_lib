@@ -2,16 +2,19 @@
 # this library: before using "XXX_LNK" please call the
 # "xxx_compile" target.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
+ifndef MAKEFILEADAMLIB
+MAKEFILEADAMLIB=.
 
 # Dependencies
 include $(ADOPT_LIB)/makefile.netlib
 include $(ADOPT_LIB)/makefile.logger
 include $(ADOPT_LIB)/makefile.configlib
 
-adamlib_compile: logger_compile netlib_compile
+ADAMLIB_COMPILE = $(call test_uptodate,$(ADOPT_LIB),adamlib.a,do_adamlib) $(LOGGER_COMPILE) $(NETLIB_COMPILE)
+
+do_adamlib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) adamlib.a
 
 ADAMLIB_LNK = $(ADOPT_LIB)/adamlib.a $(LOGGER_LNK) $(NETLIB_LNK) $(CONFIGLIB_LNK) -lstdc++ -lboost_thread
 
+endif

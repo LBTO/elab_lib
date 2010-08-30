@@ -3,15 +3,15 @@
 all: errordb.pro msgcodes.pro vartypes.pro
 
 errordb.pro: ../lib/base/errordb.txt
-	(cd $(ADOPT_SOURCE)/lib/base; $(MAKE) errordb.pro)
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_SOURCE)/lib/base errordb.pro
 	cp $(ADOPT_SOURCE)/lib/base/errordb.pro .
 
 msgcodes.pro: ../lib/base/msgcodes.txt
-	(cd $(ADOPT_SOURCE)/lib/base; $(MAKE) msgcodes.pro)
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_SOURCE)/lib/base msgcodes.pro
 	cp $(ADOPT_SOURCE)/lib/base/msgcodes.pro .
 
 vartypes.pro: ../lib/base/vartypes.txt
-	(cd $(ADOPT_SOURCE)/lib/base; $(MAKE) vartypes.pro)
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_SOURCE)/lib/base vartypes.pro
 	cp $(ADOPT_SOURCE)/lib/base/vartypes.pro .
 
 install: all

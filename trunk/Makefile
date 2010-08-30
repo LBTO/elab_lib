@@ -6,28 +6,30 @@ SUBSYSTEMS =          MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl DiagnApp \
                       SimpleMotorCtrl GUI GUIs ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl Arbitrator HexapodCtrl SysCheck idl_wrapper \
-                      OptLoopDiagnostic
+                      OptLoopDiagnostic StartUp
 					  #InterferometerCtrl 
 
 
 
-all: lib $(SUBSYSTEMS)
-	@:
+all: $(SUBSYSTEMS)
+
+#Dependencies between subdirs
+$(SUBSYSTEMS): lib
+MirrorDiagnostic: DiagnApp
+
+lib $(SUBSYSTEMS):
+	$(Q)$(MAKE) $(MAKEOPTS) -C $@
+
+.PHONY:  install lib $(SUBSYSTEMS) contrib
+
+contrib:
+	$(Q)$(MAKE) $(MAKEOPTS) -C contrib all
 
 install: install-paths
 	for dir in ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} install) || break; \
 	done
 
-$(SUBSYSTEMS): lib
-
-lib $(SUBSYSTEMS):
-	$(Q)$(MAKE) $(MAKEOPTS) -C $@
-
-.PHONY:  install lib $(SUBSYSTEMS)
-
-contrib:
-	$(Q)$(MAKE) $(MAKEOPTS) -C contrib all
 
 install-paths:
 	install -d $(ADOPT_ROOT)

@@ -2,14 +2,17 @@
 # this library: before using "XXX_LNK" please call the
 # "xxx_compile" target.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
+ifndef MAKEFILENETLIB
+MAKEFILENETLIB=.
 
 # Dependencies
 include $(ADOPT_LIB)/makefile.logger
 
-netlib_compile:
+NETLIB_COMPILE = $(call test_uptodate,$(ADOPT_LIB),netlib.a,do_netlib)
+
+do_compile:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) netlib.a
 
 NETLIB_LNK = $(ADOPT_LIB)/netlib.a $(LOGGER_LNK) -lstdc++
 
+endif

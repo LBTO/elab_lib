@@ -5,13 +5,13 @@
 ifndef MAKEFILECONFIGLIB
 MAKEFILECONFIGLIB=.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
-
 # Base lib export makefile
 include $(ADOPT_LIB)/makefile.logger
 
-configlib_compile: logger_compile
+CONFIGLIB_COMPILE = $(call test_uptodate,$(ADOPT_LIB),configlib.a,do_configlib) $(LOGGER_COMPILE)
+
+
+do_configlib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) configlib.a
 
 CONFIGLIB_LNK = $(ADOPT_LIB)/configlib.a -lstdc++ $(LOGGER_LNK)

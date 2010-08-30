@@ -5,10 +5,10 @@
 ifndef MAKEFILEIOLIB
 MAKEFILEIOLIB=.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
+IOLIB_COMPILE = $(call test_uptodate,$(ADOPT_LIB),iolib.a,do_iolib)
 
-iolib_compile:
+
+do_iolib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) iolib.a
 
 IOLIB_LNK = $(ADOPT_LIB)/iolib.a -lstdc++

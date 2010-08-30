@@ -2,16 +2,20 @@
 # this library: before using "XXX_LNK" please call the
 # "xxx_compile" target.
 
-# Supervisor general makefile
-include $(ADOPT_SOURCE)/makefile.gen
+ifndef MAKEFILEAOAPP
+MAKEFILEAOAPP=.
 
 # Dependencies
 include $(ADOPT_LIB)/base/makefile.base
 include $(ADOPT_LIB)/makefile.logger
 include $(ADOPT_LIB)/makefile.configlib
 
-aoapp_compile: logger_compile configlib_compile
+AOAPP_COMPILE = $(call test_uptodate,$(ADOPT_LIB),aoapp.a,do_aoapp) $(LOGGER_COMPILE) $(CONFIGLIB_COMPILE)
+
+do_aoapp:
+	@echo
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_LIB) aoapp.a
 
 AOAPP_LNK = $(ADOPT_LIB)/aoapp.a $(THRDLIB_LNK) $(LOGGER_LNK) $(CONFIGLIB_LNK) -lstdc++ -lboost_serialization
 
+endif

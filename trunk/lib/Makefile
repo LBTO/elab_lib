@@ -1,7 +1,8 @@
 # General Supervisor makefile
 include $(ADOPT_SOURCE)/makefile.gen
 
-.PHONY : hwlib baselib drawlib otherlibs 
+
+.PHONY : baselib otherlibs 
 
 # LIB OBJECTS
 # These archives shouldn't be linked directly: link ARCHIVES instead
@@ -14,29 +15,7 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
 
 # LIB ARCHIVES
 # Only these archives should be linked by AOApp's
-ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a libdrawobjects.a
-
-
-# BASE FILES
-# When one of these changes, all libraries must be recompiled
-BASE_FILES =  base/msgcodes.txt \
-              base/build_time.c \
-              base/errordb.c \
-              base/rtdblib.h \
-              base/buflib.c \
-              base/common.h \
-              base/msglib.c \
-              base/msgtxt.h \
-              base/timelib.c \
-              base/errlib.c \
-              base/thrdlib.c \
-              base/buflib.h \
-              base/errlib.h \
-              base/errordb.txt \
-              base/msglib.h \
-              base/rtdblib.c \
-              base/thrdlib.h \
-              base/vartypes.txt
+ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a
 
 
 .c.o:
@@ -50,14 +29,15 @@ BASE_FILES =  base/msgcodes.txt \
 ################## TARGETS ###################
 
 all: baselib $(OBJECTS) otherlibs AOStates.h AOStates.c $(ARCHIVES)
-	@:
+
+include $(ADOPT_LIB)/base/makefile.base
 
 install:
-	@:
 
-baselib: $(BASE_FILES)
-	$(Q)$(MAKE) $(MAKEOPTS) -C base
+# We can get away with BASE_COMPILE because it will not call this Makefile again
+baselib: $(BASE_COMPILE)
 
+# We cannot use AOSLIB_COMPILE etc. because they will call this Makefile again through their dependencies, causing an infinite loop
 otherlibs:
 	$(Q)$(MAKE) $(MAKEOPTS) -C aoslib
 	$(Q)$(MAKE) $(MAKEOPTS) -C BcuLib
@@ -66,6 +46,8 @@ otherlibs:
 	$(Q)$(MAKE) $(MAKEOPTS) -C IntfLib
 	$(Q)$(MAKE) $(MAKEOPTS) -C arblib
 	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib
+
+
 
 
 clean:
@@ -171,6 +153,3 @@ adsecdiagnlib.a: AdsecDiagnLib.o
 	$(AR) adsecdiagnlib.a AdsecDiagnLib.o
 	$(RANLIB) adsecdiagnlib.a
 
-# LIBDRAWOBJECTS
-libdrawobjects.a: drawlib
-	$(Q)mv ./drawlib/drawlib.a .
