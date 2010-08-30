@@ -18,14 +18,6 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
 ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a
 
 
-.c.o:
-	$(CC) $(OPTIMIZE) $(CFLAGS) -c $<
-
-.cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -c $<
-
-%.o:%.h
-
 ################## TARGETS ###################
 
 all: baselib $(OBJECTS) otherlibs AOStates.h AOStates.c $(ARCHIVES)
