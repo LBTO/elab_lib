@@ -52,7 +52,7 @@ clean:
 	$(Q)$(MAKE) $(MAKEOPTS) -C arblib clean
 	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib clean
 	$(Q)rm -f *.aux *.dvi *.log *.toc *.tmp
-	$(Q)rm -f *.o *.a
+	$(Q)rm -f *.o *.d *.a
 	$(Q)rm -f $(ARCHIVES)
 
 tags:

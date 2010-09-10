@@ -14,5 +14,5 @@ Test_AOApp: aoapp_compile Test_AOApp.o
 	$(LINKPP) -o Test_AOApp Test_AOApp.o $(AOAPP_LNK)
 
 clean:
-	rm -f *.o $(TARGETS)
+	rm -f *.o *.d $(TARGETS)
 
