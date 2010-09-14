@@ -10,12 +10,12 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
           iolib.o commlib.o \
           UdpConnection.o TcpConnection.o \
           NaNutils.o Utils.o Reorder.o Paths.o \
-          AdamLib.o bcu_diag.o aoapplib.o \
+          AdamLib.o AdamTestLib.o bcu_diag.o aoapplib.o \
           mastdiagnlib.o diagBuffer.o AdsecDiagnLib.o intmatlib.o telemetry.o 
 
 # LIB ARCHIVES
 # Only these archives should be linked by AOApp's
-ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a
+ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a adamtestlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a
 
 
 ################## TARGETS ###################
@@ -78,6 +78,7 @@ stdconfig.o: stdconfig.cpp stdconfig.h
 Utils.o: Utils.cpp Utils.h aotypes.h
 NaNutils.o: NaNutils.cpp NaNutils.h
 AdamLib.o: AdamLib.cpp AdamLib.h 
+AdamTestLib.o: AdamTestLib.cpp AdamTestLib.h 
 UdpConnection.o: UdpConnection.cpp UdpConnection.h
 TcpConnection.o: TcpConnection.cpp TcpConnection.h
 commlib.o: commlib.c commlib.h 
@@ -129,6 +130,11 @@ netlib.a: TcpConnection.o UdpConnection.o
 adamlib.a: AdamLib.o
 	$(AR) adamlib.a AdamLib.o
 	$(RANLIB) adamlib.a
+
+# ADAMTESTLIB
+adamtestlib.a: AdamTestLib.o
+	$(AR) adamtestlib.a AdamTestLib.o
+	$(RANLIB) adamtestlib.a
 
 # IOLIB
 iolib.a: iolib.o
