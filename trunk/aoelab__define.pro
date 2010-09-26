@@ -271,7 +271,7 @@ function AOelab::mag
             if obj_valid( (self->wfs_status())->ccd39() ) then $
 	            return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
 							((self->wfs_status())->ccd39())->framerate() )
-    message, 'impossible to compute the magnitude', /info 
+    message, 'impossible to compute the magnitude', /info
     return, !values.f_nan
 end
 
@@ -303,11 +303,11 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %f |")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())
     endif
     print, string(format='(%"| %-30s | %f |")','Magnitude', self->mag())
-    if obj_valid(self->modal_rec()) then begin 
+    if obj_valid(self->modal_rec()) then begin
         print, string(format='(%"| %-30s | %d |")','# Modes', (self->modal_rec())->nmodes())
         print, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )
     endif
-    if obj_valid(self->wfs_status()) and obj_valid((self->wfs_status())->ccd39())  then begin 
+    if obj_valid(self->wfs_status()) and obj_valid((self->wfs_status())->ccd39())  then begin
         print, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->ccd39())->binning())
         print, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())
         print, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )
@@ -315,12 +315,12 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
         print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
     endif
-    if obj_valid(self->control()) and obj_valid(self->modal_rec()) then begin 
+    if obj_valid(self->control()) and obj_valid(self->modal_rec()) then begin
         gaintemp = minmax( ((self->control())->gain())[(self->modal_rec())->modes_idx()] )
         if gaintemp[0] eq -1 then print, 'Gain: AUTO' else $
         print, string(format='(%"| %-30s | %f %f |")','Gain minmax', gaintemp)
     endif
-    if obj_valid(self->tel()) then begin 
+    if obj_valid(self->tel()) then begin
         print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el()/3600. )
         print, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )
     endif
@@ -352,12 +352,12 @@ pro AOelab::modalplot
 
 	loadct,39, /silent
 	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
-	if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color=250
-	if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=[250,!P.color], psym=-[2,1], /right
-	
+	if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+	if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+
     ; THIS COULD BE USED ON SKY BUT RESIDUAL MODES HAVE TO BE CALIBRATED
     ;nmodes = (self->residual_modes())->nmodes()
-	;clvar  = (self->residual_modes())->time_variance() 
+	;clvar  = (self->residual_modes())->time_variance()
 	;yrange = sqrt(minmax(clvar))
 	;plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='ampl rms', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 
@@ -379,7 +379,7 @@ pro AOelab::estimate_r0, lambda=lambda
 ;	zern_num, indgen(nmodes)+2, n=nn
 ;	varNoll         = varzern_turb(nn, DRO = DpupM/r0aso)
 	loadct,39, /silent
-	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, $ 
+	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, $
             ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
 	oplot, lindgen(nmodes)+1, armando, psym=-2, color=250
 
@@ -537,7 +537,7 @@ pro AOelab::Cleanup
     obj_destroy, self._commands
     obj_destroy, self._positions
     obj_destroy, self._modalpositions
-    obj_destroy, self._tv 
+    obj_destroy, self._tv
     obj_destroy, self._irtc
 ;    obj_destroy, self._modal_rec
 ;    obj_destroy, self._intmat
