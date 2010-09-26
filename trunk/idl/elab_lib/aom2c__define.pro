@@ -8,12 +8,12 @@ function AOm2c::Init, fname, recompute=recompute
     self._m2c_fname  = ao_datadir()+path_sep()+fname
 
     if not file_test(self._m2c_fname) then begin
-        message, 'M2C file '+self._m2c_fname+' not existing', /info 
+        message, 'M2C file '+self._m2c_fname+' not existing', /info
         return, 0
     endif
 
-    header = headfits(self._m2c_fname, /SILENT, errmsg)
-    if errmsg ne '' then message, self._m2c_fname+ ': '+ errmsg, /info 
+    header = headfits(self._m2c_fname, /SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, self._m2c_fname+ ': '+ errmsg, /info
     self._m2c_fname_fitsheader = ptr_new(header, /no_copy)
 
     store_dir = filepath(root=ao_elabdir(), sub=[file_dirname(fname)], '')
