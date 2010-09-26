@@ -2,12 +2,12 @@ pro log_twiki, aodataset, ref_star=ref_star
     if not keyword_set(ref_star) then ref_star='???'
 
     objref =  aodataset->Get(/all)
-    
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *notes* |"
+
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
         ee = objref[i]
-        
+
         gaintemp = [-1, -1]
         if obj_valid(ee->modal_rec()) then $
             if obj_valid(ee->control()) then begin
@@ -23,7 +23,8 @@ pro log_twiki, aodataset, ref_star=ref_star
         endif else begin
             band = '?'
         endelse
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d |  |")', $
+
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s |   |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -39,7 +40,8 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se()*100 : -1, $
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
-    		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 $
+    		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
+			obj_valid(ee->disturb()) ? 'ON' : 'OFF' $
 
         )
     endfor
