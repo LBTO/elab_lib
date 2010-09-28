@@ -16,10 +16,6 @@ function ao_phasemapdir
     return, !ao_env.phasemapdir
 end
 
-function ao_reflcoef
-    return, !ao_env.reflcoef
-end
-
 function ao_pupil_diameter
     return, 8.22  ; LBT
 end
@@ -38,7 +34,6 @@ pro AO_init, rootdir=rootdir
     if rootdir eq "" then message, 'Root dir not specified. Is environment variable ADOPT_DATA set?'
 
     ao_env = {       $
-        reflcoef       : 2, $ ; 2 for Telescope, 4 for tower
         root           : rootdir, $
         datadir        : rootdir+path_sep()+'towerdata', $
         elabdir        : rootdir+path_sep()+'elab', $
