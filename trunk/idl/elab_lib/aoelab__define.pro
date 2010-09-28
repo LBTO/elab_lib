@@ -53,6 +53,16 @@ function AOelab::Init, tracknum, $
 	; create telescope leaf
 	self._tel = obj_new('AOtel', wfs_status_file)
 
+	; Operation mode: "RR"    : @SolarTower, or @Telescope with RR.
+	;				  "ONSKY" : @Telescope on-sky!
+	if obj_valid(self._tel) then begin
+		if (self->tel())->el()/3600. lt 89. then self._operation_mode = "ONSKY" $
+		else self._operation_mode = "RR"
+	endif else self._operation_mode = "RR"	;in Solar Tower
+
+	;Single or double reflection
+	if self->operation_mode() eq "RR" then self._reflcoef=4. else self._reflcoef=2.
+
     ; create sanity check leaf
     crcerrors_fname = filepath(root=self._datadir,  'CrcErrors_'+tracknum+'.fits')
     fltimeout_fname = filepath(root=self._datadir,  'FlTimeout_'+tracknum+'.fits')
@@ -208,6 +218,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "offloadmodes()", "reference to offload modes object (AOoffloadmodes)"
     self->addMethodHelp, "mag()", "equivalent star magnitude (R)"
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
+    self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
 
     ; free memory
     self->free
@@ -228,11 +239,15 @@ function AOelab::recompute
 end
 
 function AOelab::reflcoef
-	return, ao_reflcoef()
+	return, self._reflcoef
 end
 
 function AOelab::n_periods
 	return, self._n_periods
+end
+
+function AOelab::operation_mode
+	return, self._operation_mode
 end
 
 ;;;;;;;;;;;;; Shortcut to most important functions/macro ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -248,11 +263,16 @@ function AOelab::isOK, cause=cause
     imok *= (self->frames_counter())->isok(cause=cause)
     if OBJ_VALID(self->disturb()) then imok *= (self->disturb())->isok(cause=cause)
     if obj_valid(self->intmat()) then $
-        if obj_valid(self->wfs_status()) and obj_valid( (self->intmat())->wfs_status() )  then $
+        if obj_valid(self->wfs_status()) and obj_valid( (self->intmat())->wfs_status() )  then begin
     	    if round((self->wfs_status())->modulation()) ne round(((self->intmat())->wfs_status())->modulation()) then begin
     		    imok*=0B
     		    cause += ' - Pyramid modulation mismatch'
     	    endif
+    	    if ((self->wfs_status())->pupils())->pup_tracknum() ne (((self->intmat())->wfs_status())->pupils())->pup_tracknum() then begin
+    		    imok*=0B
+    		    cause += ' - Pupils mismatch'
+			endif
+    	endif
     return, imok
 end
 
@@ -338,30 +358,26 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
 end
 
 
-
 pro AOelab::modalplot
-
-    ;;; THIS IS THE ONE USED IN THE TOWER
-	nmodes = (self->modalpositions())->nmodes()
-	clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
-	yrange = sqrt(minmax(clvar))
-    if obj_valid(self._disturb) then begin
-    	olvar  = (self->modaldisturb())->time_variance() * (1e9*self->reflcoef())^2.
-    	yrange = sqrt(minmax([clvar,olvar]))
-    endif
-
-	loadct,39, /silent
-	plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
-	if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
-	if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
-
-    ; THIS COULD BE USED ON SKY BUT RESIDUAL MODES HAVE TO BE CALIBRATED
-    ;nmodes = (self->residual_modes())->nmodes()
-	;clvar  = (self->residual_modes())->time_variance()
-	;yrange = sqrt(minmax(clvar))
-	;plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='ampl rms', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
-
+    if self->operation_mode() eq "RR" then begin
+		nmodes = (self->modalpositions())->nmodes()
+		clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
+		yrange = sqrt(minmax(clvar))
+    	if obj_valid(self._disturb) then begin
+    		olvar  = (self->modaldisturb())->time_variance() * (1e9*self->reflcoef())^2.
+    		yrange = sqrt(minmax([clvar,olvar]))
+    	endif
+		plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+		if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+		if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+	endif else begin
+		nmodes = (self->residual_modes())->nmodes()
+		clvar  = (self->residual_modes())->time_variance() * (1e9*self->reflcoef())^2.
+		range = sqrt(minmax(clvar))
+		plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+	endelse
 end
+
 
 pro AOelab::estimate_r0, lambda=lambda
 	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
@@ -554,6 +570,8 @@ pro AOelab__define
         _elabdir           : "",        $
         _recompute         : 0B,        $
         _n_periods		   : 0L,		$
+        _operation_mode    : "",		$	; "RR": retroreflector, "ONSKY", idem.
+        _reflcoef		   : 0.,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
         _wfs_status        : obj_new(), $
