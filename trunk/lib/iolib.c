@@ -534,4 +534,39 @@ int WriteFitsFileWithLUT( char *path, unsigned char *buffer, int type, long *dim
     return 1;
 }
 
+int ReadFitsKeyword( char *path, char *keyword, int datatype, void *value) {
+
+    fitsfile *fptr;
+    int fits_status =0; // MUST initialize status
+    char comment[128];
+
+    if ((!datatype) || (!value))
+      return NULL_BUFFER_ERROR;
+
+    if (debug) printf("Opening -->%s<--\n", path);
+
+    fits_open_file( &fptr, path, READONLY, &fits_status);
+    fits_report_error(stdout, fits_status);
+
+    if (fits_status != 0) {
+        fits_close_file(fptr,&fits_status);
+        return FILE_ERROR;
+    }
+    else {
+        fits_read_key(fptr, datatype, keyword, value, comment, &fits_status);
+        if (fits_status != 0) {
+            fits_close_file(fptr,&fits_status);
+            return KEY_NOTFOUND_ERROR;
+        }
+        
+
+       fits_close_file(fptr,&fits_status);
+       return NO_ERROR;
+       }
+
+   return FILE_ERROR;
+}
+
+
+
 
