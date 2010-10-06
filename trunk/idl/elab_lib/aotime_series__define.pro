@@ -299,6 +299,114 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     endelse
 end
 
+function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
+	n_el=8
+	stfr=0.35
+
+	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
+	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
+	
+	if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
+	if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
+	if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
+	if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
+	if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
+	if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
+	
+	idx_from = closest(from_freq, *(self._freq))
+	idx_to   = closest(to_freq, *(self._freq))
+
+	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
+	
+	if n_elements(spectrum_idx) eq 0 then vtemp=findgen(self->nmodes()) else vtemp=spectrum_idx
+
+	for kkk=0, n_elements(vtemp)-1 do begin
+		mode=vtemp[kkk]
+		if mode lt 2 then thr=0.005 else thr=0.01
+		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
+		thrs=thr/n_el*tmax
+		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
+		idx=where(spsd gt thrs)
+		if total(idx) ne -1 then begin
+			fr=(*(self._freq))[idx+idx_from]
+			ofr=-1
+			opw=-1
+			opw100=-1
+			j=0
+			tempfr=0
+			l=0
+			f1=0
+			for i=1, n_elements(fr)-1 do begin
+				if fr[i] lt fr[i-1]+stfr then begin
+					if j eq 0 then f1=fr[i-1]
+					if i eq 1 then begin
+						tempfr=fr[i]+fr[i-1]
+						j=2
+					endif else begin
+				       		tempfr=tempfr+fr[i]
+						j+=1
+					endelse
+					if i eq n_elements(fr)-1 then begin
+						f2=fr[i]
+						temppw=self->power(from_freq=f1,to_freq=f2,mode)
+						if total(ofr) eq -1 then begin
+							ofr=tempfr/j
+							opw=temppw
+						endif else begin
+							ofr=[ofr, tempfr/j]
+							opw=[opw, temppw]
+						endelse
+					endif
+					l=0
+				endif else begin
+					l+=1
+					if f1 ne 0 then f2=fr[i-1]
+					if tempfr ne 0 then begin
+						temppw=self->power(from_freq=f1,to_freq=f2,mode)
+						if total(ofr) eq -1 then begin
+							ofr=tempfr/j
+							opw=temppw
+						endif else begin
+							ofr=[ofr, tempfr/j]
+							opw=[opw, temppw]
+						endelse
+						l=0
+					endif
+					if l eq 2 then begin
+						if i gt 1 then temppw=$
+							(self->power(mode,/cum))[idx[i-1]+idx_from]-(self->power(mode,/cum))[idx[i-1]+idx_from-1] $
+							else temppw=0
+						if total(ofr) eq -1 then begin
+							ofr=fr[i-1]
+							opw=temppw
+						endif else begin
+							ofr=[ofr, fr[i-1]]
+							opw=[opw, temppw]
+						endelse
+						l=1
+					endif
+					j=0
+					tempfr=0
+					f1=0
+					f2=0
+				endelse
+			endfor
+			opw100=opw/tmax*100.
+		endif else begin
+			ofr=-1
+			opw=-1
+			opw100=-1
+		endelse
+		if kkk eq 0 then begin
+			res=create_struct('mode'+string(mode,format='(i03)'),{fr: ofr, pw: opw, pw100: opw100})
+		endif else begin
+			res=create_struct(res,'mode'+string(mode,format='(i03)'),{fr: ofr, pw: opw, pw100: opw100})
+		endelse
+	endfor
+	return, res
+end
+
 pro AOtime_series::addHelp, obj
 
     obj->addMethodHelp, "niter()",   "number of time steps"
@@ -313,6 +421,7 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "fftwindow()", "returns the type of apodization window applied in the computation of the PSD."
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
     obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative)", "return power of idx-th spectrum between frequencies from_freq and to_freq"
+    obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq"
     obj->addMethodHelp, "specPlot(idx)", "plot psd of idx-th spectrum"
 end
 
