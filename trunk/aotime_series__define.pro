@@ -317,16 +317,17 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	idx_to   = closest(to_freq, *(self._freq))
 
 	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
-	stfr = 1/self._dt/self->nfreqs()
+	stfr = 1/self._dt/(2*self->nfreqs())
 	
-	if n_elements(spectrum_idx) eq 0 then vtemp=findgen(self->nmodes()) else vtemp=spectrum_idx
-
+	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
+	
 	for kkk=0, n_elements(vtemp)-1 do begin
 		mode=vtemp[kkk]
 		if mode lt 2 then thr=0.005 else thr=0.01
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
 		thrs=thr/n_el*tmax
 		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
+		if thrs lt 5d1*min(spsd) then thrs=5d1*min(spsd) 
 		idx=where(spsd gt thrs)
 		if total(idx) ne -1 then begin
 			fr=(*(self._freq))[idx+idx_from]
