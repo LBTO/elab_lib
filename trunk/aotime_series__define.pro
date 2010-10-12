@@ -301,7 +301,6 @@ end
 
 function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
 	n_el=8
-	stfr=0.35
 
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
@@ -318,6 +317,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	idx_to   = closest(to_freq, *(self._freq))
 
 	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
+	stfr = 1/self._dt/self->nfreqs()
 	
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen(self->nmodes()) else vtemp=spectrum_idx
 
@@ -338,7 +338,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 			l=0
 			f1=0
 			for i=1, n_elements(fr)-1 do begin
-				if fr[i] lt fr[i-1]+stfr then begin
+				if fr[i] le fr[i-1]+stfr then begin
 					if j eq 0 then f1=fr[i-1]
 					if i eq 1 then begin
 						tempfr=fr[i]+fr[i-1]
