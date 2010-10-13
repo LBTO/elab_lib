@@ -317,7 +317,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	idx_to   = closest(to_freq, *(self._freq))
 
 	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
-	stfr = 1/self._dt/(2*self->nfreqs())
+	fr=*self._freq
 	
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
 	
@@ -327,10 +327,9 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
 		thrs=thr/n_el*tmax
 		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
-		if thrs lt 5d1*min(spsd) then thrs=5d1*min(spsd) 
-		idx=where(spsd gt thrs)
+		if thrs lt mean(spsd) then thrs=mean(spsd) 
+		idx=where(spsd gt thrs)+idx_from
 		if total(idx) ne -1 then begin
-			fr=(*(self._freq))[idx+idx_from]
 			ofr=-1
 			opw=-1
 			opw100=-1
@@ -338,18 +337,18 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 			tempfr=0
 			l=0
 			f1=0
-			for i=1, n_elements(fr)-1 do begin
-				if fr[i] le fr[i-1]+stfr then begin
-					if j eq 0 then f1=fr[i-1]
+			for i=1, n_elements(idx)-1 do begin
+				if idx[i] eq idx[i-1]+1 then begin
+					if j eq 0 then f1=fr[idx[i-1]]
 					if i eq 1 then begin
-						tempfr=fr[i]+fr[i-1]
+						tempfr=fr[idx[i]]+fr[idx[i-1]]
 						j=2
 					endif else begin
-				       		tempfr=tempfr+fr[i]
+				    tempfr=tempfr+fr[idx[i]]
 						j+=1
 					endelse
-					if i eq n_elements(fr)-1 then begin
-						f2=fr[i]
+					if i eq n_elements(idx)-1 then begin
+						f2=fr[idx[i]]
 						temppw=self->power(from_freq=f1,to_freq=f2,mode)
 						if total(ofr) eq -1 then begin
 							ofr=tempfr/j
@@ -362,7 +361,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					l=0
 				endif else begin
 					l+=1
-					if f1 ne 0 then f2=fr[i-1]
+					if f1 ne 0 then f2=fr[idx[i-1]]
 					if tempfr ne 0 then begin
 						temppw=self->power(from_freq=f1,to_freq=f2,mode)
 						if total(ofr) eq -1 then begin
@@ -379,10 +378,10 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 							(self->power(mode,/cum))[idx[i-1]+idx_from]-(self->power(mode,/cum))[idx[i-1]+idx_from-1] $
 							else temppw=0
 						if total(ofr) eq -1 then begin
-							ofr=fr[i-1]
+							ofr=fr[idx[i-1]]
 							opw=temppw
 						endif else begin
-							ofr=[ofr, fr[i-1]]
+							ofr=[ofr, fr[idx[i-1]]]
 							opw=[opw, temppw]
 						endelse
 						l=1
