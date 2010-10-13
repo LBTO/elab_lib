@@ -139,7 +139,10 @@ function AOelab::Init, tracknum, $
     ; modes
     modes_fname = filepath(root=self._datadir,  'Modes_'+tracknum+'.fits')
     self._modes = obj_new('AOmodes', self, modes_fname, self._frames_counter)
-
+    
+    ; open loop modes
+    ; self._olmodes = obj_new('AOolmodes', self, self._residual_modes, self._modes, self._frames_counter)
+    
     ; commands
     commands_fname = filepath(root=self._datadir,  'Commands_'+tracknum+'.fits')
     self._commands = obj_new('AOcommands', self, commands_fname, self._frames_counter)
@@ -186,6 +189,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
     if obj_valid(self._residual_modes) then self->addleaf, self._residual_modes, 'residual_modes'
     if obj_valid(self._modes) then self->addleaf, self._modes, 'modes'
+    if obj_valid(self._olmodes) then self->addleaf, self._olmodes, 'olmodes'
     if obj_valid(self._commands) then self->addleaf, self._commands, 'commands'
     if obj_valid(self._positions) then self->addleaf, self._positions, 'positions'
     if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions, 'modalpositions'
@@ -206,6 +210,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "slopes()", "reference to slopes object (AOslopes)"
     self->addMethodHelp, "residual_modes()", "reference to residual modes object (AOresidual_modes)"
     self->addMethodHelp, "modes()", "reference to integrated modes object (AOmodes)"
+    self->addMethodHelp, "modes()", "reference to open loop modes object (AOmodes)"
     self->addMethodHelp, "commands()", "reference to commands object (AOcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
@@ -487,6 +492,10 @@ function AOelab::modes
     IF (OBJ_VALID(self._modes)) THEN return, self._modes else return, obj_new()
 end
 
+function AOelab::olmodes
+    IF (OBJ_VALID(self._olmodes)) THEN return, self._olmodes else return, obj_new()
+end
+
 function AOelab::commands
     IF (OBJ_VALID(self._commands)) THEN return, self._commands else return, obj_new()
 end
@@ -531,6 +540,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
     IF (OBJ_VALID(self._modes)) THEN  self._modes->free
+    IF (OBJ_VALID(self._olmodes)) THEN  self._olmodes->free
     IF (OBJ_VALID(self._commands)) THEN  self._commands->free
     IF (OBJ_VALID(self._positions)) THEN  self._positions->free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
@@ -550,6 +560,7 @@ pro AOelab::Cleanup
     obj_destroy, self._slopes
     obj_destroy, self._residual_modes
     obj_destroy, self._modes
+    obj_destroy, self._olmodes
     obj_destroy, self._commands
     obj_destroy, self._positions
     obj_destroy, self._modalpositions
@@ -582,6 +593,7 @@ pro AOelab__define
         _slopes            : obj_new(), $
         _residual_modes    : obj_new(), $
         _modes             : obj_new(), $
+        _olmodes             : obj_new(), $
         _commands          : obj_new(), $
         _positions         : obj_new(), $
         _modalpositions    : obj_new(), $
