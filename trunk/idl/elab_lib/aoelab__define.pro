@@ -363,7 +363,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
 end
 
 
-pro AOelab::modalplot
+pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
     if self->operation_mode() eq "RR" then begin
 		nmodes = (self->modalpositions())->nmodes()
 		clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
@@ -372,7 +372,11 @@ pro AOelab::modalplot
     		olvar  = (self->modaldisturb())->time_variance() * (1e9*self->reflcoef())^2.
     		yrange = sqrt(minmax([clvar,olvar]))
     	endif
-		plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+        if not keyword_set(OVERPLOT) then  begin
+		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+        endif else begin
+		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
+        endelse
 		if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
 		if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
 	endif else begin
