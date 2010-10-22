@@ -141,7 +141,7 @@ function AOelab::Init, tracknum, $
     self._modes = obj_new('AOmodes', self, modes_fname, self._frames_counter)
     
     ; open loop modes
-    ; self._olmodes = obj_new('AOolmodes', self, self._residual_modes, self._modes, self._frames_counter)
+    self._olmodes = obj_new('AOolmodes', self) ;, self._residual_modes, self._modes, self._frames_counter)
     
     ; commands
     commands_fname = filepath(root=self._datadir,  'Commands_'+tracknum+'.fits')
@@ -593,7 +593,7 @@ pro AOelab__define
         _slopes            : obj_new(), $
         _residual_modes    : obj_new(), $
         _modes             : obj_new(), $
-        _olmodes             : obj_new(), $
+        _olmodes           : obj_new(), $
         _commands          : obj_new(), $
         _positions         : obj_new(), $
         _modalpositions    : obj_new(), $
