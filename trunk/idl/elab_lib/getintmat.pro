@@ -12,7 +12,8 @@ function aomultiton_im::getobj, fname
     pos = where(tags eq fname, cnt)
     if cnt ne 0 then begin
         obj = self._obj_list->Get(pos=pos)
-        if obj_valid(obj) then return, obj
+        if not obj_valid(obj) then message, 'Elablib error. aointmat object not valid '+fname
+        return, obj
     endif
 
     oo = obj_new('AOintmat', fname)
@@ -22,6 +23,12 @@ function aomultiton_im::getobj, fname
     self._tag_list = ptr_new([fname, tags])
     self._obj_list->add, oo, pos=0
     return, self._obj_list->Get(pos=0)
+end
+
+; for debug
+pro aomultiton_im::debug
+    print, *self._tag_list
+    print, self._obj_list->Get(/all)
 end
 
 pro aomultiton_im__define
