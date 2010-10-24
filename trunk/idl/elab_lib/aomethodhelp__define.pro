@@ -14,6 +14,9 @@ function AOmethodhelp::descr
     return, self._descr
 end
 
+pro AOmethodhelp::Cleanup
+end
+
 pro AOmethodhelp__define
     struct = { AOmethodhelp, $
         _syntax : "" , $
