@@ -14,7 +14,26 @@ function AOintmat::Init, fname
     self._nslopes = -1
     self._wfs_status = obj_new('AOwfs_status', self, full_fname)
 
+	;modal disturbance sequence
+    md_fn = strtrim(aoget_fits_keyword(header, 'M_DIST_F'))
+    md_fn  = file_basename(md_fn)
+    md_dir = file_dirname(self->fname())
+    md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))+'disturb'
+    self._modal_dist_fname = md_dir+path_sep()+md_fn
+
     self._im_file_fitsheader = ptr_new(header, /no_copy)
+
+	;retrieve data from header of modal disturbance sequence
+    full_fname = ao_datadir()+path_sep()+self->modal_dist_fname()
+    header = headfits(full_fname ,/SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
+
+	md_fn = strtrim(aoget_fits_keyword(header, 'PP_AMP_F'))
+    md_fn  = file_basename(md_fn)
+    md_dir = file_dirname(self->fname())
+    md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))+'modesAmp'
+    self._modalamp_fname = md_dir+path_sep()+md_fn
+
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOintmat', 'Represent an interaction matrix (IM)') then return, 0
@@ -29,6 +48,10 @@ function AOintmat::Init, fname
     self->addMethodHelp, "slopes_idx()", "index vector of non-null rows in IM"
     self->addMethodHelp, "basis()", "modal basis calibrated"
     self->addMethodHelp, "wfs_status()", "reference to wfs_status object"
+    self->addMethodHelp, "modalamp_fname()", "fitsfile name of modal amplitudes (string)"
+    self->addMethodHelp, "modalamp()", "modal amplitudes (fltarr)"
+    self->addMethodHelp, "modal_dist_fname()", "fitsfile name of modal disturbance sequence (fltarr)"
+    self->addMethodHelp, "modal_dist()", "modal disturbance sequence (fltarr)"
     return, 1
 end
 
@@ -112,6 +135,28 @@ function AOintmat::wfs_status
     IF (OBJ_VALID(self._wfs_status)) THEN return, self._wfs_status else return, obj_new()
 end
 
+; return filename of modal disturbance sequence used for the acquistion.
+function AOintmat::modal_dist_fname
+	return, self._modal_dist_fname
+end
+
+; return modal disturbance sequence
+function AOintmat::modal_dist
+    md = readfits(ao_datadir()+path_sep()+self->modal_dist_fname(), /SILENT)
+	return, md
+end
+
+; return filename of modal amplitudes
+function AOintmat::modalamp_fname
+	return, self._modalamp_fname
+end
+
+; return modal amplitudes
+function AOintmat::modalamp
+	ma = readfits(ao_datadir()+path_sep()+self->modalamp_fname(), /SILENT)
+	return, ma
+end
+
 ; return remapped IM in 2D for signal visualization
 function AOintmat::im2d
 	if not ptr_valid(self._im2d_cube) then begin
@@ -153,7 +198,10 @@ pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
 	imcube = self->im2d()
 	sz = size(imcube, /dim)
 
-	if nsig eq 1 then ncol=1 & nrows=1
+	if nsig eq 1 then begin
+		ncol=1
+		nrows=1
+	endif
 	if ( (not keyword_set(nrows)) AND (not keyword_set(ncol)) ) then ncol=nsig/3
 	if not keyword_set(ncol)  then ncol  = ceil(nsig/float(nrows))
 	if not keyword_set(nrows) then nrows = ceil(nsig/float(ncol))
@@ -187,6 +235,8 @@ pro AOintmat__define
         _slopes_idx						  : ptr_new()	, $
         _wfs_status						  : obj_new()	, $
         _im2d_cube						  : ptr_new()	, $
+        _modal_dist_fname				  : ''			, $
+        _modalamp_fname					  : ''			, $
         INHERITS AOhelp $
     }
 end
