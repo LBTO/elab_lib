@@ -10,18 +10,26 @@ function aomultiton_rec::getobj, fname
 
     tags = *self._tag_list
     pos = where(tags eq fname, cnt)
+    if cnt gt 1 then message, 'Elablib error. 2 rec with the same name saved in a aomultiton_rec'
     if cnt ne 0 then begin
         obj = self._obj_list->Get(pos=pos)
-        if obj_valid(obj) then return, obj
+        if not obj_valid(obj) then message, 'Elablib error. aorecmatrix object not valid '+fname
+        return, obj
     endif
     
     oo = obj_new('AOrecmatrix', fname)
-    if not obj_valid(oo) then return, obj_new()
+    if not obj_valid(oo) then message, 'Could not initialize aorecmatrix '+fname
     
     ptr_free, self._tag_list
     self._tag_list = ptr_new([fname, tags])
     self._obj_list->add, oo, pos=0 
     return, self._obj_list->Get(pos=0)
+end
+
+; for debug
+pro aomultiton_rec::debug
+    print, *self._tag_list
+    print, self._obj_list->Get(/all)
 end
 
 pro aomultiton_rec__define
