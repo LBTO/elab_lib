@@ -139,10 +139,10 @@ function AOelab::Init, tracknum, $
     ; modes
     modes_fname = filepath(root=self._datadir,  'Modes_'+tracknum+'.fits')
     self._modes = obj_new('AOmodes', self, modes_fname, self._frames_counter)
-    
+
     ; open loop modes
     self._olmodes = obj_new('AOolmodes', self) ;, self._residual_modes, self._modes, self._frames_counter)
-    
+
     ; commands
     commands_fname = filepath(root=self._datadir,  'Commands_'+tracknum+'.fits')
     self._commands = obj_new('AOcommands', self, commands_fname, self._frames_counter)
@@ -165,12 +165,12 @@ function AOelab::Init, tracknum, $
     ; IRTC
     irtc_fname = file_search(filepath(root=self._datadir, 'irtc.fits'))
     if (n_elements(dark_fname) eq 0) then begin
-    	full_dark_fname = find_irtc_dark(self, irtc_fname)
+    	full_dark_fname = find_irtc_dark(self, irtc_fname, err_msg=dark_err_msg)
     endif else begin
         dark_subdir = ['wfs_calib_'+(self->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
 		full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
 	endelse
-    self._irtc = obj_new('AOIRTC', self, irtc_fname, full_dark_fname);, pixelscale =0.010)
+    self._irtc = obj_new('AOIRTC', self, irtc_fname, full_dark_fname, dark_err_msg=dark_err_msg)
 
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
@@ -187,6 +187,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter, 'frames_counter'
     if obj_valid(self._slopes) then self->addleaf, self._slopes, 'slopes'
     if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
+    if obj_valid(self._intmat) then self->addleaf, self._intmat, 'intmat'
     if obj_valid(self._residual_modes) then self->addleaf, self._residual_modes, 'residual_modes'
     if obj_valid(self._modes) then self->addleaf, self._modes, 'modes'
     if obj_valid(self._olmodes) then self->addleaf, self._olmodes, 'olmodes'
@@ -225,7 +226,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
 
-    
+
     ; free memory
     self->free
 
@@ -268,8 +269,8 @@ function AOelab::isOK, cause=cause
     imok *= (self->sanitycheck())->isOK(cause=cause)
     imok *= (self->frames_counter())->isok(cause=cause)
     if OBJ_VALID(self->disturb()) then imok *= (self->disturb())->isok(cause=cause)
-    if obj_valid(self->intmat()) then $
-        if obj_valid(self->wfs_status()) and obj_valid( (self->intmat())->wfs_status() )  then begin
+    if OBJ_VALID(self->intmat()) then $
+        if OBJ_VALID(self->wfs_status()) and OBJ_VALID( (self->intmat())->wfs_status() )  then begin
     	    if round((self->wfs_status())->modulation()) ne round(((self->intmat())->wfs_status())->modulation()) then begin
     		    imok*=0B
     		    cause += ' - Pyramid modulation mismatch'
@@ -279,6 +280,7 @@ function AOelab::isOK, cause=cause
     		    cause += ' - Pupils mismatch'
 			endif
     	endif
+    if OBJ_VALID(self->irtc()) then imok *= (self->irtc())->isok(cause=cause)
     return, imok
 end
 
@@ -383,8 +385,14 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
 	endif else begin
 		nmodes = (self->residual_modes())->nmodes()
 		clvar  = (self->residual_modes())->time_variance() * (1e9*self->reflcoef())^2.
-		range = sqrt(minmax(clvar))
-		plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+		olvar  = (self->olmodes())->time_variance() * (1e9*self->reflcoef())^2.
+   		yrange = sqrt(minmax([clvar,olvar]))
+        if not keyword_set(OVERPLOT) then  begin
+			plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+        endif else begin
+		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
+		endelse
+		oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
 	endelse
 end
 
@@ -571,8 +579,8 @@ function AOelab::ex, cmd  ;,  isvalid=isvalid
         if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid=0
     endif
     if isvalid eq 1 then begin
-        return, value 
-    endif else begin 
+        return, value
+    endif else begin
         message, 'invalid function '+cmd
         return, -1
     endelse
