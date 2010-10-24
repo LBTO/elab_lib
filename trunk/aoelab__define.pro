@@ -225,6 +225,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
 
+    
     ; free memory
     self->free
 
@@ -540,6 +541,46 @@ function AOelab::offloadmodes
     IF (OBJ_VALID(self._offloadmodes)) THEN return, self._offloadmodes else return, obj_new()
 end
 
+function AOelab::ex, cmd  ;,  isvalid=isvalid
+    apex = string(39B)
+  	;nparams = n_params()
+
+    ;if nparams eq 2 then objref = self->Get(pos=index) else begin
+    ; 	objref = self->Get(/all)
+    ;	index = lindgen(self->count())
+    ;endelse
+	;nel = n_elements(objref)
+    ;isvalid = bytarr(nel)
+
+    cmds = strsplit(cmd, '.', /extr)
+
+    isvalid=0
+	tmpobj=self
+    for j=0L, n_elements(cmds)-2 do begin
+        method_name = (strsplit(cmds[j], '(', /extr))[0]
+        add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
+        r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
+        r=execute('if (hasmethod) then tmpobj= tmpobj->'+cmds[j]+add_brackets)
+        if not obj_valid(tmpobj) then break ;
+    endfor
+    if j eq n_elements(cmds)-1 then begin
+        method_name = (strsplit(cmds[j], '(', /extr))[0]
+        add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
+        r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
+        r=execute('if (hasmethod) then begin & value = tmpobj->'+cmds[j]+add_brackets+'  & isvalid=1 & endif')
+        if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid=0
+    endif
+    if isvalid eq 1 then begin
+        return, value 
+    endif else begin 
+        message, 'invalid function '+cmd
+        return, -1
+    endelse
+
+end
+
+
+
 pro AOelab::free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
@@ -555,7 +596,7 @@ end
 
 pro AOelab::Cleanup
     obj_destroy, self._obj_tracknum
-    obj_destroy, self._adsec_status
+    ;obj_destroy, self._adsec_status
     obj_destroy, self._wfs_status
     obj_destroy, self._tel
     obj_destroy, self._sanitycheck
