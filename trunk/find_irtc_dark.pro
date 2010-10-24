@@ -1,10 +1,15 @@
 
-function find_irtc_dark, root_obj, irtc_fname
+function find_irtc_dark, root_obj, irtc_fname, err_msg=err_msg
+
+	err_msg = ""
 
 	if not file_test(irtc_fname) then begin
-        message, irtc_fname + ' not found', /info
+		msg_temp = 'IRTC dark '+ irtc_fname + ' not found'
+        message, msg_temp, /info
+		err_msg += ' -  ' + msg_temp
         return,""
     endif
+
     fitsheader = headfits(irtc_fname, /SILENT)
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
 	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6
@@ -40,20 +45,39 @@ function find_irtc_dark, root_obj, irtc_fname
 				dark_filter_number = long(aoget_fits_keyword(dark_header, 'FILTRNR'))
 				if (dark_exptime eq exptime) and (filter_number eq dark_filter_number) then dark_found=1B else dd+=1
 			endwhile
-			if dark_found then dark_fname = all_darks_fname[idx_closest[dd]] else begin
-				message, 'No compatible (i.e. same exposure time or filter) IRTC dark found', /info
+			if dark_found then begin
+				dark_fname = all_darks_fname[idx_closest[dd]]
+			 	time_elapsed = abs(all_darks_julday[idx_closest[dd]] - thisjulday)
+			 	max_time_elapsed = julday(01, 01, 2010, 01, 00, 00) -  julday(01, 01, 2010, 00, 00, 00)
+			 	if time_elapsed gt max_time_elapsed then begin
+			 		msg_temp = 'Warning: Selected IRTC dark +'+strtrim(round(time_elapsed/max_time_elapsed),2)+'h old!'
+			 		message, msg_temp, /info
+			 		err_msg += ' - ' + msg_temp
+			 	endif
+			endif else begin
+				msg_temp = 'No compatible (i.e. same exposure time or filter) IRTC dark found'
+				message, msg_temp, /info
+				err_msg += ' -  ' + msg_temp
+				return, ""
 			endelse
 		endif else begin
-			message, 'No darks found matching '+all_darks_search, /info
+			msg_temp = 'No darks found matching '+all_darks_search
+			message, msg_temp, /info
+	 		err_msg += ' - ' + msg_temp
 			return, ""
 		endelse
-	endif else message, 'No IRTC exposure time available. Cannot find the closest dark...', /info
+	endif else begin
+		msg_temp = 'No IRTC exposure time info saved. Could not select IRTC dark'
+		message, msg_temp, /info
+	 	err_msg += ' - ' + msg_temp
+	 	return, ""
+	endelse
 
-	;If the closest dark was not found, take the one specified in the header (better than nothing)
-	if not keyword_set(dark_found) then begin
-    	dark_fname = aoget_fits_keyword(fitsheader, 'IRTC.DARK_FILENAME')
- 		dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
-	endif
+;	;If the closest dark was not found, take the one specified in the header (better than nothing)
+;	if not keyword_set(dark_found) then begin
+;    	dark_fname = aoget_fits_keyword(fitsheader, 'IRTC.DARK_FILENAME')
+; 		dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
+;	endif
 
 	return, dark_fname
 end
