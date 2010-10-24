@@ -109,6 +109,8 @@ pro AOhelp::addleaf, leaf, leaf_call
 end
 
 pro AOhelp::Cleanup
+    ; IMPORTANT: remove leafs from container before destroying it, to avoid destroying objects!!
+    self._leafs->remove, /all
     obj_destroy, self._leafs
     obj_destroy, self._methods_help
 end
