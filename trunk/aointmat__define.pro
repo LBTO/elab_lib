@@ -218,7 +218,7 @@ pro AOintmat::Cleanup
     ptr_free, self._modes_idx
     ptr_free, self._slopes_idx
     ptr_free, self._im_file_fitsheader
-    ptr_free, self.im2d_cube
+    ptr_free, self._im2d_cube
     obj_destroy, self._wfs_status
     self->AOhelp::Cleanup
 end
