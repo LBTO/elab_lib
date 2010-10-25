@@ -496,7 +496,7 @@ pro AOpsf::compute_centroid
 			im = image[*,*,ii]
 			im[where(im lt self->threshold())] = 0.
 			im = im[long_exp_center[0]-sz:long_exp_center[0]+sz-1, long_exp_center[1]-sz:long_exp_center[1]+sz-1]
-			centr[ii,*] = (calc_centroid(im) - sz) * self->pixelscale()
+			centr[ii,*] = aocalc_centroid(im) * self->pixelscale()
 		endfor
 		thr = self->threshold()
 		save, centr, thr, long_exp_center, file=self._centroid_fname
