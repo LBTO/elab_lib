@@ -23,6 +23,9 @@ pro log_twiki, aodataset, ref_star=ref_star
         endif else begin
             band = '?'
         endelse
+        if ee->operation_mode() eq 'RR' then begin
+        	if obj_valid(ee->disturb()) then disturb='ON' else disturb='OFF'
+        endif else disturb='ONSKY'
 
         print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s |   |")', $
             ee->tracknum(), $
@@ -42,7 +45,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
     		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
-			obj_valid(ee->disturb()) ? 'ON' : 'OFF' $
+			disturb  $
 
         )
     endfor
