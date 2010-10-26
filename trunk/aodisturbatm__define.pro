@@ -80,7 +80,7 @@ end
 ;end
 
 pro AOdisturbatm::Cleanup
-    self->AOhelp::Cleanup
+    ;self->AOhelp::Cleanup
 end
 
 pro AOdisturbatm::addHelp, obj
