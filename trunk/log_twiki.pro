@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     objref =  aodataset->Get(/all)
 
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *Seeing* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
         ee = objref[i]
@@ -45,8 +45,8 @@ pro log_twiki, aodataset, ref_star=ref_star
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
     		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
-			disturb  $
-
+			disturb,  $
+            ee->isOK(cause=cause) eq 1L ? "" :  cause 
         )
     endfor
 
