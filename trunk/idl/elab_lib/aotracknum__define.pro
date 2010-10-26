@@ -1,11 +1,13 @@
 
 
-function AOtracknum::Init, tracknum
-    if stregex(tracknum, '^[0-9]{8}_[0-9]{6}$', /bool) ne 1 then begin
-        message, 'tracknum must be in the form YYYYMMDD_hhmmss', /inform
-        return, 0
+function AOtracknum::Init, tracknum, y=y, m=m, d=d, hh=hh, mm=mm, ss=ss
+    if keyword_set(y) then begin
+        tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
     endif
-
+    if stregex(tracknum, '^[0-9]{8}_[0-9]{6}$', /bool) ne 1 then begin
+         message, 'tracknum must be in the form YYYYMMDD_hhmmss', /inform
+         return, 0
+    endif
     self._tracknum = tracknum
 
     ; initialize help object and add methods and leafs
