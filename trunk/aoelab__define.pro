@@ -140,9 +140,6 @@ function AOelab::Init, tracknum, $
     modes_fname = filepath(root=self._datadir,  'Modes_'+tracknum+'.fits')
     self._modes = obj_new('AOmodes', self, modes_fname, self._frames_counter)
 
-    ; open loop modes
-    self._olmodes = obj_new('AOolmodes', self) ;, self._residual_modes, self._modes, self._frames_counter)
-
     ; commands
     commands_fname = filepath(root=self._datadir,  'Commands_'+tracknum+'.fits')
     self._commands = obj_new('AOcommands', self, commands_fname, self._frames_counter)
@@ -154,6 +151,9 @@ function AOelab::Init, tracknum, $
     ; modalpositions
     self._modalpositions = obj_new('AOmodalpositions', self)
 
+    ; open loop modes
+    self._olmodes = obj_new('AOolmodes', self)
+
     ; ccd39 frames
     frames_fname = filepath(root=self._datadir,  'Frames_'+tracknum+'.fits')
     self._frames = obj_new('AOframes', self, frames_fname)
@@ -164,13 +164,7 @@ function AOelab::Init, tracknum, $
 
     ; IRTC
     irtc_fname = file_search(filepath(root=self._datadir, 'irtc.fits'))
-    if (n_elements(dark_fname) eq 0) then begin
-    	full_dark_fname = find_irtc_dark(self, irtc_fname, err_msg=dark_err_msg)
-    endif else begin
-        dark_subdir = ['wfs_calib_'+(self->wfs_status())->wunit(),'irtc','backgrounds','bin1'] ;always bin1???
-		full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
-	endelse
-    self._irtc = obj_new('AOIRTC', self, irtc_fname, full_dark_fname, dark_err_msg=dark_err_msg)
+    self._irtc = obj_new('AOIRTC', self, irtc_fname, dark_fname)
 
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
@@ -396,28 +390,6 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
 	endelse
 end
 
-
-pro AOelab::estimate_r0, lambda=lambda
-	if n_elements(lambda) eq 0 then lambda=500e-9	;nm
-	nmodes = (self->modal_rec())->nmodes()
-	clvar  = (self->modalpositions())->time_variance() * (10*self->reflcoef()*2.*!PI/lambda)^2.
-
-	; Compare with Zernike variance:
-	;Zernike number (1->piston, 2->tip, ...)
-	zern_number = indgen(nmodes)+1
-	DpupM = 8.22	;m
-	r0aso = 0.020	;m
-	sec2rad = 4.85*1.e-6
-
-	armando			= (4.*!pi^2)*(DpupM/r0aso)^(5./3.)*diag_matrix(kolm_mcovar(nmodes+1))
-;	zern_num, indgen(nmodes)+2, n=nn
-;	varNoll         = varzern_turb(nn, DRO = DpupM/r0aso)
-	loadct,39, /silent
-	plot_oo, lindgen(nmodes)+1, clvar, psym=-1, symsize=0.8, charsize=1.2, $
-            ytitle=textoidl('rad^2'), xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
-	oplot, lindgen(nmodes)+1, armando, psym=-2, color=250
-
-end
 
 pro AOelab::modalSpecPlot, modenum
 
