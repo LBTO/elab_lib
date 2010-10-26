@@ -163,7 +163,7 @@ pro AOolmodes::estimate_r0
 
 	;Find best fit
 	r0a=0.01 & r0b=1.   ;range of r0s in m
-	minf_bracket, r0a,r0b,r0c, erra,errb, errc, FUNC_NAME='AOolmodes::fit_r0_errfunc'
+	minf_bracket, r0a,r0b,r0c, erra,errb, errc, FUNC_NAME='fit_r0_errfunc'
 	minf_parabolic, r0a,r0b,r0c, r0fit, errmin, FUNC_NAME='fit_r0_errfunc'
 
 	;Save results
