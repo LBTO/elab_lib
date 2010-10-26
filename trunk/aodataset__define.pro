@@ -1,9 +1,12 @@
 
 ;+
 ;
+; KEYWORD
+;    lastminute   analyze tracknums acquired in the last lastminute minutes
+; 
 ;-
 
-function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, _extra=ex
+function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
     if not self->IDL_container::Init() then return, 0
     if not keyword_set(root_dir)      then root_dir = !ao_env.root
     self._root_dir = root_dir
@@ -11,6 +14,13 @@ function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum,
 	if n_elements(objarray) eq 0 then begin
     	if not keyword_set(from_tracknum) then from_tracknum = ""
     	if not keyword_set(to_tracknum)   then to_tracknum = ""
+        if keyword_set(lastminute) then begin
+            now =  systime(/Julian)
+            caldat, now, m,d,y,hh,mm,ss
+            to_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
+            caldat, now - (lastminute/1440.d),  m,d,y,hh,mm,ss
+            from_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
+        endif
     	self._from_tracknum = obj_new('AOtracknum', from_tracknum)
     	self._to_tracknum   = obj_new('AOtracknum', to_tracknum)
 
