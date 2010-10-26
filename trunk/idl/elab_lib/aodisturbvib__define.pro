@@ -52,7 +52,7 @@ end
 
 pro AOdisturbatm::Cleanup
     ptr_free, self._vibrations
-    self->AOhelp::Cleanup
+    ;self->AOhelp::Cleanup
 end
 
 pro AOdisturbvib::addHelp, obj
