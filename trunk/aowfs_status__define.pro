@@ -61,7 +61,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "rerotator()",  "rirotator angle (degrees)"
     self->addMethodHelp, "camera_lens()", "Position [x,y] of camera lens (mm)"
     self->addMethodHelp, "stages()", "Position [x,y,z] of stages (mm)"
-    self->addMethodHelp, "lamp()",  "lamp intensity (a.u.)"
+    self->addMethodHelp, "lamp_intensity()",  "lamp intensity (a.u.)"
     self->addMethodHelp, "cube_angle()",  "cube rotator angle (degree)"
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "summary", "Summary of WFS status"
