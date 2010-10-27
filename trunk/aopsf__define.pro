@@ -649,9 +649,20 @@ function AOpsf::roi
 end
 
 pro AOpsf::free
-    if ptr_valid(self._image)      then ptr_free, self._image
-    if ptr_valid(self._dark_image) then ptr_free, self._dark_image
-    if ptr_valid(self._sym_psf)    then ptr_free, self._sym_psf
+    if ptr_valid(self._image)       then ptr_free, self._image
+    if ptr_valid(self._dark_image)  then ptr_free, self._dark_image
+    if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
+    if ptr_valid(self._centroid)    then ptr_free, self._centroid
+    IF OBJ_VALID(self._gaussfit)   then  self._gaussfit->free
+    if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
+    if ptr_valid(self._psfprofvar)  then ptr_free, self._psfprofvar
+    if ptr_valid(self._psfprof_dist)    then ptr_free, self._psfprof_dist
+    if ptr_valid(self._psfprof_dist_lD) then ptr_free, self._psfprof_dist_lD
+    if ptr_valid(self._sym_psf)     then ptr_free, self._sym_psf
+    if ptr_valid(self._enc_ene)    then ptr_free, self._enc_ene
+    if ptr_valid(self._enc_ene_dist)    then ptr_free, self._enc_ene_dist
+    if ptr_valid(self._enc_ene_dist_lD) then ptr_free, self._enc_ene_dist_lD
+    self->AOtime_series::free
 end
 
 pro AOpsf::Cleanup
@@ -670,6 +681,7 @@ pro AOpsf::Cleanup
     if ptr_valid(self._enc_ene)    then ptr_free, self._enc_ene
     if ptr_valid(self._enc_ene_dist)    then ptr_free, self._enc_ene_dist
     if ptr_valid(self._enc_ene_dist_lD) then ptr_free, self._enc_ene_dist_lD
+    self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
 

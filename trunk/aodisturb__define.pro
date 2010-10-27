@@ -190,10 +190,14 @@ function AOdisturb::isok, cause=cause
 	return,dist_ok
 end
 
+pro AOdisturb::free
+	if ptr_valid(self._commands) then ptr_free, self._commands
+	self->AOtimes_series::free
+end
 
 pro AOdisturb::Cleanup
-    ptr_free, self._disturb_fname_fitsheader
-    ptr_free, self._commands
+    if ptr_valid(self._disturb_fname_fitsheader) then ptr_free, self._disturb_fname_fitsheader
+	if ptr_valid(self._commands) then ptr_free, self._commands
     if strmatch(self._type, '*vib*') then self->AOdisturbvib::Cleanup
     if strmatch(self._type, '*atm*') then self->AOdisturbatm::Cleanup
     self->AOtime_series::Cleanup

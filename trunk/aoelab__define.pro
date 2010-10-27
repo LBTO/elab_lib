@@ -134,7 +134,7 @@ function AOelab::Init, tracknum, $
     self._slopes = obj_new('AOslopes', self, slopes_file, self._frames_counter)
 
     ; residual modes
-    self._residual_modes = obj_new('AOresidual_modes', self, self._slopes, self._modal_rec)
+    self._residual_modes = obj_new('AOresidual_modes', self)
 
     ; modes
     modes_fname = filepath(root=self._datadir,  'Modes_'+tracknum+'.fits')
@@ -569,9 +569,11 @@ pro AOelab::free
     IF (OBJ_VALID(self._commands)) THEN  self._commands->free
     IF (OBJ_VALID(self._positions)) THEN  self._positions->free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
-    IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
     IF (OBJ_VALID(self._tv)) THEN  self._tv->free
     IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
+    IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
+    IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
+    IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
 end
 
 pro AOelab::Cleanup

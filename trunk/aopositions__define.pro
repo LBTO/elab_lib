@@ -83,14 +83,14 @@ function AOpositions::flatpositions
 end
 
 pro AOpositions::free
-    ptr_free, self._positions
+    if ptr_valid(self._positions) then ptr_free, self._positions
     self->AOtime_series::free
 end
 
 
 pro AOpositions::Cleanup
-    ptr_free, self._positions
-    ptr_free, self._fitsheader
+    if ptr_valid(self._positions) then ptr_free, self._positions
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

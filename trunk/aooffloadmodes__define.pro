@@ -64,13 +64,13 @@ function AOoffloadmodes::GetDati
 end
 
 pro AOoffloadmodes::free
-    ptr_free, self._offloadmodes
+    if ptr_valid(self._offloadmodes) then ptr_free, self._offloadmodes
     self->AOtime_series::free
 end
 
 
 pro AOoffloadmodes::Cleanup
-    ptr_free, self._offloadmodes
+    if ptr_valid(self._offloadmodes) then ptr_free, self._offloadmodes
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

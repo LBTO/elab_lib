@@ -177,13 +177,13 @@ function AOolmodes::seeing
 end
 
 pro AOolmodes::free
-    ptr_free, self._modes
+    if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOtime_series::free
 end
 
 
 pro AOolmodes::Cleanup
-    ptr_free, self._modes
+    if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

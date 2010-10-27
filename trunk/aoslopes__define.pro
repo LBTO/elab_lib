@@ -184,12 +184,14 @@ end
 
 
 pro AOslopes::Free
-    ptr_free, self._slopes
+    if ptr_valid(self._slopes) then ptr_free, self._slopes
+    self->AOtime_series::free
 end
 
 pro AOslopes::Cleanup
-    ptr_free, self._slopes
-    ptr_free, self._fitsheader
+    if ptr_valid(self._slopes) then ptr_free, self._slopes
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
+    self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
 
