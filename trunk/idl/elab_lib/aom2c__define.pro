@@ -47,7 +47,7 @@ end
 
 function AOm2c::c2m
     if file_test(self._store_c2m_fname) then begin
-        restore, self._store_c2m_fname, /v
+        restore, self._store_c2m_fname
     endif else begin
         m2c = self->m2c()
 		idx_valid_modes = where(total(m2c,2) ne 0, nmodes_max)
