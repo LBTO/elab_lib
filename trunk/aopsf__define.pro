@@ -4,7 +4,7 @@
 ;
 ; INPUT
 ;   root_obj
-;   psf_fname            images cube fits file name (absolute path) 
+;   psf_fname            images cube fits file name (absolute path)
 ;   dark_fname           dark fits file name (absolute path)
 ;   pixelscale           [arcsec/px]
 ;   lambda               [m]
@@ -13,7 +13,7 @@
 ;
 ; KEYWORD
 ;   binning              default = 1
-;   roi                  array [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame 
+;   roi                  array [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame
 ;-
 
 ;function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
@@ -34,45 +34,19 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
     self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
-    
-;    if not keyword_set(pixelscale) then begin 
-;        apertnr = long(aoget_fits_keyword(self->header(), 'APERTNR'))
-;        case apertnr of
-;            1: pixelscale = 0.010
-;            2: pixelscale = 0.020
-;            3: pixelscale = 0.100
-;        else: begin
-;                message, 'unknown pixelscale (apertnr is'+string(apertnr)+'). Force to 0.010', /info 
-;                pixelscale = 0.010
-;              end
-;        endcase
-;    endif
-    self._pixelscale = pixelscale 
-	
-    ; Detect filter:
-    ;filter_number = long(aoget_fits_keyword(self->header(), 'FILTRNR'))
-    ;self._lambda_im = irtc_filter_lambda(filter_number)
+    self._pixelscale = pixelscale
     self._lambda_im = lambda
-	
-    ; Exposure time
-	;self._exptime = float(aoget_fits_keyword(self->header(), 'EXPTIME'))*1e-6	;in seconds
-	;if self._exptime eq 0 then message, 'PSF image exposure time not known', /info
 	self._exptime = exptime
-
-    ;Framerate
-	;self._framerate = float(aoget_fits_keyword(self->header(), 'FR-RATE')) < 66.
-	;if self._framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
-    ;self._framerate =  self._framerate < 1./self._exptime 
     self._framerate = framerate
 
     ; binning
     if not keyword_set(binning) then binning = 1
     self._binning = binning
-	
+
     ; ROI
     if not keyword_set(roi) then roi = [0, self->frame_w()-1, 0, self->frame_h()-1]
     self._roi = roi
-    
+
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
 
 
@@ -248,24 +222,31 @@ function AOpsf::image
 end
 
 function AOpsf::dark_image
-    if not (PTR_VALID(self._dark_image)) then $
-    	if file_test(self->dark_fname()) then begin
-        	dark = float(readfits( self->dark_fname(), dark_header, /SILENT))
-	    	naxis = long(aoget_fits_keyword(dark_header, 'NAXIS'))
-    		dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
-    		dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-    		if (dark_frame_w ne self._frame_w) or (dark_frame_h ne self._frame_h) then begin
-    			message, 'Dark and PSF images do not have the same dimensions!!', /info
-    			self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
-    		endif else begin
-    			dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
-        		if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
+    if not (PTR_VALID(self._dark_image)) then begin
+    	cube_fname = self->dark_fname()
+    	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='irtc_darks', $
+    		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
+		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname)) else begin
+    		if file_test(cube_fname) then begin
+        		dark = float(readfits(cube_fname, dark_header, /SILENT))
+	    		naxis = long(aoget_fits_keyword(dark_header, 'NAXIS'))
+    			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
+    			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
+    			if (dark_frame_w ne self._frame_w) or (dark_frame_h ne self._frame_h) then begin
+    				message, 'Dark and PSF images do not have the same dimensions!!', /info
+    				self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
+    			endif else begin
+    				dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
+        			if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
         								  self._dark_image = ptr_new(dark)
+	        		writefits, saved_dark_fname, *(self._dark_image)
+        		endelse
+        	endif else begin
+        		message, 'Dark file not existing. Assuming it zero', /info
+        		self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
         	endelse
-        endif else begin
-        	message, 'Dark file not existing. Assuming it zero', /info
-        	self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
         endelse
+    endif
     return, *(self._dark_image)
 end
 
@@ -536,12 +517,12 @@ pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
     freq = self->freq(from=from_freq, to=to_freq)
     tip  = self->power(0, from=from_freq, to=to_freq, /cum)
     tilt = self->power(1, from=from_freq, to=to_freq, /cum)
-    plot, freq, sqrt(tip + tilt), $ 
+    plot, freq, sqrt(tip + tilt), $
         title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [mas]', _extra=ex
     oplot, freq, sqrt(tip), col='0000ff'x
     oplot, freq, sqrt(tilt), col='00ff00'x
     legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
-    
+
     sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
     ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
     print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
@@ -711,7 +692,7 @@ pro AOpsf__define
         _frame_h        :  0L			, $
         _exptime	    :  0.			, $
         _framerate		:  0.			, $	  ;Hz
-        _binning 		:  0.			, $	  
+        _binning 		:  0.			, $
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
         _threshold      :  0.			, $
