@@ -146,9 +146,13 @@ function AOgaussfit::psffit
     return, *self._psffit
 end
 
+pro AOgaussfit::free
+	if ptr_valid(self._frame) then ptr_free, self._frame
+end
+
 pro AOgaussfit::Cleanup
-    ptr_free, self._frame
-    ptr_free, self._psffit
+	if ptr_valid(self._frame) then ptr_free, self._frame
+    if ptr_valid(self._psffit) then ptr_free, self._psffit
     self->AOhelp::Cleanup
 end
 

@@ -61,13 +61,13 @@ function AOmodaldisturb::GetDati
 end
 
 pro AOmodaldisturb::free
-    ptr_free, self._modaldisturb
+    if ptr_valid(self._modaldisturb) then ptr_free, self._modaldisturb
     self->AOtime_series::free
 end
 
 
 pro AOmodaldisturb::Cleanup
-    ptr_free, self._modaldisturb
+    if ptr_valid(self._modaldisturb) then ptr_free, self._modaldisturb
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

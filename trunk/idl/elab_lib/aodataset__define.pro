@@ -3,7 +3,7 @@
 ;
 ; KEYWORD
 ;    lastminute   analyze tracknums acquired in the last lastminute minutes
-; 
+;
 ;-
 
 function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
@@ -102,7 +102,7 @@ end
 ;
 function AOdataset::GetFromTracknum, tracknum, idx=idx
     ;if not ptr_valid(self._tracknums) then return, obj_new()
-    
+
     if n_elements(tracknum) eq 1 then begin
         tidx = where(self->tracknums() eq tracknum, count)
         if count ne 0 then idx=tidx
@@ -185,8 +185,8 @@ function AOdataset::value, cmd, index, index_out=index_out, VERBOSE=VERBOSE
             v[i]=ptr_new(value, /no_copy)
             if keyword_set(verbose) then print, 'data found'
         endif else if keyword_set(verbose) then print, 'data NOT found'
-        if obj_valid(tmpobj) then $
-        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+        if obj_valid(objref[i]) then $
+        	if obj_hasmethod(objref[i], 'free') then objref[i]->free
 	endfor
     valid = where(isvalid eq 1, cntvalid)
 
@@ -303,8 +303,8 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, AOdat
             if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
             v[i]=ptr_new(value, /no_copy)
          endif
-        if obj_valid(tmpobj) then $
-        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+        if obj_valid(objref[i]) then $
+        	if obj_hasmethod(objref[i], 'free') then objref[i]->free
     endfor
     valid = where(isvalid eq 1, cntvalid)
     if arg_present(ptrdata) then ptrdata = cntvalid eq 0 ? ptr_new() : v[valid]

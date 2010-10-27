@@ -58,13 +58,13 @@ function AOmodalpositions::GetDati
 end
 
 pro AOmodalpositions::free
-    ptr_free, self._modalpositions
+    if ptr_valid(self._modalpositions) then ptr_free, self._modalpositions
     self->AOtime_series::free
 end
 
 
 pro AOmodalpositions::Cleanup
-    ptr_free, self._modalpositions
+    if ptr_valid(self._modalpositions) then ptr_free, self._modalpositions
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

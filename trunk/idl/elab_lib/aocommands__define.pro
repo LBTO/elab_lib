@@ -75,14 +75,14 @@ function AOcommands::GetDati
 end
 
 pro AOcommands::free
-    ptr_free, self._commands
+    if ptr_valid(self._commands) then ptr_free, self._commands
     self->AOtime_series::free
 end
 
 
 pro AOcommands::Cleanup
-    ptr_free, self._commands
-    ptr_free, self._fitsheader
+    if ptr_valid(self._commands) then ptr_free, self._commands
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

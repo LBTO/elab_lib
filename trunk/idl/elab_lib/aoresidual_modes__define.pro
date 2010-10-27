@@ -7,9 +7,7 @@
 ;
 ;-
 
-function AOresidual_modes::Init, root_obj, slopes, rec
-    self._rec    =  ptr_new(rec)
-    self._slopes =  ptr_new(slopes)
+function AOresidual_modes::Init, root_obj
 
     self._store_fname     = filepath(root=root_obj->elabdir(), 'residual_modes.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'residual_modes_psd.sav')
@@ -34,8 +32,6 @@ function AOresidual_modes::Init, root_obj, slopes, rec
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
     self->addMethodHelp, "modes()", "modal residue (m rms, surface) [niter, nmodes]"
-    self->addMethodHelp, "slopes()", "reference to slopes object"
-    self->addMethodHelp, "rec()", "reference to modal reconstructor object"
     self->addMethodHelp, "nmodes()", "number of residual modes"
     self->AOtime_series::addHelp, self
     return, 1
@@ -47,8 +43,8 @@ pro AOresidual_modes::datiProducer
         restore, self._store_fname
     endif else begin
         ; compute residual modes from slopes and modal rec
-        t_rec = (*self._rec->rec())[*,*self._rec->modes_idx()]
-        modes =  t_rec ##  *self._slopes->slopes()
+        t_rec = ((self._root_obj->modal_rec())->rec())[*,(self._root_obj->modal_rec())->modes_idx()]
+        modes =  t_rec ##  (self._root_obj->slopes())->slopes()
         save, modes, file=self._store_fname
     endelse
     self._modes = ptr_new(modes, /no_copy)
@@ -62,14 +58,6 @@ end
 function AOresidual_modes::modes, _extra=ex ;TODO add extra for series_idx or iter_idx
     ;if (PTR_VALID(self._modes)) THEN return, *(self._modes) else return, 0d
     return, self->dati(_extra=ex)
-end
-
-function AOresidual_modes::slopes
-    if (OBJ_VALID(*self._slopes)) THEN return, *self._slopes else return, 0d
-end
-
-function AOresidual_modes::rec
-    if (OBJ_VALID(*self._rec)) THEN return, *self._rec else return, 0d
 end
 
 function AOresidual_modes::nmodes
@@ -100,14 +88,14 @@ function AOresidual_modes::GetDati
 end
 
 pro AOresidual_modes::free
-    ptr_free, self._modes
+    if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOtime_series::free
 end
 
 
 pro AOresidual_modes::Cleanup
     ;obj_destroy, self._obj_psd
-    ptr_free, self._modes
+    if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
@@ -115,8 +103,6 @@ end
 pro AOresidual_modes__define
     struct = { AOresidual_modes, $
         _modes         : ptr_new(), $
-        _slopes        : ptr_new(), $
-        _rec           : ptr_new(), $
         _store_fname   : "" ,       $
         _root_obj      : obj_new(), $
         INHERITS    AOtime_series, $
