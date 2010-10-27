@@ -37,7 +37,7 @@ end
 pro AOmodaldisturb::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         modaldisturb = self._m2c_obj->c2m() ## self._disturb_obj->command()
         save, modaldisturb, file=self._store_fname

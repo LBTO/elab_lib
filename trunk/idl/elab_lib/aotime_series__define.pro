@@ -64,7 +64,7 @@ end
 
 pro AOtime_series::SpectraCompute
     if file_test(self._store_psd_fname) then begin
-        restore, self._store_psd_fname, /v
+        restore, self._store_psd_fname
     endif else begin
         dati = self->GetDati()
         if test_type(dati, /pointer) ne 0 then message, 'AOtime_series subclass::GetDati must return a pointer to float 1/2D array'
@@ -177,7 +177,7 @@ end
 function AOtime_series::freq, from_freq=from_freq, to_freq=to_freq
     IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
     IF (PTR_VALID(self._freq)) THEN begin
-        
+
         if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
         if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
         if from_freq ge to_freq then message, "from_freq must be less than to_freq"
@@ -189,8 +189,8 @@ function AOtime_series::freq, from_freq=from_freq, to_freq=to_freq
         idx_from = closest(from_freq, *(self._freq))
         idx_to   = closest(to_freq, *(self._freq))
 
-        return, (*(self._freq))[idx_from:idx_to] 
-        
+        return, (*(self._freq))[idx_from:idx_to]
+
     endif else begin
         return, 0d
     endelse
@@ -304,7 +304,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
-	
+
 	if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
 	if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
 	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
@@ -312,22 +312,22 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
 	if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
 	if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
-	
+
 	idx_from = closest(from_freq, *(self._freq))
 	idx_to   = closest(to_freq, *(self._freq))
 
 	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
 	fr=*self._freq
-	
+
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
-	
+
 	for kkk=0, n_elements(vtemp)-1 do begin
 		mode=vtemp[kkk]
 		if mode lt 2 then thr=0.005 else thr=0.01
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
 		thrs=thr/n_el*tmax
 		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
-		if thrs lt mean(spsd) then thrs=mean(spsd) 
+		if thrs lt mean(spsd) then thrs=mean(spsd)
 		idx=where(spsd gt thrs)+idx_from
 		if total(idx) ne -1 then begin
 			ofr=-1

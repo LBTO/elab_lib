@@ -63,7 +63,7 @@ end
 
 pro AOolmodes::datiProducer
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
 		rmodes = (self._root_obj->residual_modes())->modes()
 		imodes = (self._root_obj->modes())->modes()

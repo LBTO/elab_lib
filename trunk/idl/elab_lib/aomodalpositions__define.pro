@@ -34,7 +34,7 @@ end
 pro AOmodalpositions::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         modalpositions = self._m2c_obj->c2m() ## self._pos_obj->positions()
         save, modalpositions, file=self._store_fname

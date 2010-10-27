@@ -41,7 +41,7 @@ end
 pro AOcommands::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         commands = readfits(self._fname, /SILENT)
         commands = transpose(temporary(commands))

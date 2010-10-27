@@ -43,7 +43,7 @@ end
 pro AOpositions::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         positions = readfits(self._fname, /SILENT)
         positions = transpose(temporary(positions))

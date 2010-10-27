@@ -23,7 +23,7 @@ function generate_dampvib, damp, fvib, fc, nstep, seed=seed
     v[i] = randomn(seed)
     out[i] = v[i] + z1[i]
     z1[i+1] = z2[i] -viba1*out[i]
-    z2[i+1] = viba2*out[i]  
+    z2[i+1] = viba2*out[i]
   endfor
   fft1, out, 1/fc, SPEC=spec, /NOPLOT
   out = real_part(fft(abs(spec),1))
@@ -73,7 +73,7 @@ end
 ;
 function modalif_to_zonalif, mirmodes_file, idx_mask=idx_mask
   ; Restore MMmatrix and mm2c
-  restore, mirmodes_file,/v
+  restore, mirmodes_file
   IFmatrix = transpose(mm2c ## transpose(MMmatrix))
   undefine, MMmatrix, mm2c
   return, IFmatrix
@@ -293,7 +293,7 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
 	if file_test(disturb_dir+'inv_IFmatrix.sav') then begin
 		undefine, IFmatrix
-		restore, disturb_dir+'inv_IFmatrix.sav',/v
+		restore, disturb_dir+'inv_IFmatrix.sav'
 	endif else begin
 		if n_elements(IFmatrix) eq 0 then IFmatrix = modalif_to_zonalif(mirmodes_file, idx_mask=idx_mask)
 		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE)

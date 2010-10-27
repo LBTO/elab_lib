@@ -35,7 +35,7 @@ end
 pro AOoffloadmodes::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         restore, self._fname  ; pmpos, f2p, cl_act
         offloadmodes = pmpos ## (self._pos_obj->positions() -  ( self._pos_obj->flatpositions() ## replicate(1.0, self._pos_obj->niter()) ) )
