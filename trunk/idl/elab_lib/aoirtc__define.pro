@@ -43,7 +43,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     	2: lambda = 1.07e-6	;J
     	3: lambda = 1.60e-6	;H
      else: begin
-     		lambda = 0.
+     		lambda = 1.
      		msg_temp = 'Unknown IRTC filter'
             message, msg_temp, /info
 	        self._irtc_err_msg += ' - ' + msg_temp
