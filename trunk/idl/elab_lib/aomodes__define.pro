@@ -41,7 +41,7 @@ end
 pro AOmodes::datiProducer
 
     if file_test(self._store_fname) then begin
-        restore, self._store_fname, /v
+        restore, self._store_fname
     endif else begin
         modes = readfits(self._fname, /SILENT)
         modes = transpose(temporary(modes))
