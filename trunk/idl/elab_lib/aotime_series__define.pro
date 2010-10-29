@@ -407,6 +407,122 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	return, res
 end
 
+function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
+  IF not keyword_set(plot) THEN plot=0
+  IF not keyword_set(fstep) THEN fstep=0.25
+  IF not keyword_set(n) THEN n=5
+  IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
+  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
+  
+  if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
+  if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+  if from_freq ge to_freq then message, "from_freq must be less than to_freq"
+  if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
+  if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
+  if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
+  if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
+  
+  if self._niter eq -1 then self->Compute
+  
+  idx_from = closest(from_freq, *(self._freq))
+  idx_to   = closest(to_freq, *(self._freq))
+  
+  peaks=self->findpeaks([0,1], from_freq=from_freq, to_freq=to_freq)
+
+  frtemp=[peaks.(0).fr,peaks.(1).fr]
+  pwtemp=[peaks.(0).pw,peaks.(1).pw]
+  flag=0
+  j=0
+  
+  cc = [-1,255.,255.*256,255.*256*256,255.*256*100,255.*100]
+  
+  while flag eq 0 do begin
+    idx=where(abs(frtemp - frtemp[j]) lt 0.6)
+    if total(idx) ne -1 then begin
+      for k=0,n_elements(idx)-1 do begin
+        if idx[k] ne j then begin
+          if idx[k] lt n_elements(frtemp)-1 then begin
+            frtemp=[frtemp[0:idx[k]-1],frtemp[idx[k]+1:*]]
+            pwtemp=[pwtemp[0:idx[k]-1],pwtemp[idx[k]+1:*]]
+          endif else begin
+            frtemp=frtemp[0:idx[k]-1]
+            pwtemp=pwtemp[0:idx[k]-1]
+          endelse
+          idx=idx-1
+        endif
+      endfor
+    endif
+    j+=1
+    if j gt n_elements(frtemp)-1 then flag=1
+  endwhile
+
+  if n_elements(pwtemp) lt nfr then nnn=n_elements(pwtemp) else nnn=nfr
+  maxr=dblarr(nnn)
+  idxmax=dblarr(nnn)
+  fvibmax=dblarr(nnn)
+  pow=dblarr(nnn)
+  rm1=dblarr(self._niter,nnn)
+  rm2=dblarr(self._niter,nnn)
+  ab=dblarr(2,nnn)
+  cor=dblarr(nnn)
+  var=dblarr(nnn)
+  plt=0
+  if plot eq 1 then $
+    window, /free
+  for ijk = 0, nnn-1 do begin 
+    if ijk eq 0 then pw=pwtemp else pw[idxmax(ijk-1)]=0
+    maxr(ijk) = max(pw,idxmaxtemp)
+    idxmax(ijk) = idxmaxtemp
+    fvibmax(ijk) = frtemp[idxmax(ijk)]
+    pow(ijk) = pwtemp[idxmax(ijk)]
+    a1t=fft((*(self->GetDati()))[*,0])
+    a2t=fft((*(self->GetDati()))[*,1])
+    p=self._niter*self._dt
+    
+    if p*fstep lt 1 then fstep=1./p
+    a1t[0:p*(fvibmax(ijk)-fstep)-1]=0
+    a1t[p*(fvibmax(ijk)+fstep):p*(1./self._dt-fvibmax(ijk)-fstep)-1]=0
+    a1t[p*(1./self._dt-fvibmax(ijk)+fstep):*]=0
+    a2t[0:p*(fvibmax(ijk)-fstep)-1]=0
+    a2t[p*(fvibmax(ijk)+fstep):p*(1./self._dt-fvibmax(ijk)-fstep)-1]=0
+    a2t[p*(1./self._dt-fvibmax(ijk)+fstep):*]=0
+    rm1[*,ijk]=fft(a1t,1)
+    rm2[*,ijk]=fft(a2t,1)
+    ab[*,ijk] = linfit(rm1[*,ijk],rm2[*,ijk])
+    cor[ijk] = variance( rm2[*,ijk]-ab[1,ijk]*rm1[*,ijk]-ab[0,ijk] )
+    var[ijk] = variance( rm2[*,ijk] )
+    if ijk eq 0 then begin
+      if plot eq 1 then $
+        plot, 1.1*minmax([rm1[*,ijk],rm2[*,ijk]]), 1.1*minmax([rm1[*,ijk],rm2[*,ijk]]), $
+            xtitle='direction 0', ytitle='direction 1', title='vibrations from '+strtrim(from_freq,2)+'Hz to '+strtrim(to_freq,2)+'Hz', charsize=1.2, /nodata
+      if plot eq 1 then $
+        oplot, rm1[*,ijk], rm2[*,ijk], psym=3
+      frvib= fvibmax(ijk)
+      colo=-1
+    endif else begin
+      if plot eq 1 then $
+        oplot, rm1[*,ijk], rm2[*,ijk], psym=3, col=CC[ijk]
+      frvib=[frvib, fvibmax(ijk)]
+      colo=[colo,CC[ijk]]
+    endelse
+    if plot eq 1 then $
+      oplot, minmax(rm1[*,0]), ab[1,ijk]*minmax(rm1[*,0])+ab[0,ijk], col=CC[ijk]
+  endfor
+  if plot eq 1 then $
+    legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
+  angle=transpose(atan(ab[1,*]))*180/!pi
+
+  directions={$
+    freq: frvib, $
+    power: pow, $
+    error_var: cor, $
+    signal_var: var, $
+    angle: angle $
+    }
+
+  return, directions
+end
+
 pro AOtime_series::addHelp, obj
 
     obj->addMethodHelp, "niter()",   "number of time steps"
@@ -422,6 +538,8 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
     obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative)", "return power of idx-th spectrum between frequencies from_freq and to_freq"
     obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq"
+    obj->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
+                        "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
     obj->addMethodHelp, "specPlot(idx)", "plot psd of idx-th spectrum"
 end
 
