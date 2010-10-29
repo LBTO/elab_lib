@@ -5,7 +5,7 @@ function AOtel::Init, fitsfile
     endif
 
 	hdr = headfits(fitsfile, /SILENT, errmsg=errmsg)
-    if errmsg ne '' then message, fitsfile+ ': '+ errmsg, /info 
+    if errmsg ne '' then message, fitsfile+ ': '+ errmsg, /info
 
 
 	angle_arcsec = float(aoget_fits_keyword(hdr, 'tel.ROTATOR.ANGLE'))
@@ -18,24 +18,24 @@ function AOtel::Init, fitsfile
 	el = float(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
 	if el ne -9999. then self._el = el else self._el = !VALUES.F_NAN
 
-    dec =  float(aoget_fits_keyword(hdr, 'tel.TEL.DEC')) 
+    dec =  float(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
 	if dec ne -9999. then self._dec = dec * 180./!pi else self._dec = !VALUES.F_NAN
-    
+
     ra  =  float(aoget_fits_keyword(hdr, 'tel.TEL.RA'))
 	if ra ne -9999. then self._ra = ra * 180./!pi/15 else self._ra = !VALUES.F_NAN
-	
+
     istracking = long(aoget_fits_keyword(hdr, 'tel.TEL.ISTRACKING'))
 	if istracking ne -9999 then self._istracking = istracking else self._istracking = -1L
-    
+
     isguiding  =  long(aoget_fits_keyword(hdr, 'tel.TEL.ISGUIDING'))
 	if isguiding ne -9999 then self._isguiding = isguiding else self._isguiding = -1L
 
     self._tel_hbs_on            =  long(aoget_fits_keyword(hdr, 'tel.TEL.HBS_ON'))
 	if self._tel_hbs_on eq -9999 then self._tel_hbs_on = -1L
-    
+
     self._tel_vent_on           =  long(aoget_fits_keyword(hdr, 'tel.TEL.VENT_ON'))
 	if self._tel_vent_on eq -9999 then self._tel_vent_on = -1L
-	
+
     indoor_wind = float(aoget_fits_keyword(hdr, 'tel.AMB.WINDSPEED'))
 	if indoor_wind ne -9999. then self._indoor_wind = indoor_wind else self._indoor_wind = !VALUES.F_NAN
 
@@ -71,6 +71,7 @@ function AOtel::Init, fitsfile
 	if ter3 ne -9999. then self._ter[3] = ter3 else self._ter[3] = !VALUES.F_NAN
 
     self._dimm_seeing           =  float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))
+    if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
     self._guidecam_centroid_y   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.Y'))
 
@@ -83,25 +84,25 @@ function AOtel::Init, fitsfile
 ; tel.HEXAPOD.ABS_POS4  real   hexapod rotation Y (arcseconds)
 ; tel.HEXAPOD.ABS_POS5  real   hexapod rotation Z (arcseconds)
 ; tel.HEXAPOD.STATUS    int    hexapod status (significato ignoto)
-; tel.DIMM.SEEING = '0.736199021339'                                     
-; tel.EXTERN.WINDDIRECTION = '250.935348511'                             
-; tel.EXTERN.WINDSPEED = '3.29999995232'                                 
-; tel.GUIDECAM.CENTROID.X = '0.674229739671'                             
-; tel.GUIDECAM.CENTROID.Y = '0.674229739671'                             
-; tel.ROTATOR.ANGLE = '1358070.0'                                        
-; tel.SWA.DEPLOYED = '-9999   '                                          
-; tel.TEL.AZ = '44739.3184691'                                           
-; tel.TEL.DEC = '3.72526308274'                                          
-; tel.TEL.EL = '306205.354398'                                           
-; tel.TEL.HBS_ON = '-9999   '                                            
-; tel.TEL.ISGUIDING = '-9999   '                                         
-; tel.TEL.ISTRACKING = '-9999   '                                        
-; tel.TEL.RA = '0.655775413092'                                          
-; tel.TEL.VENT_ON = '-9999   '                                           
-; tel.TERTIARY.ABS_POS0 = '-1087.47875977'                               
-; tel.TERTIARY.ABS_POS1 = '18.0770874023'                                
-; tel.TERTIARY.ABS_POS2 = '-0.0    '                                     
-; tel.TERTIARY.ABS_POS3 = '-43.1807785034'                               
+; tel.DIMM.SEEING = '0.736199021339'
+; tel.EXTERN.WINDDIRECTION = '250.935348511'
+; tel.EXTERN.WINDSPEED = '3.29999995232'
+; tel.GUIDECAM.CENTROID.X = '0.674229739671'
+; tel.GUIDECAM.CENTROID.Y = '0.674229739671'
+; tel.ROTATOR.ANGLE = '1358070.0'
+; tel.SWA.DEPLOYED = '-9999   '
+; tel.TEL.AZ = '44739.3184691'
+; tel.TEL.DEC = '3.72526308274'
+; tel.TEL.EL = '306205.354398'
+; tel.TEL.HBS_ON = '-9999   '
+; tel.TEL.ISGUIDING = '-9999   '
+; tel.TEL.ISTRACKING = '-9999   '
+; tel.TEL.RA = '0.655775413092'
+; tel.TEL.VENT_ON = '-9999   '
+; tel.TERTIARY.ABS_POS0 = '-1087.47875977'
+; tel.TERTIARY.ABS_POS1 = '18.0770874023'
+; tel.TERTIARY.ABS_POS2 = '-0.0    '
+; tel.TERTIARY.ABS_POS3 = '-43.1807785034'
 
 
     ; initialize help object and add methods and leafs
@@ -153,11 +154,11 @@ function AOtel::el
 end
 
 function AOtel::dec
-	return, self._dec    
+	return, self._dec
 end
 
 function AOtel::ra
-	return, self._ra    
+	return, self._ra
 end
 
 function AOtel::hbs_on
@@ -173,7 +174,7 @@ function AOtel::istracking
 end
 
 function AOtel::isguiding
-	return, self._isguiding    
+	return, self._isguiding
 end
 
 function AOtel::wind_speed
@@ -226,16 +227,16 @@ pro AOtel__define
         _hex	    				: fltarr(6)		, $ ; hexapod
         _ter       					: fltarr(4)		, $ ; tertiary
         _swa    					: 0.     		, $ ; swing arm deployed
-        _dimm_seeing    			: 0.     		, $ ; dimm seeing 
-        _extern_wind_direction 		: 0.     		, $ ; 
-        _extern_wind_speed     		: 0.     		, $ ; 
-        _guidecam_centroid_x  		: 0.     		, $ ; 
-        _guidecam_centroid_y 		: 0.     		, $ ; 
-        _dec                 		: 0.     		, $ ; 
-        _ra                  		: 0.     		, $ ; 
-        _tel_hbs_on          		: 0L     		, $ ; 
-        _tel_vent_on         		: 0L     		, $ ; 
-        _isguiding           		: 0L     		, $ ; 
+        _dimm_seeing    			: 0.     		, $ ; dimm seeing
+        _extern_wind_direction 		: 0.     		, $ ;
+        _extern_wind_speed     		: 0.     		, $ ;
+        _guidecam_centroid_x  		: 0.     		, $ ;
+        _guidecam_centroid_y 		: 0.     		, $ ;
+        _dec                 		: 0.     		, $ ;
+        _ra                  		: 0.     		, $ ;
+        _tel_hbs_on          		: 0L     		, $ ;
+        _tel_vent_on         		: 0L     		, $ ;
+        _isguiding           		: 0L     		, $ ;
         INHERITS AOhelp $
     }
 end
