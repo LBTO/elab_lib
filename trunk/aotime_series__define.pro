@@ -300,7 +300,7 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
 end
 
 function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
-	n_el=8
+	n_el=6
 
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
@@ -466,6 +466,7 @@ function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, pl
   ab=dblarr(2,nnn)
   cor=dblarr(nnn)
   var=dblarr(nnn)
+  xy=dblarr(nnn)
   plt=0
   if plot eq 1 then $
     window, /free
@@ -488,9 +489,20 @@ function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, pl
     a2t[p*(1./self._dt-fvibmax(ijk)+fstep):*]=0
     rm1[*,ijk]=fft(a1t,1)
     rm2[*,ijk]=fft(a2t,1)
-    ab[*,ijk] = linfit(rm1[*,ijk],rm2[*,ijk])
-    cor[ijk] = variance( rm2[*,ijk]-ab[1,ijk]*rm1[*,ijk]-ab[0,ijk] )
-    var[ijk] = variance( rm2[*,ijk] )
+    ab1 = linfit(rm1[*,ijk],rm2[*,ijk])
+    ab2 = linfit(rm2[*,ijk],rm1[*,ijk])
+    cor1 = variance( rm2[*,ijk]-ab1[1]*rm1[*,ijk]-ab1[0] )
+    cor2 = variance( rm1[*,ijk]-ab2[1]*rm2[*,ijk]-ab2[0] )
+    if cor1 lt cor2 then begin
+      cor[ijk]=cor1
+      ab[*,ijk]=ab1
+      var[ijk] = variance( rm2[*,ijk] )
+    endif else begin
+      cor[ijk]=cor2
+      ab[*,ijk]=ab2
+      xy[ijk]=1
+      var[ijk] = variance( rm1[*,ijk] )
+    endelse
     if ijk eq 0 then begin
       if plot eq 1 then $
         plot, 1.1*minmax([rm1[*,ijk],rm2[*,ijk]]), 1.1*minmax([rm1[*,ijk],rm2[*,ijk]]), $
@@ -505,12 +517,14 @@ function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, pl
       frvib=[frvib, fvibmax(ijk)]
       colo=[colo,CC[ijk]]
     endelse
-    if plot eq 1 then $
-      oplot, minmax(rm1[*,0]), ab[1,ijk]*minmax(rm1[*,0])+ab[0,ijk], col=CC[ijk]
+    if fvibmax(ijk) lt fmax and fvibmax(ijk) gt fmin then begin
+      if xy[ijk] eq 0 then oplot, 1.2*minmax(rm1[*,0]), ab[1,ijk]*1.2*minmax(rm1[*,0])+ab[0,ijk], col=CC[ijk] $
+        else oplot, ab[1,ijk]*1.2*minmax(rm2[*,0])+ab[0,ijk], 1.2*minmax(rm2[*,0]), col=CC[ijk]
+    endif
   endfor
   if plot eq 1 then $
     legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
-  angle=transpose(atan(ab[1,*]))*180/!pi
+  angle=( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*180/!pi
 
   directions={$
     freq: frvib, $
