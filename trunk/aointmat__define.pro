@@ -5,7 +5,7 @@
 
 function AOintmat::Init, fname
     self._im_file  = fname
-    full_fname = ao_datadir()+path_sep()+self->fname()
+    full_fname = filepath(root=ao_datadir(), self->fname())
     header = headfits(full_fname ,/SILENT, errmsg=errmsg)
     if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
 
@@ -40,7 +40,11 @@ function AOintmat::Init, fname
     self->addMethodHelp, "fname()",   "fitsfile name (string)"
     self->addMethodHelp, "header()",     "header of fitsfile (strarr)"
     self->addMethodHelp, "im()", 	"interaction matrix"
-    self->addMethodHelp, "im2d()", "interaction matrix (signals remapped in 2D)"
+    self->addMethodHelp, "sx([idx])", 	"x-slopes (idx: index to selected modes)"
+    self->addMethodHelp, "sy([idx])", 	"y-slopes (idx: index to selected modes)"
+    self->addMethodHelp, "sx2d([idx])", "x-slopes remapped in 2D (idx: index to selected modes)"
+    self->addMethodHelp, "sy2d([idx])", "y-slopes remapped in 2D (idx: index to selected modes)"
+    self->addMethodHelp, "s2d_mask()", "mask of remapped signals in 2D"
     self->addMethodHelp, "visu_im2d [,mode_num_idx ,ncol=ncol ,nrows=nrows ,ct=ct ,zoom=zoom]", "displays IM in 2D"
     self->addMethodHelp, "nmodes()", "number of non-null columns in IM"
     self->addMethodHelp, "modes_idx()", "index vector of non-null columns in IM"
@@ -157,37 +161,59 @@ function AOintmat::modalamp
 	return, ma
 end
 
-; return remapped IM in 2D for signal visualization
-function AOintmat::im2d
-	if not ptr_valid(self._im2d_cube) then begin
-		mypup = 0	;use this pupil info to remap signals
-		sx = self->sx()
-		sy = self->sy()
-		indpup = ((self->wfs_status())->pupils())->indpup()
-		nsub   = ((self->wfs_status())->pupils())->nsub()
-		fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
-
-		cx  = (((self->wfs_status())->pupils())->cx())[mypup]
-		cy  = (((self->wfs_status())->pupils())->cy())[mypup]
-		rad = (((self->wfs_status())->pupils())->radius())[mypup]
-		xr = [floor(cx-rad),ceil(cx+rad)]
-		yr = [floor(cy-rad),ceil(cy+rad)]
-		im2d_w = xr[1]-xr[0]+1
-		im2d_h = yr[1]-yr[0]+1
-
-		s2d = fltarr(fr_sz,fr_sz)
-		im_2d = fltarr(im2d_w*2,im2d_h,self->nmodes())
-		for ii=0, self->nmodes()-1 do begin
-			s2d[indpup[*,mypup]] = sx[ii,*]
-			s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-			s2d[indpup[*,mypup]] = sy[ii,*]
-			s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-			im_2d[*,*,ii] = [s2d_tmpA,s2d_tmpB]
-		endfor
-		self._im2d_cube = ptr_new(im_2d, /no_copy)
-	endif
-	return, *(self._im2d_cube)
+; returns Sx in 2D
+function AOintmat::sx2d, mode_num_idx
+	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	if not ptr_valid(self._sx2d_cube) then self->im2d
+	return, (*(self._sx2d_cube))[*,*,mode_num_idx]
 end
+
+; returns Sy in 2D
+function AOintmat::sy2d, mode_num_idx
+	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	if not ptr_valid(self._sy2d_cube) then self->im2d
+	return, (*(self._sy2d_cube))[*,*,mode_num_idx]
+end
+
+; returns the mask of 2D-remapped signals
+function AOintmat::s2d_mask
+	if not ptr_valid(self._s2d_mask) then self->im2d
+	return, *self._s2d_mask
+end
+
+; remaps IM in 2D
+pro AOintmat::im2d
+	mypup = 0	;use this pupil info to remap signals
+	sx = self->sx()
+	sy = self->sy()
+	indpup = ((self->wfs_status())->pupils())->indpup()
+	nsub   = ((self->wfs_status())->pupils())->nsub()
+	fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
+
+	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
+	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
+	rad = (((self->wfs_status())->pupils())->radius())[mypup]
+	xr = [floor(cx-rad),ceil(cx+rad)]
+	yr = [floor(cy-rad),ceil(cy+rad)]
+	im2d_w = xr[1]-xr[0]+1
+	im2d_h = yr[1]-yr[0]+1
+
+	s2d  = fltarr(fr_sz,fr_sz)
+	sx2d = fltarr(im2d_w,im2d_h,self->nmodes())
+	sy2d = fltarr(im2d_w,im2d_h,self->nmodes())
+	for ii=0, self->nmodes()-1 do begin
+		s2d[indpup[*,mypup]] = sx[ii,*]
+		sx2d[*,*,ii] = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+		s2d[indpup[*,mypup]] = sy[ii,*]
+		sy2d[*,*,ii] = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+	endfor
+
+	s2d[indpup[*,mypup]] = 1.	;for the s2d mask
+	self._sx2d_cube = ptr_new(sx2d)
+	self._sy2d_cube = ptr_new(sy2d)
+	self._s2d_mask  = ptr_new(s2d[xr[0]:xr[1],yr[0]:yr[1]])
+end
+
 
 pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
 	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
@@ -195,30 +221,33 @@ pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
 	if not keyword_set(zoom) then zoom=1
 
 	nsig = n_elements(mode_num_idx)
-	imcube = self->im2d()
-	sz = size(imcube, /dim)
+	sx_2d = self->sx2d(mode_num_idx)
+	sy_2d = self->sy2d(mode_num_idx)
+	sz = size(sy_2d,/dim)
 
 	if nsig eq 1 then begin
 		ncol=1
 		nrows=1
 	endif
-	if ( (not keyword_set(nrows)) AND (not keyword_set(ncol)) ) then ncol=nsig/3
+	if ( (not keyword_set(nrows)) AND (not keyword_set(ncol)) ) then ncol=nsig/3 > 1
 	if not keyword_set(ncol)  then ncol  = ceil(nsig/float(nrows))
 	if not keyword_set(nrows) then nrows = ceil(nsig/float(ncol))
 	npag = ceil(nsig/(float(nrows)*float(ncol)))
 
 	if (ct lt 0) or (ct gt 40) then ct=3
 	loadct,ct
-	window,/free,xsize=sz[0]*ncol*zoom,ysize=sz[1]*nrows*zoom
+	window,/free,xsize=sz[0]*2*ncol*zoom,ysize=sz[1]*nrows*zoom
     erase,0
-    for ii=0, nsig-1 do tvscl,rebin(imcube[*,*,mode_num_idx[ii]],sz[0]*zoom,sz[1]*zoom,/SAMPLE),ii
+    for ii=0, nsig-1 do tvscl,rebin([sx_2d[*,*,ii],sy_2d[*,*,ii]],sz[0]*2*zoom,sz[1]*zoom,/SAMPLE),ii
 end
 
 pro AOintmat::Cleanup
     ptr_free, self._modes_idx
     ptr_free, self._slopes_idx
     ptr_free, self._im_file_fitsheader
-    ptr_free, self._im2d_cube
+    ptr_free, self._sx2d_cube
+    ptr_free, self._sy2d_cube
+    ptr_free, self._s2d_mask
     obj_destroy, self._wfs_status
     self->AOhelp::Cleanup
 end
@@ -234,7 +263,9 @@ pro AOintmat__define
         _nslopes						  : -1L			, $
         _slopes_idx						  : ptr_new()	, $
         _wfs_status						  : obj_new()	, $
-        _im2d_cube						  : ptr_new()	, $
+        _sx2d_cube						  : ptr_new()	, $
+        _sy2d_cube						  : ptr_new()   , $
+        _s2d_mask						  : ptr_new()	, $
         _modal_dist_fname				  : ''			, $
         _modalamp_fname					  : ''			, $
         INHERITS AOhelp $
