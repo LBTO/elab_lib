@@ -63,6 +63,11 @@ function AOm2c::header
     if ptr_valid(self._m2c_fname_fitsheader) then return, *(self._m2c_fname_fitsheader) else return, ""
 end
 
+pro AOm2c::free
+    if ptr_valid(self._m2c_fname_fitsheader) then ptr_free, self._m2c_fname_fitsheader
+    if ptr_valid(self._m2c) then ptr_free, self._m2c
+    if ptr_valid(self._c2m) then ptr_free, self._c2m
+end
 
 pro AOm2c::Cleanup
     ptr_free, self._m2c_fname_fitsheader

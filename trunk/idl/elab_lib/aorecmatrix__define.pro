@@ -79,6 +79,12 @@ function AOrecmatrix::num_svd_filt_modes
 	return, self._filt_modes_svd
 end
 
+pro AOrecmatrix::free
+    if ptr_valid(self._modes_idx) then ptr_free, self._modes_idx
+    if ptr_valid(self._slopes_idx) then ptr_free, self._slopes_idx
+    if ptr_valid(self._rec_file_fitsheader) then ptr_free, self._rec_file_fitsheader
+end
+
 pro AOrecmatrix::Cleanup
     ptr_free, self._modes_idx
     ptr_free, self._slopes_idx

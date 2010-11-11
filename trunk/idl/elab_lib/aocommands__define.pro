@@ -76,6 +76,7 @@ end
 
 pro AOcommands::free
     if ptr_valid(self._commands) then ptr_free, self._commands
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     self->AOtime_series::free
 end
 
