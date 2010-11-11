@@ -6,8 +6,8 @@
 ;
 ;-
 
-function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
-    if not self->IDL_container::Init() then return, 0
+function AOdataset::Init, tracknumlist, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
+    if not self->AOlist::Init() then return, 0
     if not keyword_set(root_dir)      then root_dir = !ao_env.root
     self._root_dir = root_dir
 
@@ -21,16 +21,29 @@ function AOdataset::Init, objarray=objarray, from=from_tracknum, to=to_tracknum,
             caldat, now - (lastminute/1440.d),  m,d,y,hh,mm,ss
             from_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
         endif
-    	self._from_tracknum = obj_new('AOtracknum', from_tracknum)
-    	self._to_tracknum   = obj_new('AOtracknum', to_tracknum)
+    	objfrom_tracknum = obj_new('AOtracknum', from_tracknum)
+    	objto_tracknum   = obj_new('AOtracknum', to_tracknum)
+    	if (not obj_valid(objfrom_tracknum)) or (not obj_valid(objto_tracknum)) then return, 0
+    	from_julday = objfrom_tracknum->julday()
+	    to_julday   = objto_tracknum->julday()
+	    obj_destroy, objfrom_tracknum
+	    obj_destroy, objto_tracknum
 
-    	if (not obj_valid(self._from_tracknum)) or (not obj_valid(self._to_tracknum)) then return, 0
+        date0 = strmid(from_tracknum,0,8)
+        date1 = strmid(to_tracknum,0,8)
+        if date0 eq date1 then begin
+            searchdirregexp = date0
+        endif else begin
+            date = [date0, date1]
+            date = date[sort(date)]
+            for i=1, strlen(date[0])-1 do begin
+                if ~strcmp(strmid(date0, 0,i),strmid(date1, 0, i)) then break
+            endfor
+            searchdirregexp = strmid(date0, 0, i-1)+'*'
+        endelse
 
-    	tracknums = file_basename(file_search(ao_datadir()+path_sep()+'adsec_data'+path_sep()+'*'+path_sep()+'Data_*', /TEST_DIRECTORY))
+    	tracknums = file_basename(file_search(ao_datadir()+path_sep()+'adsec_data'+path_sep()+searchdirregexp+path_sep()+'Data_*', /TEST_DIRECTORY))
     	for i=0L, n_elements(tracknums)-1 do tracknums[i]  = strmid(tracknums[i], 5)
-
-    	from_julday = self._from_tracknum->julday()
-	    to_julday   = self._to_tracknum->julday()
 
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
@@ -63,19 +76,18 @@ function AOdataset::tracknums
     if ptr_valid(self._tracknums) then return, *(self._tracknums) else return, ""
 end
 
-function AOdataset::from_tracknum
-    if obj_valid(self._from_tracknum) then return, self._from_tracknum else return, obj_new()
-end
+;function AOdataset::from_tracknum
+;    if obj_valid(self._from_tracknum) then return, self._from_tracknum else return, obj_new()
+;end
 
-function AOdataset::to_tracknum
-    if obj_valid(self._to_tracknum) then return, self._to_tracknum else return, obj_new()
-end
+;function AOdataset::to_tracknum
+;    if obj_valid(self._to_tracknum) then return, self._to_tracknum else return, obj_new()
+;end
 
 ;
-; add dataset2 to this one
-; dataset2 is emptied
+; return a set union of this and of the passed one
 ;
-pro AOdataset::merge, dataset2
+pro AOdataset::union, dataset2
     if not obj_isa(dataset2, 'AOdataset') then message, 'argument is not a valid AOdataset object', BLOCK='elab', name='ao_oaa_dataset'
     nelem2 = dataset2->Count()
     elem2  = dataset2->Get(/all)
@@ -120,7 +132,7 @@ function AOdataset::GetFromTracknum, tracknum, idx=idx
     endelse
 end
 
-pro AOdataset::RemoveFromTracknum, tracknum
+pro AOdataset::RemoveTracknum, tracknum
     self->Remove, self->GetFromTracknum( tracknum )
 end
 
@@ -135,7 +147,6 @@ pro AOdataset::Wrong
         print, tn, cause
     endfor
 end
-
 
 ;
 ; free memory
@@ -240,7 +251,7 @@ end
 ; return index of dataset items that matches the condition operand+reference_value
 ;
 ;
-function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, AOdata_subset=AOdata_subset
+function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
     apex = string(39B)
 
     objref = self->Get(/all)
@@ -308,28 +319,27 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, AOdat
     endfor
     valid = where(isvalid eq 1, cntvalid)
     if arg_present(ptrdata) then ptrdata = cntvalid eq 0 ? ptr_new() : v[valid]
+	if cntvalid eq 0 then return, obj_new()
 
-	if arg_present(AOdata_subset) then $
-		AOdata_subset = obj_new('aodataset', objarray=self->Get(pos=valid))
-
-    return, valid
+	;if arg_present(AOdata_subset) then $
+	;	AOdata_subset = obj_new('aodataset', objarray=self->Get(pos=valid))
+    ;return, valid
+	return, obj_new('aodataset', objarray=self->Get(pos=valid))
 end
 
 pro AOdataset::Cleanup
     heap_free, self._tracknums
-    heap_free, self._from_tracknum
-    heap_free, self._to_tracknum
-    self->IDL_CONTAINER::Cleanup
+    ;heap_free, self._from_tracknum
+    ;heap_free, self._to_tracknum
+    self->aolist::Cleanup
 end
 
 
 pro AOdataset__define
     struct = { AOdataset, $
         _root_dir           : "", $
-        _from_tracknum      : obj_new(), $
-        _to_tracknum        : obj_new(), $
         _tracknums          : ptr_new(), $
-        inherits  IDL_CONTAINER $
+        inherits  AOlist $
     }
 end
 
