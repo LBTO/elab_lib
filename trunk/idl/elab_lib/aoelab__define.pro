@@ -56,7 +56,9 @@ function AOelab::Init, tracknum, $
 	; Operation mode: "RR"    : @SolarTower, or @Telescope with RR.
 	;				  "ONSKY" : @Telescope on-sky!
 	if obj_valid(self._tel) then begin
-		if (self->tel())->el()/3600. lt 89. then self._operation_mode = "ONSKY" $
+		;if (self->tel())->el()/3600. lt 89. then self._operation_mode = "ONSKY" $
+		;if (self->wfs_status())->lamp_intensity() lt .001 then self._operation_mode = "ONSKY" $
+		if (self->wfs_status())->cube_stage() lt -40. then self._operation_mode = "ONSKY" $
 		else self._operation_mode = "RR"
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
@@ -219,8 +221,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "mag()", "equivalent star magnitude (R)"
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
-
-
+    self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
     ; free memory
     self->free
 
@@ -558,8 +559,6 @@ function AOelab::ex, cmd  ;,  isvalid=isvalid
     endelse
 
 end
-
-
 
 pro AOelab::free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
