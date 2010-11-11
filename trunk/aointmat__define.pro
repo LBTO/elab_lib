@@ -241,6 +241,13 @@ pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
     for ii=0, nsig-1 do tvscl,rebin([sx_2d[*,*,ii],sy_2d[*,*,ii]],sz[0]*2*zoom,sz[1]*zoom,/SAMPLE),ii
 end
 
+pro AOintmat::free
+    if ptr_valid(self._modes_idx) then ptr_free, self._modes_idx
+    if ptr_valid(self._slopes_idx) then ptr_free, self._slopes_idx
+    if ptr_valid(self._im_file_fitsheader) then ptr_free, self._im_file_fitsheader
+    if ptr_valid(self._im2d_cube) then ptr_free, self._im2d_cube
+end
+
 pro AOintmat::Cleanup
     ptr_free, self._modes_idx
     ptr_free, self._slopes_idx
