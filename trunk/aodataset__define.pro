@@ -6,12 +6,14 @@
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, objarray=objarray, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
-    if not self->AOlist::Init() then return, 0
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
+    ;if not self->AOlist::Init() then return, 0
+    self._nelems = 0
+    
     if not keyword_set(root_dir)      then root_dir = !ao_env.root
     self._root_dir = root_dir
 
-	if n_elements(objarray) eq 0 then begin
+	if n_elements(tracknumlist) eq 0 then begin
     	if not keyword_set(from_tracknum) then from_tracknum = ""
     	if not keyword_set(to_tracknum)   then to_tracknum = ""
         if keyword_set(lastminute) then begin
@@ -48,32 +50,32 @@ function AOdataset::Init, tracknumlist, objarray=objarray, from=from_tracknum, t
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
-        		obj = getaoelab(tracknums[i], _extra=ex)
-	;            obj =  obj_new('AOelab', tracknums[i], _extra=ex)
-    	        if obj_valid(obj) then begin
-        	        obj->free
-            	    self->add, obj
-            	endif
+        		;obj = getaoelab(tracknums[i], _extra=ex)
+    	        ;if obj_valid(obj) then begin
+        	    ;    obj->free
+            	;    self->add, obj
+            	;endif
+            	self->add, tracknums[i]
         	endif
         	obj_destroy, o_track
     	end
 	endif else begin
-		for ii=0, n_elements(objarray)-1 do $
-			if obj_isa(objarray[ii], 'AOelab') then self->add, objarray[ii]
+		for ii=0, n_elements(tracknumlist)-1 do self->add, tracknumlist[ii]
 	endelse
 
-    nelem = self->Count()
-    if nelem ne 0 then begin
-        self._tracknums = ptr_new(strarr(nelem))
-        objref = self->Get(/all)
-        for i=0L, self->Count()-1 do (*(self._tracknums))[i] = objref[i]->tracknum()
-    endif
+;    nelem = self->Count()
+;    if nelem ne 0 then begin
+;        self._tracknums = ptr_new(strarr(nelem))
+;        objref = self->Get(/all)
+;        for i=0L, self->Count()-1 do (*(self._tracknums))[i] = objref[i]->tracknum()
+;    endif
 
     return, 1
 end
 
 function AOdataset::tracknums
-    if ptr_valid(self._tracknums) then return, *(self._tracknums) else return, ""
+    ;if ptr_valid(self._tracknums) then return, *(self._tracknums) else return, ""
+    return, self->get()
 end
 
 ;function AOdataset::from_tracknum
@@ -87,74 +89,40 @@ end
 ;
 ; return a set union of this and of the passed one
 ;
-pro AOdataset::union, dataset2
+function AOdataset::union, dataset2
     if not obj_isa(dataset2, 'AOdataset') then message, 'argument is not a valid AOdataset object', BLOCK='elab', name='ao_oaa_dataset'
-    nelem2 = dataset2->Count()
     elem2  = dataset2->Get(/all)
-    for i=0L,nelem2-1 do begin
-        elem2tracknum = elem2[i]->tracknum()
-        ; skip duplicated elements
-        if obj_valid(self->GetFromTracknum(elem2tracknum)) then continue
-        ; tracknum not present in this dataset: add it
-        self->add, elem2[i]
-        self._tracknums = ptr_new( [ self->tracknums(), elem2tracknum], /no_copy )
-        ; now remove elem2 from dataset2. Otherwise if in the future dataset2 is destroyed
-        ; the referenced objects (that are now referenced also in this dataset) are destroyed
-        dataset2->remove, elem2[i]
-    endfor
+    elem   = self->Get(/all)
+    return, obj_new('aodataset', [elem, elem2])
 end
 
-;+
-; Get subset of a dataset.
-;-
-;function AOdataset::getset,
 
-;
-; tracknum : string or string array
-;
-function AOdataset::GetFromTracknum, tracknum, idx=idx
-    ;if not ptr_valid(self._tracknums) then return, obj_new()
-
-    if n_elements(tracknum) eq 1 then begin
-        tidx = where(self->tracknums() eq tracknum, count)
-        if count ne 0 then idx=tidx
-    endif else begin
-        for i=0L, n_elements(tracknum)-1 do begin
-            tidx = where(self->tracknums() eq tracknum[i], count)
-            if count ne 0 then idx = n_elements(idx) eq 0 ? tidx : [idx, tidx]
-        endfor
-    endelse
-    if n_elements(idx) gt 0 then begin
-        return, self->Get(pos=idx)
-    endif else begin
-        message, 'tracknum not found in dataset', /informational, /continue, BLOCK='elab', name='ao_oaa_dataset'
-        return, obj_new()
-    endelse
-end
 
 pro AOdataset::RemoveTracknum, tracknum
-    self->Remove, self->GetFromTracknum( tracknum )
+    idx = where (self->Get(/all) eq tracknum, cnt)
+    if cnt gt 0 then self->Remove, idx
 end
 
 ;
 ; report the measures that are NOT ok, and why
 ;
-pro AOdataset::Wrong
-    idx = self->where('isok', 'eq', 0)
-    for i=0L,n_elements(idx)-1 do begin
-        r=(self->get(pos=idx[i]))->isok(cause=cause)
-        tn=(self->get(pos=idx[i]))->tracknum()
-        print, tn, cause
-    endfor
-end
+;pro AOdataset::Wrong
+;    idx = self->where('isok', 'eq', 0)
+;    for i=0L,n_elements(idx)-1 do begin
+;        r=(self->get(pos=idx[i]))->isok(cause=cause)
+;        tn=(self->get(pos=idx[i]))->tracknum()
+;        print, tn, cause
+;    endfor
+;end
 
 ;
 ; free memory
 ;
 pro AOdataset::free
-    objref = self->Get(/all)
+    tns = self->Get(/all)
     for i=0L, self->Count()-1 do begin
-        objref[i]->free
+        ee = getaoelab(tns[i])
+        ee->free
     endfor
 end
 
@@ -175,7 +143,7 @@ function AOdataset::value, cmd, index, index_out=index_out, VERBOSE=VERBOSE
     cmds = strsplit(cmd, '.', /extr)
 
 	for i=0L, nel-1 do begin
-		tmpobj=objref[i]
+		tmpobj=getaoelab(objref[i])
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
       	for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
@@ -270,7 +238,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
         ; hasmethod = obj_hasmethod(tmpobj, '$cmds[j]$')
         ; if (hasmethod) then value = tmpobj->$cmds[j]$()
         ;
-        tmpobj = objref[i]      ; (*self._array)[i]
+        tmpobj = getaoelab(objref[i])      ; (*self._array)[i]
         for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
             add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
@@ -324,11 +292,66 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
 	;if arg_present(AOdata_subset) then $
 	;	AOdata_subset = obj_new('aodataset', objarray=self->Get(pos=valid))
     ;return, valid
-	return, obj_new('aodataset', objarray=self->Get(pos=valid))
+	return, obj_new('aodataset', self->Get(pos=valid))
 end
 
+;;;;;;;;;;;;;;;;;;; list of string implementation (list()like)  ;;;;;;;;;;;;;;
+; in IDL8 this will be replaced by list() ;
+
+function aodataset::count
+    return, self._nelems
+end
+
+function aodataset::Get, pos=pos, all=all
+    if self->count() eq 0 then return, ""
+    if n_elements(pos) ne 0  then begin 
+        if max(pos) ge self->count() then begin 
+            message, 'aodataset::Get: Index is out of range', /info
+            return, ""
+        endif
+        return, (*self._values)[pos]
+    endif
+    return, *self._values  
+end
+
+
+pro aodataset::Add, value
+    if self->count() gt 0 then begin
+        values = self->Get()
+        dum = where(values eq value, cnt)
+        if cnt gt 0 then return
+        ptr_free, self._values
+        self._values = ptr_new( [values, value], /no_copy)
+    endif else begin
+        self._values = ptr_new([value], /no_copy)
+    endelse
+    self._nelems += 1
+end
+
+
+function aodataset::Remove, idx
+    vals = self->Get()
+    nobj = self->count()
+    if idx ge nobj then message, 'AOLIST::REMOVE: Index is out of range', /info
+    res = vals[idx]
+    ptr_free, self._values
+    case idx of
+        0:        newvals = vals[1:*]
+        nobj-1:   newvals = vals[0:nobj-2]
+        else:     newvals = [ vals[0:idx-1], vals[idx+1:*] ]
+    endcase
+    self._values = ptr_new( newvals, /no_copy)
+    ; decrement counter
+    self._nelems -= 1
+    return, res
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 pro AOdataset::Cleanup
-    heap_free, self._tracknums
+    ;heap_free, self._tracknums
     ;heap_free, self._from_tracknum
     ;heap_free, self._to_tracknum
     self->aolist::Cleanup
@@ -338,8 +361,10 @@ end
 pro AOdataset__define
     struct = { AOdataset, $
         _root_dir           : "", $
-        _tracknums          : ptr_new(), $
-        inherits  AOlist $
+        _values         : ptr_new() , $
+        _nelems         : 0L, $
+        _allocated_size : 0L  $
+         ;inherits  AOlist $
     }
 end
 
