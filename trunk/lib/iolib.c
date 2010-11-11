@@ -567,6 +567,30 @@ int ReadFitsKeyword( char *path, char *keyword, int datatype, void *value) {
    return FILE_ERROR;
 }
 
+//@Function: writeFits3D
+//
+// Wrapper for WriteFitsFile to write 3d buffers
+//
+// Also available are writeFits2D and writeFits1D
+//@
+
+int writeFits3D( char *filename, void *buf, int type, int dim1, int dim2, int dim3) {
+
+      long dims[] = { dim1, dim2, dim3 };
+      return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 3);
+}
+
+int writeFits2D( char *filename, void *buf, int type, int dim1, int dim2) {
+
+      long dims[] = { dim1, dim2 };
+      return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 2);
+}
+
+int writeFits1D( char *filename, void *buf, int type, int dim1) {
+
+      long dims[] = { dim1 };
+      return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 1);
+}
 
 
 
