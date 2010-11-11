@@ -194,10 +194,26 @@ function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, err
 	return, dark_fname
 end
 
+;This function overrides the dark_image() method in AOPSF.
+function AOIRTC::dark_image
+    if not (PTR_VALID(self._dark_image)) then begin
+    	cube_fname = self->dark_fname()
+    	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='irtc_darks', $
+    		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
+		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname)) else begin
+			dark = self->AOPSF::dark_image()
+			if not file_test(file_dirname(saved_dark_fname), /dir) then file_mkdir, file_dirname(saved_dark_fname)
+       		writefits, saved_dark_fname, dark
+		endelse
+	endif
+	return, *(self._dark_image)
+end
+
+
 
 ;Returns the error messages
 ;-----------------------------------------------------
-function AOirtc::isok, cause=cause
+function AOIRTC::isok, cause=cause
 	isok=1B
 	if n_elements(self._irtc_err_msg) gt 1 then begin
 		isok*=0B

@@ -224,28 +224,23 @@ end
 function AOpsf::dark_image
     if not (PTR_VALID(self._dark_image)) then begin
     	cube_fname = self->dark_fname()
-    	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='irtc_darks', $
-    		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
-		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname)) else begin
-    		if file_test(cube_fname) then begin
-        		dark = float(readfits(cube_fname, dark_header, /SILENT))
-	    		naxis = long(aoget_fits_keyword(dark_header, 'NAXIS'))
-    			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
-    			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-    			if (dark_frame_w ne self._frame_w) or (dark_frame_h ne self._frame_h) then begin
-    				message, 'Dark and PSF images do not have the same dimensions!!', /info
-    				self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
-    			endif else begin
-    				dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
-        			if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
-        								  self._dark_image = ptr_new(dark)
-	        		writefits, saved_dark_fname, *(self._dark_image)
-        		endelse
-        	endif else begin
-        		message, 'Dark file not existing. Assuming it zero', /info
-        		self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
-        	endelse
-        endelse
+   		if file_test(cube_fname) then begin
+       		dark = float(readfits(cube_fname, dark_header, /SILENT))
+    		naxis = long(aoget_fits_keyword(dark_header, 'NAXIS'))
+   			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
+   			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
+   			if (dark_frame_w ne self._frame_w) or (dark_frame_h ne self._frame_h) then begin
+   				message, 'Dark and PSF images do not have the same dimensions!!', /info
+   				self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
+   			endif else begin
+   				dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
+       			if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
+       								  self._dark_image = ptr_new(dark)
+       		endelse
+       	endif else begin
+       		message, 'Dark file not existing. Assuming it zero', /info
+       		self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
+       	endelse
     endif
     return, *(self._dark_image)
 end
