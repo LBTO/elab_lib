@@ -163,6 +163,21 @@ pro AOframes::calc_number_photons
 	self._nphsub_per_int_av = self._nph_per_int_av / nsub
 end
 
+pro AOframes::free
+    if ptr_valid(self._header) then ptr_free, self._header
+    if ptr_valid(self._wfs_status) then ptr_free, self._wfs_status
+    if ptr_valid(self._adu_per_quadrant) then ptr_free, self._adu_per_quadrant
+    if ptr_valid(self._nph_per_int) then ptr_free, self._nph_per_int
+end
+
+
+pro AOframes::Cleanup
+    if ptr_valid(self._header) then ptr_free, self._header
+    if ptr_valid(self._wfs_status) then ptr_free, self._wfs_status
+    if ptr_valid(self._adu_per_quadrant) then ptr_free, self._adu_per_quadrant
+    if ptr_valid(self._nph_per_int) then ptr_free, self._nph_per_int
+    self->AOhelp::Cleanup
+end
 
 pro AOframes__define
     struct = { AOframes					, $

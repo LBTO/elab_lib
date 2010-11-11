@@ -76,6 +76,7 @@ end
 
 pro AOmodes::free
     if ptr_valid(self._modes) then ptr_free, self._modes
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     self->AOtime_series::free
 end
 

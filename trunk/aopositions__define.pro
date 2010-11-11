@@ -83,6 +83,7 @@ function AOpositions::flatpositions
 end
 
 pro AOpositions::free
+    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     if ptr_valid(self._positions) then ptr_free, self._positions
     self->AOtime_series::free
 end
