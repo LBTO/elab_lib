@@ -6,14 +6,12 @@
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, root_dir=root_dir, lastminute=lastminute, _extra=ex
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, _extra=ex
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
     
-    if not keyword_set(root_dir)      then root_dir = !ao_env.root
-    self._root_dir = root_dir
-
 	if n_elements(tracknumlist) eq 0 then begin
+	    if (keyword_set(from_tracknum) eq 0) and (keyword_set(to_tracknum) eq 0) then return, 1
     	if not keyword_set(from_tracknum) then from_tracknum = ""
     	if not keyword_set(to_tracknum)   then to_tracknum = ""
         if keyword_set(lastminute) then begin
@@ -50,11 +48,6 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, root
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
-        		;obj = getaoelab(tracknums[i], _extra=ex)
-    	        ;if obj_valid(obj) then begin
-        	    ;    obj->free
-            	;    self->add, obj
-            	;endif
             	self->add, tracknums[i]
         	endif
         	obj_destroy, o_track
@@ -62,13 +55,6 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, root
 	endif else begin
 		for ii=0, n_elements(tracknumlist)-1 do self->add, tracknumlist[ii]
 	endelse
-
-;    nelem = self->Count()
-;    if nelem ne 0 then begin
-;        self._tracknums = ptr_new(strarr(nelem))
-;        objref = self->Get(/all)
-;        for i=0L, self->Count()-1 do (*(self._tracknums))[i] = objref[i]->tracknum()
-;    endif
 
     return, 1
 end
@@ -78,13 +64,6 @@ function AOdataset::tracknums
     return, self->get()
 end
 
-;function AOdataset::from_tracknum
-;    if obj_valid(self._from_tracknum) then return, self._from_tracknum else return, obj_new()
-;end
-
-;function AOdataset::to_tracknum
-;    if obj_valid(self._to_tracknum) then return, self._to_tracknum else return, obj_new()
-;end
 
 ;
 ; return a set union of this and of the passed one
@@ -94,6 +73,21 @@ function AOdataset::union, dataset2
     elem2  = dataset2->Get(/all)
     elem   = self->Get(/all)
     return, obj_new('aodataset', [elem, elem2])
+end
+
+;
+; return a set that is the intersection of this and of the passed one
+;
+function AOdataset::intersection, dataset2
+    if not obj_isa(dataset2, 'AOdataset') then message, 'argument is not a valid AOdataset object', BLOCK='elab', name='ao_oaa_dataset'
+    elem2  = dataset2->Get(/all)
+    elem   = self->Get(/all)
+    res = obj_new('aodataset')
+    for i=0, n_elements(elem2)-1 do begin
+        idx=where(elem2[i] eq elem, cnt)
+        if cnt gt 0 then res->add, elem2[i]
+    endfor
+    return, res
 end
 
 
@@ -351,11 +345,7 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOdataset::Cleanup
-    ;heap_free, self._tracknums
-    ;heap_free, self._from_tracknum
-    ;heap_free, self._to_tracknum
     ptr_free, self._values
-;    self->aolist::Cleanup
 end
 
 
