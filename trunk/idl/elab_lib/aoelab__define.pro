@@ -34,7 +34,7 @@ function AOelab::Init, tracknum, $
     endif
 
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
-
+    
     ; create adsec_status leaf
     tmp = filepath(root=self._datadir, 'adsec.sav')
     if file_test(tmp) eq 0 then begin
@@ -207,7 +207,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "slopes()", "reference to slopes object (AOslopes)"
     self->addMethodHelp, "residual_modes()", "reference to residual modes object (AOresidual_modes)"
     self->addMethodHelp, "modes()", "reference to integrated modes object (AOmodes)"
-    self->addMethodHelp, "modes()", "reference to open loop modes object (AOmodes)"
+    self->addMethodHelp, "olmodes()", "reference to open loop modes object (AOolmodes)"
     self->addMethodHelp, "commands()", "reference to commands object (AOcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
@@ -561,6 +561,9 @@ function AOelab::ex, cmd  ;,  isvalid=isvalid
 end
 
 pro AOelab::free
+    IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
+    IF (OBJ_VALID(self._control )) THEN  self._control->free
+    IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free 
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
     IF (OBJ_VALID(self._modes)) THEN  self._modes->free
@@ -570,6 +573,10 @@ pro AOelab::free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
     IF (OBJ_VALID(self._tv)) THEN  self._tv->free
     IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
+    IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
+    IF (OBJ_VALID(self._intmat)) THEN  self._intmat->free
+    IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
+    IF (OBJ_VALID(self._frames)) THEN  self._frames->free
     IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
