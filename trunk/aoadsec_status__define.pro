@@ -7,6 +7,7 @@
 
 
 function AOadsec_status::Init, root_obj, adsec_status_struct
+
     ; convert filepaths /usr/local/adopt/calib/left/adsec/*  in adsec_calib/*
     tmp_struct = adsec_status_struct
     self->ConvertFilePath, tmp_struct
@@ -34,7 +35,8 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
    								   self._ovsamp_time = 1./time_or_freq			; it's a freq!
 	endif else self._ovsamp_time = -1.
 
-	;Search for struct containing information on adsec (used mainly for display of positions)
+
+  ;Search for struct containing information on adsec (used mainly for display of positions)
 	files = filepath("adsec_struct_*.sav", root_dir=ao_elabdir())
 	all_files = file_search(files, count=nfiles)
 	if nfiles gt 0 then begin
@@ -52,7 +54,10 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
 		idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
 		self._adsec_struct_file = all_files[idx1]
 	endif
-
+  ; con il filename corrispondente (e.g. 'adsec_structs_20100101.sav') lo passiamo al multiton che ti rende la referenza a quell'oggetto
+  self._adsec_structs = getadsecstructs(self._adsec_struct_file)
+  
+  
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOadsec_status', 'Represents the AdSec status') then return, 0
     self->addMethodHelp, "fsm_state()", "return AdSec FSM state (string)"
@@ -66,6 +71,11 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
     self->addMethodHelp, "shape_file()", "return shape filename (string)"
     self->addMethodHelp, "ff_matrix_file()", "return ff matrix filename (string)"
     self->addMethodHelp, "adsec_struct_file()", "return adsec_struct filename (string)"
+    self->addMethodHelp, "adsec()", "(struct)"
+    self->addMethodHelp, "adsec_shell()", "(struct)"
+    self->addMethodHelp, "gr()", "(struct)"
+    self->addMethodHelp, "sc()", "(struct)"
+    self->addMethodHelp, "act_coordinates()", "return adsec coordinates (vect[2,672])"
     return, 1
 end
 
@@ -157,12 +167,32 @@ function AOadsec_status::ovsamp_time
     return, self._ovsamp_time
 end
 
-pro AOadsec_status::Cleanup
-    self->AOhelp::Cleanup
-end
-
 function AOadsec_status::adsec_struct_file
 	return, self._adsec_struct_file
+end
+
+function AOadsec_status::struct_adsec
+  return, self._adsec_structs->adsec()
+end
+
+function AOadsec_status::struct_adsec_shell
+  return, self._adsec_structs->adsec_shell()
+end
+
+function AOadsec_status::struct_gr
+  return, self._adsec_structs->gr()
+end
+
+function AOadsec_status::struct_sc
+  return, self._adsec_structs->sc()
+end
+
+function AOadsec_status::act_coordinates
+  return, self._adsec_structs->act_coordinates()
+end
+
+pro AOadsec_status::Cleanup
+    self->AOhelp::Cleanup
 end
 
 pro AOadsec_status__define
@@ -179,6 +209,7 @@ pro AOadsec_status__define
         _ff_matrix_file          : "", $
         _ovsamp_time			 : 0., $
         _adsec_struct_file		 : "", $
+        _adsec_structs           :obj_new(), $
         INHERITS AOhelp $
     }
 end

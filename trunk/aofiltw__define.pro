@@ -169,6 +169,10 @@ function AOfiltw::header
 	return, *(self._header)
 end
 
+pro AOfiltw::free
+  if ptr_valid(self._fw_data) then ptr_free, self._fw_data
+end
+
 pro AOfiltw::Cleanup
 	ptr_free, self._fw_data
     self->AOhelp::Cleanup
