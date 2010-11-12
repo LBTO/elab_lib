@@ -145,6 +145,14 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
 end
 
+pro AOwfs_status::free
+    if ptr_valid(self._header) then ptr_free, self._header
+    self._ccd39->free
+    self._pupils->free
+    self._filtw1->free
+    self._filtw2->free
+end
+
 pro AOwfs_status::Cleanup
     ptr_free, self._header
     obj_destroy, self._ccd39

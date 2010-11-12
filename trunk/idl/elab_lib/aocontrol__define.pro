@@ -181,56 +181,55 @@ function AOcontrol::intmat_fname
 end
 
 function AOcontrol::ttdirections, plot=plot, verbose=verbose
-  if not keyword_set(adsec_file) then adsec_file = '/home/guido/IDLWorkspace/fernandopack.sav'
   if not keyword_set(plot) then plot = 0
   if not keyword_set(verbose) then verbose = 0
-  m2c = readfits(self._m2c_fname)
-  restore, adsec_file
   
   surf1=fltarr(3,672)
-  surf1[0,*]=m2c[0,*]
-  surf1[1:2,*]=adsec.act_coordinates
-  surf1a=fltarr(3,n_elements(adsec.ACT_W_CL))
-  surf1a=surf1[*,adsec.ACT_W_CL]
+  surf1[0,*]=(self->m2c())[0,*]
+  surf1[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
+  surf1a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
+  surf1a=surf1[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
   fit_plane, surf1a, a=a1, b=b1, c=c1, plane=plane1, num=100.
   tip_ang=a1
   if verbose then begin
     print, a1, b1, c1
     print, 'TIP angle = '+strtrim(tip_ang/!pi*180.,2)
-    print, 'error std = '+strtrim(sqrt(variance(surf1[0,adsec.ACT_W_CL]-plane1[adsec.ACT_W_CL])))
-    print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,adsec.ACT_W_CL])))
+    print, 'error std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
+                                                -plane1[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+    print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   endif
-  if plot then begin
-    plane1=fltarr(672)
-    for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
-    loadct, 39
-    window, /free
-    display, surf1[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
-    window, /free
-    display, plane1, /as,/sh, PARAM_FILE=adsec_file, rot=0.
-  endif
+;  if plot then begin
+;    plane1=fltarr(672)
+;    for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
+;    loadct, 39
+;    window, /free
+;    display, surf1[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
+;    window, /free
+;    display, plane1, /as,/sh, PARAM_FILE=adsec_file, rot=0.
+;  endif
   
   surf2=fltarr(3,672)
-  surf2[0,*]=m2c[1,*]
-  surf2[1:2,*]=adsec.act_coordinates
-  surf2a=fltarr(3,n_elements(adsec.ACT_W_CL))
-  surf2a=surf2[*,adsec.ACT_W_CL]
+  surf2[0,*]=(self->m2c())[1,*]
+  surf2[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
+  surf2a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
+  surf2a=surf2[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
   fit_plane, surf2a, a=a2, b=b2, c=c2, plane=plane2, num=100.
   tilt_ang=a2
   if verbose then begin
     print, a2, b2, c2
     print, 'TILT angle = '+strtrim(tilt_ang/!pi*180.,2)
-    print, 'error std = '+strtrim(sqrt(variance(surf2[0,adsec.ACT_W_CL]-plane2[adsec.ACT_W_CL])))
-    print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,adsec.ACT_W_CL])))
+    print, 'error std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
+                                               -plane2[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+    print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   endif
-  if plot eq 1 then begin
-    plane2=fltarr(672)
-    for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
-    window, /free
-    display, surf2[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
-    window, /free
-    display, plane2, /as,/sh, PARAM_FILE=adsec_file, rot=0.
-  endif
+;  if plot eq 1 then begin
+;    plane2=fltarr(672)
+;    for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
+;    window, /free
+;    display, surf2[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
+;    window, /free
+;    display, plane2, /as,/sh, PARAM_FILE=adsec_file, rot=0.
+;  endif
 
   return, [tip_ang,tilt_ang]
 end
@@ -241,7 +240,6 @@ pro AOcontrol::free
     if ptr_valid(self._gain_fitsheader) then ptr_free, self._gain_fitsheader
     if ptr_valid(self._modes_idx ) then ptr_free, self._modes_idx 
     if ptr_valid(self._gain) then ptr_free, self._gain
-    self->AOtime_series::free
 end
 
 pro AOcontrol::Cleanup

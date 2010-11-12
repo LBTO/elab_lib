@@ -245,7 +245,9 @@ pro AOintmat::free
     if ptr_valid(self._modes_idx) then ptr_free, self._modes_idx
     if ptr_valid(self._slopes_idx) then ptr_free, self._slopes_idx
     if ptr_valid(self._im_file_fitsheader) then ptr_free, self._im_file_fitsheader
-    if ptr_valid(self._im2d_cube) then ptr_free, self._im2d_cube
+    if ptr_valid(self._sx2d_cube) then ptr_free, self._sx2d_cube
+    if ptr_valid(self._sy2d_cube) then ptr_free, self._sy2d_cube
+    if ptr_valid(self._s2d_mask) then ptr_free, self._s2d_mask
 end
 
 pro AOintmat::Cleanup
