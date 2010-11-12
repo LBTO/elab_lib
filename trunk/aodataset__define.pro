@@ -100,7 +100,7 @@ end
 
 pro AOdataset::RemoveTracknum, tracknum
     idx = where (self->Get(/all) eq tracknum, cnt)
-    if cnt gt 0 then self->Remove, idx
+    if cnt gt 0 then dum = self->Remove(idx)
 end
 
 ;
@@ -129,14 +129,14 @@ end
 ;
 ;
 ;
-function AOdataset::value, cmd, index, index_out=index_out, VERBOSE=VERBOSE
+function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 	apex = string(39B)
   	nparams = n_params()
 
-    if nparams eq 2 then objref = self->Get(pos=index) else begin
-    	objref = self->Get(/all)
-    	index = lindgen(self->count())
-    endelse
+    ;if nparams eq 2 then objref = self->Get(pos=index) else begin
+    objref = self->Get(/all)
+    index = lindgen(self->count())
+    ;endelse
 	nel = n_elements(objref)
     isvalid = bytarr(nel)
 
@@ -173,7 +173,7 @@ function AOdataset::value, cmd, index, index_out=index_out, VERBOSE=VERBOSE
 	; Otherwise, return a data array.
 	if cntvalid ne 0 then begin
 
-    	if arg_present(index_out) then index_out = index[where(isvalid)]
+    	if arg_present(set_out) then set_out = obj_new('aodataset', self->Get(pos=index[where(isvalid)]))
 
 		;check type
 		type_all = lonarr(cntvalid)
@@ -205,7 +205,7 @@ function AOdataset::value, cmd, index, index_out=index_out, VERBOSE=VERBOSE
 		return, data
 
 	endif else begin
-		if arg_present(index_out) then index_out = [-1]
+		if arg_present(set_out) then set_out = obj_new()
 		return, -1
 	endelse
 
@@ -354,7 +354,8 @@ pro AOdataset::Cleanup
     ;heap_free, self._tracknums
     ;heap_free, self._from_tracknum
     ;heap_free, self._to_tracknum
-    self->aolist::Cleanup
+    ptr_free, self._values
+;    self->aolist::Cleanup
 end
 
 
