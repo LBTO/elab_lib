@@ -18,6 +18,8 @@ The AO supervisor will run as a plain user, provided with sudo
 privileges as root (needed only for installation) and is to be 
 installed from the same user.
 
+3rd PARTY LIBRARIES
+You need oaa_lib to be installed in the idl path directory. Download it from Arcetri website
 
 INSTALLATION
 
