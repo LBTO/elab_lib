@@ -375,7 +375,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					endif
 					if l eq 2 then begin
 						if i gt 1 then temppw=$
-							(self->power(mode,/cum))[idx[i-1]+idx_from]-(self->power(mode,/cum))[idx[i-1]+idx_from-1] $
+							(self->power(mode,/cum))[idx[i-1]]-(self->power(mode,/cum))[idx[i-1]-1] $
 							else temppw=0
 						if total(ofr) eq -1 then begin
 							ofr=fr[idx[i-1]]
