@@ -410,7 +410,7 @@ end
 function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
-  IF not keyword_set(n) THEN n=5
+  IF not keyword_set(nfr) THEN nfr=5
   IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
   IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
   
@@ -517,9 +517,11 @@ function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, pl
       frvib=[frvib, fvibmax(ijk)]
       colo=[colo,CC[ijk]]
     endelse
-    if fvibmax(ijk) lt fmax and fvibmax(ijk) gt fmin then begin
-      if xy[ijk] eq 0 then oplot, 1.2*minmax(rm1[*,0]), ab[1,ijk]*1.2*minmax(rm1[*,0])+ab[0,ijk], col=CC[ijk] $
-        else oplot, ab[1,ijk]*1.2*minmax(rm2[*,0])+ab[0,ijk], 1.2*minmax(rm2[*,0]), col=CC[ijk]
+    if plot eq 1 then begin
+      if fvibmax(ijk) lt to_freq and fvibmax(ijk) gt from_freq then begin
+        if xy[ijk] eq 0 then oplot, 1.2*minmax(rm1[*,0]), ab[1,ijk]*1.2*minmax(rm1[*,0])+ab[0,ijk], col=CC[ijk] $
+          else oplot, ab[1,ijk]*1.2*minmax(rm2[*,0])+ab[0,ijk], 1.2*minmax(rm2[*,0]), col=CC[ijk]
+      endif
     endif
   endfor
   if plot eq 1 then $
