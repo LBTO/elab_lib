@@ -192,7 +192,7 @@ end
 
 pro AOdisturb::free
 	if ptr_valid(self._commands) then ptr_free, self._commands
-	self->AOtimes_series::free
+	self->AOtime_series::free
 end
 
 pro AOdisturb::Cleanup
