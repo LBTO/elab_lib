@@ -54,6 +54,7 @@ function AOolmodes::Init, root_obj
     if not self->AOhelp::Init('AOolmodes', 'Represent reconstructed open loop modes') then return, 0
     self->addMethodHelp, "modes()", "reconstructed open loop modes matrix [niter,nmodes]"
     self->addMethodHelp, "nmodes()", "number of modes"
+    self->addMethodHelp, "plotJitter(from_freq=from_freq, to_freq=to_freq, _extra=ex)", ""
     self->addMethodHelp, "r0([lambda=lambda] [,/PLOT])", "Estimates r0 @ lambda (default 500nm)"
     self->addMethodHelp, "seeing()", "Seeing value (@ 500nm)"
     self->addMethodHelp, "ide(mode_idx, visu=visu)", "Identifies turbulence, vibrations and noise model for mode_idx mode"
@@ -63,6 +64,7 @@ function AOolmodes::Init, root_obj
 end
 
 pro AOolmodes::datiProducer
+
     if file_test(self._store_fname) then begin
         restore, self._store_fname
     endif else begin
@@ -73,6 +75,7 @@ pro AOolmodes::datiProducer
 		nmodes  = sz[1]
 
 		olmodes = fltarr(nframes,nmodes)
+
 		if self._decimation eq 2 then begin
 			mpos = (self._root_obj->modalpositions())->modalpositions()
 			mpos = mpos[*,0:nmodes-1]
@@ -98,6 +101,21 @@ function AOolmodes::nmodes
     return, self->AOtime_series::nseries()
 end
 
+pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
+    coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6
+    freq = self->freq(from=from_freq, to=to_freq)
+    tip  = self->power(0, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
+    tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
+    plot, freq, sqrt(tip + tilt), $
+        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
+    oplot, freq, sqrt(tip), col='0000ff'x
+    oplot, freq, sqrt(tilt), col='00ff00'x
+    legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
+
+    sigmatot2 = max ( tip + tilt)  / 2
+    ldmas = 1.6d-6 / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
+    print, 'SR attenuation in H band due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+end
 
 ; to be implemented in AOtime_series subclasses
 function AOolmodes::GetDati
@@ -177,9 +195,10 @@ function AOolmodes::seeing
 	return, 0.5 / (self->r0()*4.85)
 end
 
-function AOolmodes::ide, mode_idx, visu=visu
+function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
 
   if not keyword_set(visu) then visu=0
+  if not keyword_set(only_noise) then only_noise=0
   
   CC = [-1,255.,255.*50,255.*100,255.*150,255.*256,255.*256*50,255.*256*100,255.*256*150,255.*256*256]
   
@@ -194,62 +213,84 @@ function AOolmodes::ide, mode_idx, visu=visu
   
   idx1 = closest(f1, self->freq())
   idx2 = closest(f2, self->freq())
-  nm = mean((self->psd(mode_idx))[idx2:*])
+  nm = mean(((self._root_obj->residual_modes())->psd(mode_idx))[idx2:*])
   vnm = variance((self->psd(mode_idx))[idx2:*])
   fc = 1/self._dt
   noise = nm*fc
   
-  p1 = (self->psd(mode_idx))[idx1]
-  p2 = (self->psd(mode_idx))[idx2]
+  if only_noise eq 0 then begin
+    p1 = (self->psd(mode_idx))[idx1]
+    p2 = (self->psd(mode_idx))[idx2]
+    
+    f1l = alog10(f1)
+    f2l = alog10(f2)
+    p1l = alog10(p1)
+    p2l = alog10(p2)
+    frl = alog10((self->freq())[idx1:idx2-2])
+   
+    pl=interpol([p1l,p2l],[f1l,f2l],frl)
   
-  f1l = alog10(f1)
-  f2l = alog10(f2)
-  p1l = alog10(p1)
-  p2l = alog10(p2)
-  frl = alog10((self->freq())[idx1:idx2-2])
+    vectemp1 = (self->psd(mode_idx))
+    vectemp2 = (self->psd(mode_idx))
+    vectemp1[idx1:idx2-2] = 10.^(pl)
+    idx3 = where(vectemp2 gt vectemp1+sqrt(vnm))
+    if total(idx3) ne -1 then vectemp2[idx3] = vectemp1[idx3]+sqrt(vnm)
   
-  pl=interpol([p1l,p2l],[f1l,f2l],frl)
+    kkk1 = 5
+    a = 1.0001d - log_array(1d-4, 5d-1, kkk1)
+    kkk2 = 5
+    b = log_array(1d-8*(self->psd(mode_idx))(0),1d0*(self->psd(mode_idx))(0),kkk2)
+    minvectemp2 = min(vectemp2)
+    vectemp2 = vectemp2-nm
+    vectemp2[where(vectemp2 le 0)] = minvectemp2
+    if visu eq 1 then oplot, self->freq(), vectemp2, col=cc[9]
+    turbpar = turb_est2(vectemp2, a, b, res=res)
+    fturb = -alog(turbpar[1:2])*fc/2/!pi
+    kturb = turbpar[0]
   
-  vectemp1 = (self->psd(mode_idx))
-  vectemp2 = (self->psd(mode_idx))
-  vectemp1[idx1:idx2-2] = 10.^(pl)
-  idx3 = where(vectemp2 gt vectemp1+sqrt(vnm))
-  if total(idx3) ne -1 then vectemp2[idx3] = vectemp1[idx3]+sqrt(vnm)
+    CLT=fltarr(self->nfreqs())
+    for k=1,self->nfreqs() do begin
+      z = exp(complex(0, !pi/self->nfreqs()*k))
+      CP = (1-turbpar(1)*z^(-1))*(1-turbpar(2)*z^(-1))
+      CLT(k-1) = abs(turbpar(0)/CP)
+    endfor
   
-  kkk1 = 5
-  a = 1.0001d - log_array(1d-4, 5d-1, kkk1)
-  kkk2 = 5
-  b = log_array(1d-8*(self->psd(mode_idx))(0),1d0*(self->psd(mode_idx))(0),kkk2)
-  minvectemp2 = min(vectemp2)
-  vectemp2 = vectemp2-nm
-  vectemp2[where(vectemp2 le 0)] = minvectemp2
-  if visu eq 1 then oplot, self->freq(), vectemp2, col=cc[9]
-  turbpar = turb_est2(vectemp2, a, b, res=res)
-  fturb = -alog(turbpar[1:2])*fc/2/!pi
-  kturb = turbpar[0]
+    if visu eq 1 then oplot, self->freq(), CLT, col=cc[5]
   
-  CLT=fltarr(self->nfreqs())
-  for k=1,self->nfreqs() do begin
-    z = exp(complex(0, !pi/self->nfreqs()*k))
-    CP = (1-turbpar(1)*z^(-1))*(1-turbpar(2)*z^(-1))
-    CLT(k-1) = abs(turbpar(0)/CP)
-  endfor
-  
-  if visu eq 1 then oplot, self->freq(), CLT, col=cc[5]
-  
-  fv=fltarr(nfr)
-  par=fltarr(nfr,2)
-  ppp = 50
-  for j=0,nfr-1 do fv[j]=closest(fp.(0).fr[idx[j]], self->freq())
-  for i=0,nfr-2 do begin
+    fv=fltarr(nfr)
+    par=fltarr(nfr,2)
+    ppp = 50
+    for j=0,nfr-1 do fv[j]=closest(fp.(0).fr[idx[j]], self->freq())
+    for i=0,nfr-2 do begin
+      vecv=fltarr(self->nfreqs())
+      if i eq 0 then vecv[fv[0]-10:min([mean(fv[0:1]),fv[0]+ppp])]=(self->psd(mode_idx))[fv[0]-10:min([mean(fv[0:1]),fv[0]+ppp])] else $
+        vecv[max([mean(fv[i-1:i]),fv[i]-ppp]):min([mean(fv[i:i+1]),fv[i]+ppp])]=(self->psd(mode_idx))[max([mean(fv[i-1:i]),fv[i]-ppp]):min([mean(fv[i:i+1]),fv[i]+ppp])]
+      if visu eq 1 then print, 'vibration #'+strtrim(i,2)+' frequency ='+strtrim(frv[idx[i]],2)  
+      par[i,*]=vib_est(vecv-nm, fp.(0).fr[idx[i]], fc)
+      CLTv=fltarr(self->nfreqs())
+      omega=2*!pi*frv[idx[i]]
+      damp1=par[i,1]*omega
+      damp2=omega
+      va1 = -real(2 * exp(- damp1 / fc) * cos( sqrt(complex( omega^2 - damp1^2 )) / fc ))
+      va2 = exp(- 2 * damp1 / fc)
+      vb1 = -real(2 * exp(- damp2 / fc) * cos( sqrt(complex( omega^2 - damp2^2 )) / fc ))
+      vb2 = exp(- 2* damp2 / fc)
+      for k=1,self->nfreqs() do begin
+        z = exp(complex(0, !pi/self->nfreqs()*k))
+        CP1 = POLY(z^(-1), [1d, vb1, vb2])
+        CP2 = POLY(z^(-1), [1d, va1, va2])
+        CLTv(k-1) = abs(CP1/CP2)*par[i,0]
+      endfor
+      if visu eq 1 then oplot, self->freq(), CLTv, col=cc[1]
+    endfor
     vecv=fltarr(self->nfreqs())
-    if i eq 0 then vecv[fv[0]-10:min([mean(fv[0:1]),fv[0]+ppp])]=(self->psd(mode_idx))[fv[0]-10:min([mean(fv[0:1]),fv[0]+ppp])] else $
-      vecv[max([mean(fv[i-1:i]),fv[i]-ppp]):min([mean(fv[i:i+1]),fv[i]+ppp])]=(self->psd(mode_idx))[max([mean(fv[i-1:i]),fv[i]-ppp]):min([mean(fv[i:i+1]),fv[i]+ppp])]
-    if visu eq 1 then print, 'vibration #'+strtrim(i,2)+' frequency ='+strtrim(frv[idx[i]],2)  
-    par[i,*]=vib_est(vecv-nm, fp.(0).fr[idx[i]], fc)
+    vecv[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]=(self->psd(mode_idx))[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]
+    if visu eq 1 then print, 'vibration #'+strtrim(nfr-1,2)+' frequency ='+strtrim(frv[idx[nfr-1]],2)  
+    par[nfr-1,*]=vib_est(vecv-nm, fp.(0).fr[idx[nfr-1]], fc)
+  
     CLTv=fltarr(self->nfreqs())
-    omega=2*!pi*frv[idx[i]]
-    damp1=par[i,1]*omega
+    omega=2*!pi*frv[idx[nfr-1]]
+    damp1=par[nfr-1,1]*omega
     damp2=omega
     va1 = -real(2 * exp(- damp1 / fc) * cos( sqrt(complex( omega^2 - damp1^2 )) / fc ))
     va2 = exp(- 2 * damp1 / fc)
@@ -262,36 +303,26 @@ function AOolmodes::ide, mode_idx, visu=visu
       CLTv(k-1) = abs(CP1/CP2)*par[i,0]
     endfor
     if visu eq 1 then oplot, self->freq(), CLTv, col=cc[1]
-  endfor
-  vecv=fltarr(self->nfreqs())
-  vecv[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]=(self->psd(mode_idx))[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]
-  if visu eq 1 then print, 'vibration #'+strtrim(nfr-1,2)+' frequency ='+strtrim(frv[idx[nfr-1]],2)  
-  par[nfr-1,*]=vib_est(vecv-nm, fp.(0).fr[idx[nfr-1]], fc)
+    model={ $
+      turb_fr: fturb, $
+      turb_g: kturb, $
+      noise: noise, $
+      vib_fr: fp.(0).fr[idx], $
+      vib_g: par[*,0], $
+      vib_damp: par[*,1] $
+    }  
+  endif else begin
+    model={ $
+      turb_fr: -1, $
+      turb_g: -1, $
+      noise: noise, $
+      vib_fr: -1, $
+      vib_g: -1, $
+      vib_damp: -1 $
+    }  
+  endelse
   
-  CLTv=fltarr(self->nfreqs())
-  omega=2*!pi*frv[idx[nfr-1]]
-  damp1=par[nfr-1,1]*omega
-  damp2=omega
-  va1 = -real(2 * exp(- damp1 / fc) * cos( sqrt(complex( omega^2 - damp1^2 )) / fc ))
-  va2 = exp(- 2 * damp1 / fc)
-  vb1 = -real(2 * exp(- damp2 / fc) * cos( sqrt(complex( omega^2 - damp2^2 )) / fc ))
-  vb2 = exp(- 2* damp2 / fc)
-  for k=1,self->nfreqs() do begin
-    z = exp(complex(0, !pi/self->nfreqs()*k))
-    CP1 = POLY(z^(-1), [1d, vb1, vb2])
-    CP2 = POLY(z^(-1), [1d, va1, va2])
-    CLTv(k-1) = abs(CP1/CP2)*par[i,0]
-  endfor
-  if visu eq 1 then oplot, self->freq(), CLTv, col=cc[1]
-  
-  model={ $
-    turb_fr: fturb, $
-    turb_g: kturb, $
-    noise: noise, $
-    vib_fr: fp.(0).fr[idx], $
-    vib_g: par[*,0], $
-    vib_damp: par[*,1] $
-  }  
+
   
   return, model
 end
