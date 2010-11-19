@@ -55,7 +55,7 @@ function AOm2c::c2m
         c2m = pseudo_invert(m2c)
         save, c2m, file=self._store_c2m_fname
     endelse
-    self._c2m = ptr_new(c2m, /no_copy)
+    if not ptr_valid (self._c2m) then self._c2m = ptr_new(c2m, /no_copy)
     return, *self._c2m
 end
 
@@ -64,7 +64,7 @@ function AOm2c::header
 end
 
 pro AOm2c::free
-    if ptr_valid(self._m2c_fname_fitsheader) then ptr_free, self._m2c_fname_fitsheader
+    ;if ptr_valid(self._m2c_fname_fitsheader) then ptr_free, self._m2c_fname_fitsheader
     if ptr_valid(self._m2c) then ptr_free, self._m2c
     if ptr_valid(self._c2m) then ptr_free, self._c2m
 end

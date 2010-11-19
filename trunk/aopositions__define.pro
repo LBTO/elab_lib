@@ -91,7 +91,6 @@ end
 
 pro AOpositions::Cleanup
     if ptr_valid(self._positions) then ptr_free, self._positions
-    if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end

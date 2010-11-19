@@ -119,10 +119,9 @@ function AOframes_counter::lost_frames
 end
 
 pro AOframes_counter::free
-    if ptr_valid(self._lost_frames_idx) then ptr_free, self._lost_frames_idx
-    if ptr_valid(self._lost_frames) then ptr_free, self._lost_frames
-    if ptr_valid(self._header) then ptr_free, self._header
-    if ptr_valid(self._fc) then ptr_free, self._fc
+    ;if ptr_valid(self._lost_frames_idx) then ptr_free, self._lost_frames_idx
+    ;if ptr_valid(self._lost_frames) then ptr_free, self._lost_frames
+    ;if ptr_valid(self._fc) then ptr_free, self._fc
 end
 
 pro AOframes_counter::Cleanup

@@ -170,7 +170,6 @@ function AOfiltw::header
 end
 
 pro AOfiltw::free
-  if ptr_valid(self._fw_data) then ptr_free, self._fw_data
 end
 
 pro AOfiltw::Cleanup
