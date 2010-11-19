@@ -82,7 +82,6 @@ end
 pro AOrecmatrix::free
     if ptr_valid(self._modes_idx) then ptr_free, self._modes_idx
     if ptr_valid(self._slopes_idx) then ptr_free, self._slopes_idx
-    if ptr_valid(self._rec_file_fitsheader) then ptr_free, self._rec_file_fitsheader
 end
 
 pro AOrecmatrix::Cleanup

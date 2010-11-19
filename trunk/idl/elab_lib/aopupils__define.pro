@@ -96,8 +96,8 @@ function AOpupils::pup_tracknum
 end
 
 pro AOpupils::free
-  if ptr_valid(self._header) then ptr_free, self._header  
-  if ptr_valid(self._indpup) then ptr_free, self._indpup
+  ;if ptr_valid(self._header) then ptr_free, self._header  
+  ;if ptr_valid(self._indpup) then ptr_free, self._indpup
 end
 
 pro AOpupils::Cleanup

@@ -54,7 +54,7 @@ function AOccd39::dark_fname
 end
 
 pro AOccd39::free
-    if ptr_valid(self._header) then ptr_free, self._header
+    ;if ptr_valid(self._header) then ptr_free, self._header
 end
 
 pro AOccd39::Cleanup

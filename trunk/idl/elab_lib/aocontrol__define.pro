@@ -235,9 +235,6 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
 end
 
 pro AOcontrol::free
-    if ptr_valid(self._b0_a_fitsheader) then ptr_free, self._b0_a_fitsheader
-    if ptr_valid(self._c_fitsheader) then ptr_free, self._c_fitsheader
-    if ptr_valid(self._gain_fitsheader) then ptr_free, self._gain_fitsheader
     if ptr_valid(self._modes_idx ) then ptr_free, self._modes_idx 
     if ptr_valid(self._gain) then ptr_free, self._gain
 end
