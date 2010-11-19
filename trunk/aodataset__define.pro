@@ -116,6 +116,10 @@ pro AOdataset::free
     tns = self->Get(/all)
     for i=0L, self->Count()-1 do begin
         ee = getaoelab(tns[i])
+        if obj_valid(ee) eq 0 then begin
+            message, tns[i] + ' skipped because it lacks required data', /info
+            continue
+        endif 
         ee->free
     endfor
 end
@@ -138,6 +142,10 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 
 	for i=0L, nel-1 do begin
 		tmpobj=getaoelab(objref[i])
+        if obj_valid(tmpobj) eq 0 then begin
+            message, objref[i] + ' skipped because it lacks required data', /info
+            continue
+        endif 
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
       	for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
@@ -233,6 +241,10 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
         ; if (hasmethod) then value = tmpobj->$cmds[j]$()
         ;
         tmpobj = getaoelab(objref[i])      ; (*self._array)[i]
+        if obj_valid(tmpobj) eq 0 then begin
+            message, objref[i] + ' skipped because it lacks required data', /info
+            continue
+        endif 
         for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
             add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
