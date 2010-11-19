@@ -301,10 +301,15 @@ function AOpsf::bias
 end
 
 function AOpsf::shiftAndAdd
-    for i=0L, self->n_frames()-1 do begin
-        cc = (self->centroid())[i,*]
+    sha = fltarr(self->frame_w(), self->frame_h())
+    cc = ( self->centroid() ) / self->pixelscale() 
+    for i=0L, self->nframes()-1 do begin
+        imas = (self->image())[*,*,i]
+        ; TODO implement subpixel shift
+        sha += shift(imas,-cc[i,0], -cc[i,1])
     endfor
-    ;TODO
+    sha /= self->nframes()
+    return, sha 
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 2D Gaussian Fit
@@ -459,7 +464,7 @@ pro AOpsf::compute_centroid
         longexp = self->longexposure()
         dx = n_elements(longexp[*,0])
         dy = n_elements(longexp[0,*])
-        if ((long_exp_center[0] lt 0) or (long_exp_center[1] lt 1) or (long_exp_center[0] ge dx) or (long_exp_center[1] ge dy)) then begin
+        if ((long_exp_center[0] lt 0) or (long_exp_center[1] lt 0) or (long_exp_center[0] ge dx) or (long_exp_center[1] ge dy)) then begin
             long_exp_center[0] = dx/2
             long_exp_center[1] = dy/2
         endif
@@ -467,13 +472,15 @@ pro AOpsf::compute_centroid
 		centr = fltarr(self->nframes(),2)
 		; compute centroid in a small (0.6") field centered on the long-exp PSF
 		square = 0.6	; arcsec
-		sz = square/2./self->pixelscale()
+		sz = fix(square/2./self->pixelscale())
 		for ii=0L, self->nframes()-1 do begin
 			im = image[*,*,ii]
 			im[where(im lt self->threshold())] = 0.
-            sz = min([sz, long_exp_center[0], long_exp_center[1], dx-long_exp_center[0], dy-long_exp_center[1]])
+            sz = fix(min([sz, long_exp_center[0], long_exp_center[1], dx-long_exp_center[0], dy-long_exp_center[1]]))
 			im = im[long_exp_center[0]-sz:long_exp_center[0]+sz-1, long_exp_center[1]-sz:long_exp_center[1]+sz-1]
-			centr[ii,*] = aocalc_centroid(im) * self->pixelscale()
+			;centr[ii,*] = aocalc_centroid(im) * self->pixelscale()
+			r = gauss2dfit(im, coeff, /tilt)
+            centr[ii,*] = (coeff[4:5]-[sz,sz]) * self->pixelscale()
 		endfor
 		thr = self->threshold()
 		save, centr, thr, long_exp_center, file=self._centroid_fname
@@ -483,7 +490,7 @@ pro AOpsf::compute_centroid
 end
 
 ;
-; centroid of short-exposures in arcsec
+; centroid of short-exposures in arcsec wrt to the longexp centroid (gaussfit->center()) 
 ;
 function AOpsf::centroid
     if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
@@ -723,5 +730,6 @@ pro AOpsf__define
         INHERITS AOtime_series			  $
     }
 end
+
 
 
