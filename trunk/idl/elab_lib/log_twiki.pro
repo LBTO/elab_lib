@@ -6,8 +6,12 @@ pro log_twiki, aodataset, ref_star=ref_star
     print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
-        ee = objref[i]
-
+        ee = getaoelab(objref[i])
+        if obj_valid(ee) eq 0 then begin
+            message, objref[i] + ' skipped because it lacks required data', /info
+            continue
+        endif 
+        
         gaintemp = [-1, -1]
         if obj_valid(ee->modal_rec()) then $
             if obj_valid(ee->control()) then begin

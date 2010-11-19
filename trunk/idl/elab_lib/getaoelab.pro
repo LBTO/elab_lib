@@ -29,6 +29,7 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
         endelse
     endif
     
+    message, 'Getting tracknum '+tn, /info
     oo = obj_new('aoelab', tn, recompute=recompute, _extra=ex)
     if not obj_valid(oo) then begin
         message, 'Could not initialize aoelab '+tn, /info
@@ -68,7 +69,6 @@ function getaoelab, tracknum, $
         aomultiton_elab = obj_new('aomultiton_elab')
         defsysv, "!aomultiton_elab", aomultiton_elab
     endif
-    message, 'Getting tracknum '+tracknum, /info
     return, !aomultiton_elab->getobj(tracknum, modal_rec=modal_reconstructor_file, recompute=recompute, dark_fname=dark_fname) 
 ;    return, obj_new('AOelab', tracknum, modal_rec=modal_reconstructor_file, recompute=recompute, dark_fname=dark_fname)
 end
