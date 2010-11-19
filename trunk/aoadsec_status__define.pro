@@ -71,12 +71,45 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
     self->addMethodHelp, "shape_file()", "return shape filename (string)"
     self->addMethodHelp, "ff_matrix_file()", "return ff matrix filename (string)"
     self->addMethodHelp, "adsec_struct_file()", "return adsec_struct filename (string)"
-    self->addMethodHelp, "adsec()", "(struct)"
-    self->addMethodHelp, "adsec_shell()", "(struct)"
-    self->addMethodHelp, "gr()", "(struct)"
-    self->addMethodHelp, "sc()", "(struct)"
+    self->addMethodHelp, "struct_adsec()", "(struct)"
+    self->addMethodHelp, "struct_adsec_shell()", "(struct)"
+    self->addMethodHelp, "struct_gr()", "(struct)"
+    self->addMethodHelp, "struct_sc()", "(struct)"
     self->addMethodHelp, "act_coordinates()", "return adsec coordinates (vect[2,672])"
     return, 1
+end
+
+pro AOadsec_status::summary
+    print, string(format='(%"fsm_state = %s")', self->fsm_state() )
+    print, string(format='(%"b0_a_file = %s")', self->b0_a_file() )
+    print, string(format='(%"b_delay_a_file = %s")', self->b_delay_a_file() )
+    print, string(format='(%"a_delay_file = %s")', self->a_delay_file() )
+    print, string(format='(%"c_file = %s")', self->c_file() )
+    print, string(format='(%"g_gain_a_file = %s")', self->g_gain_a_file() )
+    print, string(format='(%"disturb_file = %s")', self->disturb_file() )
+    print, string(format='(%"disturb_status = %d")', self->disturb_status() )
+    print, string(format='(%"shape_file = %s")', self->shape_file() )
+    print, string(format='(%"ff_matrix_file = %s")', self->ff_matrix_file() )
+    print, string(format='(%"adsec_struct_file = %s")', self->adsec_struct_file() )
+end
+
+pro AOadsec_status::test
+    d = self->fsm_state() 
+    d = self->b0_a_file() 
+    d = self->b_delay_a_file() 
+    d = self->a_delay_file() 
+    d = self->c_file() 
+    d = self->g_gain_a_file() 
+    d = self->disturb_file() 
+    d = self->disturb_status() 
+    d = self->shape_file() 
+    d = self->ff_matrix_file() 
+    d = self->adsec_struct_file() 
+    d = self->struct_adsec() 
+    d = self->struct_adsec_shell() 
+    d = self->struct_gr() 
+    d = self->struct_sc() 
+    d = self->act_coordinates() 
 end
 
 pro AOadsec_status::ConvertFilePath, struct
@@ -190,6 +223,7 @@ end
 function AOadsec_status::act_coordinates
   return, self._adsec_structs->act_coordinates()
 end
+
 
 pro AOadsec_status::Cleanup
     self->AOhelp::Cleanup

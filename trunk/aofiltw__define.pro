@@ -169,6 +169,18 @@ function AOfiltw::header
 	return, *(self._header)
 end
 
+pro AOfiltw::test
+    d=self->fw_number()
+    d=self->fw_pos()
+    d=self->fw_data()
+    d=self->name()
+    d=self->reflectivity()
+    d=self->transmissivity()
+    d=self->cw()
+    d=self->bw()
+    d=self->header()
+end
+
 pro AOfiltw::free
 end
 

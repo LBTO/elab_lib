@@ -201,6 +201,27 @@ function AOtel::swing_arm
 	return, self._swa
 end
 
+pro AOtel::test
+    d=self->rot_angle()
+    d=self->az()
+    d=self->el()
+    d=self->ra()
+    d=self->dec()
+    d=self->istracking()
+    d=self->isguiding()
+    d=self->hbs_on()
+    d=self->vent_on()
+    d=self->hexapod()
+    d=self->tertiary()
+    d=self->swing_arm()
+    d=self->wind_speed()
+    d=self->extern_wind_speed()
+    d=self->extern_wind_direction()
+    d=self->dimm_seeing()
+    d=self->guidecam_fwhm_x()
+    d=self->guidecam_fwhm_y()
+end
+
 pro AOtel::Cleanup
 	self->AOhelp::Cleanup
 end

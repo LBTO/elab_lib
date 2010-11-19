@@ -51,6 +51,7 @@ end
 ; additional explanations are added to the string cause
 ;
 function AOSanityCheck::IsOK, cause=cause
+    if n_elements(cause) eq 0 then cause=""
     if self._isok eq -2 then begin
         self._isok = 0B
 
@@ -174,6 +175,16 @@ function AOSanityCheck::WFSGlobalTimeout
     return, self._wfsglobaltimeout
 end
 
+pro AOSanityCheck::test
+    d=self->ClosedLoop()
+    d=self->CRCerror()
+    d=self->FLTimeout()
+    d=self->PendingCounter()
+    d=self->SkipCounter()
+    d=self->TimeStamp()
+    d=self->WFSGlobalTimeout()
+    d=self->IsOK()
+end
 
 pro AOSanityCheck::Cleanup
     self->AOhelp::Cleanup
