@@ -46,7 +46,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
     		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
 			disturb,  $
-            ee->isOK(cause=cause) eq 1L ? "" :  cause 
+            ee->isOK(cause=cause) eq 1L ? "" :  cause $ 
         )
     endfor
 
