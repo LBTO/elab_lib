@@ -95,6 +95,15 @@ function AOpupils::pup_tracknum
 	return, self._pup_tracknum
 end
 
+pro AOpupils::test
+    d=self->indpup()
+    d=self->nsub()
+    d=self->radius()
+    d=self->cx()
+    d=self->cy()
+    d=self->pup_tracknum()
+end
+
 pro AOpupils::free
   ;if ptr_valid(self._header) then ptr_free, self._header  
   ;if ptr_valid(self._indpup) then ptr_free, self._indpup

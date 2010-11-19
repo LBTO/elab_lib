@@ -53,6 +53,15 @@ function AOccd39::dark_fname
 	return, self._dark_filename
 end
 
+pro AOccd39::test
+    d = self->framerate()
+    d = self->readout_speed()
+    d = self->binning()
+    d = self->status()
+    d = self->dark()
+    d = self->dark_fname()
+end
+
 pro AOccd39::free
     ;if ptr_valid(self._header) then ptr_free, self._header
 end

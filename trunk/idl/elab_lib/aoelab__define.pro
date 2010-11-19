@@ -560,6 +560,14 @@ function AOelab::ex, cmd  ;,  isvalid=isvalid
 
 end
 
+pro AOelab::test
+    IF (OBJ_VALID(self._obj_tracknum)) THEN  self._obj_tracknum->test
+    IF (OBJ_VALID(self._adsec_status)) THEN  self._adsec_status->test
+    IF (OBJ_VALID(self._wfs_status)) THEN  self._wfs_status->test
+    IF (OBJ_VALID(self._tel)) THEN  self._tel->test
+    IF (OBJ_VALID(self._sanitycheck)) THEN  self._sanitycheck->test
+end
+
 pro AOelab::free
     IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
     IF (OBJ_VALID(self._control )) THEN  self._control->free

@@ -145,8 +145,29 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
 end
 
+pro AOwfs_status::test
+    d = self->fitsfile()
+    d = self->header()
+    d = self->wunit()
+    d = self->ccd39()
+    d = self->pupils()
+    d = self->filtw1()
+    d = self->filtw2()
+    d = self->modulation()
+    d = self->rerotator()
+    d = self->camera_lens()
+    d = self->stages()
+    d = self->lamp_intensity()
+    d = self->cube_angle()
+    d = self->cube_stage()
+    (self->ccd39())->test
+    (self->pupils())->test
+    (self->filtw1())->test
+    (self->filtw2())->test
+end
+
 pro AOwfs_status::free
-    if ptr_valid(self._header) then ptr_free, self._header
+    ;if ptr_valid(self._header) then ptr_free, self._header
     self._ccd39->free
     self._pupils->free
     self._filtw1->free

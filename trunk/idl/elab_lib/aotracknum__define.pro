@@ -31,10 +31,19 @@ function AOtracknum::tracknum
     return, self._tracknum
 end
 
+pro AOtracknum::summary
+    print, string(format='(%"tracknum = %s")', self->tracknum() )
+    print, string(format='(%"julday = %f")', self->julday() )
+end
+
+pro AOtracknum::test
+    d = self->tracknum() 
+    d = self->julday() 
+end
+
 pro AOtracknum::Cleanup
     self->AOhelp::Cleanup
 end
-
 
 pro AOtracknum__define
     struct = { AOtracknum, $
