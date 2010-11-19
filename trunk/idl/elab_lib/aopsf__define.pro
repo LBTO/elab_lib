@@ -471,6 +471,7 @@ pro AOpsf::compute_centroid
 		for ii=0L, self->nframes()-1 do begin
 			im = image[*,*,ii]
 			im[where(im lt self->threshold())] = 0.
+            sz = min([sz, long_exp_center[0], long_exp_center[1], dx-long_exp_center[0], dy-long_exp_center[1]])
 			im = im[long_exp_center[0]-sz:long_exp_center[0]+sz-1, long_exp_center[1]-sz:long_exp_center[1]+sz-1]
 			centr[ii,*] = aocalc_centroid(im) * self->pixelscale()
 		endfor
