@@ -50,6 +50,7 @@ function AOframes::Init, root_obj, frames_file
     self->addMethodHelp, "nph_per_int_rms()", "time-stddev of total number of photons per frame"
     self->addMethodHelp, "nph_per_sec_av()",  "total number of photons per second, time-averaged"
     self->addMethodHelp, "nphsub_per_int_av()", "number of photons per frame per subaperture, time-averaged"
+    self->addMethodHelp, "adu_per_quadrant()", "ADU per quadrant"
     return, 1
 end
 
