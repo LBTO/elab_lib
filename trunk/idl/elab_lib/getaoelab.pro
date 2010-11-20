@@ -42,6 +42,11 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
     return, self._obj_list->Get(pos=0)
 end
 
+pro aomultiton_elab::free
+    objs = self._obj_list->Get(/all)
+    for i=0,self._obj_list->Count()-1 do objs[i]->free
+end
+
 ; for debug
 pro aomultiton_elab::debug
     print, *self._tag_list
