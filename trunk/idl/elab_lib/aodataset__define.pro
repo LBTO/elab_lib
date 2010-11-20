@@ -6,7 +6,7 @@
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, _extra=ex
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
     
@@ -56,6 +56,9 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 		for ii=0, n_elements(tracknumlist)-1 do self->add, tracknumlist[ii]
 	endelse
 
+    if keyword_set(recompute) then begin
+        for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
+    endif
     return, 1
 end
 
@@ -166,8 +169,8 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
             v[i]=ptr_new(value, /no_copy)
             if keyword_set(verbose) then print, 'data found'
         endif else if keyword_set(verbose) then print, 'data NOT found'
-        if obj_valid(objref[i]) then $
-        	if obj_hasmethod(objref[i], 'free') then objref[i]->free
+        if obj_valid(tmpobj) then $
+        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
 	endfor
     valid = where(isvalid eq 1, cntvalid)
 
@@ -288,8 +291,8 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
             if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
             v[i]=ptr_new(value, /no_copy)
          endif
-        if obj_valid(objref[i]) then $
-        	if obj_hasmethod(objref[i], 'free') then objref[i]->free
+        if obj_valid(tmpobj) then $
+        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
     endfor
     valid = where(isvalid eq 1, cntvalid)
     if arg_present(ptrdata) then ptrdata = cntvalid eq 0 ? ptr_new() : v[valid]
