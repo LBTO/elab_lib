@@ -29,6 +29,7 @@ pro log_twiki, aodataset, ref_star=ref_star
         endelse
         if ee->operation_mode() eq 'RR' then begin
         	if obj_valid(ee->disturb()) then disturb='ON' else disturb='OFF'
+            if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!' 
         endif else disturb='ONSKY'
 
         print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s | %s |")', $
