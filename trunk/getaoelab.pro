@@ -64,7 +64,8 @@ end
 function getaoelab, tracknum, $
             recompute = recompute, $
             dark_fname=dark_fname, $
-            modal_reconstructor_file=modal_reconstructor_file       ; this is used in case of kalman filter
+            modal_reconstructor_file=modal_reconstructor_file, $       ; this is used in case of kalman filter
+            freeall=freeall
 
     ;on_error, 2
     defsysv, "!ao_env", EXISTS=exists
@@ -73,6 +74,10 @@ function getaoelab, tracknum, $
     if not exists then begin
         aomultiton_elab = obj_new('aomultiton_elab')
         defsysv, "!aomultiton_elab", aomultiton_elab
+    endif
+    if keyword_set(freeall) then begin
+        !aomultiton_elab->free
+        return,'OK'
     endif
     return, !aomultiton_elab->getobj(tracknum, modal_rec=modal_reconstructor_file, recompute=recompute, dark_fname=dark_fname) 
 ;    return, obj_new('AOelab', tracknum, modal_rec=modal_reconstructor_file, recompute=recompute, dark_fname=dark_fname)
