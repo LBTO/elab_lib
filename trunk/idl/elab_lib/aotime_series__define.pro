@@ -323,7 +323,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	fr=*self._freq
 
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
-  ntot = fix(alog10(max(vtemp)))+1
+  if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
   
 	for kkk=0, n_elements(vtemp)-1 do begin
 		mode=vtemp[kkk]
