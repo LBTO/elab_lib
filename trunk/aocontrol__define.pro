@@ -198,16 +198,19 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
                                                 -plane1[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
     print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   endif
-;  if plot then begin
-;    plane1=fltarr(672)
-;    for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
-;    loadct, 39
-;    window, /free
-;    display, surf1[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
-;    window, /free
-;    display, plane1, /as,/sh, PARAM_FILE=adsec_file, rot=0.
-;  endif
-  
+  if plot then begin
+    plane1=fltarr(672)
+    for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
+    loadct, 39
+    window, /free
+    display, surf1[0,*], /as,/sh, $
+    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+    window, /free
+    display, plane1, /as,/sh, $
+    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+  endif
   surf2=fltarr(3,672)
   surf2[0,*]=(self->m2c())[1,*]
   surf2[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
@@ -222,15 +225,18 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
                                                -plane2[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
     print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   endif
-;  if plot eq 1 then begin
-;    plane2=fltarr(672)
-;    for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
-;    window, /free
-;    display, surf2[0,*], /as,/sh, PARAM_FILE=adsec_file, rot=0.
-;    window, /free
-;    display, plane2, /as,/sh, PARAM_FILE=adsec_file, rot=0.
-;  endif
-
+  if plot eq 1 then begin
+    plane2=fltarr(672)
+    for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
+    window, /free
+    display, surf2[0,*], /as,/sh, $
+    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+    window, /free
+    display, plane2, /as,/sh, $
+    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+  endif
   return, [tip_ang,tilt_ang]
 end
 
