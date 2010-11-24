@@ -178,7 +178,7 @@ function AOelab::Init, tracknum, $
     trnm_acc = tracknum
     temp0 = strmid(trnm_acc, 0, 8)
     temp1 = strmid(trnm_acc, 9)
-    if temp0 ge 20101123 and temp1 gt 010000 then begin
+    if temp0 ge 20101123 then begin
       self._accel = obj_new('AOaccel', self, proj, data=data)
     endif else begin
       flag_acc = 0
