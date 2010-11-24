@@ -123,38 +123,38 @@ function AOtime_series::deltat
 end
 
 function AOtime_series::niter
-    if self._niter eq -1 then self->Compute
+    if self._niter eq -1 then self->AOtime_series::Compute
     return, self._niter
 end
 
 function AOtime_series::nseries
-    if self._nseries eq -1 then self->Compute
+    if self._nseries eq -1 then self->AOtime_series::Compute
     return, self._nseries
 end
 
 function AOtime_series::time_variance, series_idx
-    if not ptr_valid(self._time_variance) then self->Compute
+    if not ptr_valid(self._time_variance) then self->AOtime_series::Compute
 
     if n_elements(series_idx) ne 0 then return, (*self._time_variance)[series_idx] $
     else return, *self._time_variance
 end
 
 function AOtime_series::ensemble_variance, iter_idx
-    if not ptr_valid(self._ensemble_variance) then self->Compute
+    if not ptr_valid(self._ensemble_variance) then self->AOtime_series::Compute
 
     if n_elements(iter_idx) ne 0 then return, (*self._ensemble_variance)[iter_idx] $
     else return, *self._ensemble_variance
 end
 
 function AOtime_series::time_average, series_idx
-    if not ptr_valid(self._time_average) then self->Compute
+    if not ptr_valid(self._time_average) then self->AOtime_series::Compute
 
     if n_elements(series_idx) ne 0 then return, (*self._time_average)[series_idx] $
     else return, *self._time_average
 end
 
 function AOtime_series::ensemble_average, iter_idx
-    if not ptr_valid(self._ensemble_average) then self->Compute
+    if not ptr_valid(self._ensemble_average) then self->AOtime_series::Compute
     if n_elements(iter_idx) ne 0 then return, (*self._ensemble_average)[iter_idx] $
     else return, *self._ensemble_average
 end
@@ -544,7 +544,6 @@ end
 ;end
 
 pro AOtime_series::addHelp, obj
-
     obj->addMethodHelp, "niter()",   "number of time steps"
     obj->addMethodHelp, "time_variance(series_idx)", "time-variance of series series_idx"
     obj->addMethodHelp, "ensemble_variance(iter_idx)", "ensemble-variance of iteration iter_idx"
@@ -560,9 +559,25 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq"
 ;    obj->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
 ;                        "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
-    obj->addMethodHelp, "specPlot(idx)", "plot psd of idx-th spectrum"
+    obj->addMethodHelp, "SpecPlot, idx", "plot psd of idx-th spectrum"
 end
 
+pro AOtime_series::test
+    d=self->niter()
+    d=self->time_variance()
+    d=self->ensemble_variance()
+    d=self->time_average()
+    d=self->ensemble_average()
+    d=self->nfreqs()
+    d=self->freq()
+    d=self->nspectra()
+    d=self->psd()
+    d=self->fftwindow()
+    d=self->power()
+    d=self->findPeaks()
+    ;d=self->findDirections()
+    ; self->specPlot,0
+end
 
 pro AOtime_series::free
     ptr_free, self._psd
