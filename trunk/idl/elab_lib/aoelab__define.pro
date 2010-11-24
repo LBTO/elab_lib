@@ -171,6 +171,31 @@ function AOelab::Init, tracknum, $
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
     self._offloadmodes = obj_new('AOoffloadmodes', self, pos2mod_fname)
+    
+    ; accelerometers
+    dir = ao_datadir()+path_sep()+'accel'
+    proj = ao_elabdir()+path_sep()+'accelerometers'+path_sep()+'projection_matrix.fits'
+    trnm_acc = tracknum
+    temp0 = strmid(trnm_acc, 0, 8)
+    temp1 = strmid(trnm_acc, 9)
+    if temp0 ge 20101123 and temp1 gt 010000 then begin
+      self._accel = obj_new('AOaccel', self, proj, data=data)
+    endif else begin
+      flag_acc = 0
+      if FILE_TEST(dir+path_sep()+trnm_acc) eq 0 then begin
+        t = 'temp1='+temp1+'+1'
+        f = execute(t)
+        if temp1 lt 95959 then trnm_acc = temp0+'_0'+strtrim(temp1,2) $
+          else trnm_acc = temp0+'_'+strtrim(temp1,2)
+        if FILE_TEST(dir+path_sep()+trnm_acc) eq 0 then begin
+          flag_acc = 1
+        endif
+      endif
+      if flag_acc eq 0 then begin
+        acc_file = dir+path_sep()+trnm_acc+path_sep()+'acc.sav'
+        self._accel = obj_new('AOaccel', self, proj, file=acc_file)
+      endif
+    endelse
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOElab', 'Represents an AO measure') then return, 0
@@ -196,6 +221,8 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
     if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
     if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes, 'offloadmodes'
+    if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'    
+
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
     self->addMethodHelp, "adsec_status()", "reference to adsec status object (AOadsec_status)"
@@ -222,6 +249,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
     self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
+    self->addMethodHelp, "accel", "accelerometer data (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz)"
     ; free memory
     self->free
 
@@ -522,6 +550,10 @@ function AOelab::offloadmodes
     IF (OBJ_VALID(self._offloadmodes)) THEN return, self._offloadmodes else return, obj_new()
 end
 
+function AOelab::accel
+  IF (OBJ_VALID(self._accel)) THEN return, self._accel else return, obj_new()
+end
+
 function AOelab::ex, cmd  ;,  isvalid=isvalid
     apex = string(39B)
   	;nparams = n_params()
@@ -588,6 +620,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
+    IF (OBJ_VALID(self._accel )) THEN  self._accel->free 
 end
 
 pro AOelab::Cleanup
@@ -613,6 +646,7 @@ pro AOelab::Cleanup
     obj_destroy, self._disturb
     obj_destroy, self._modaldisturb
     obj_destroy, self._offloadmodes
+    obj_destroy, self._accel
     self->AOhelp::Cleanup
 end
 
@@ -646,6 +680,7 @@ pro AOelab__define
         _disturb           : obj_new(), $
         _modaldisturb      : obj_new(), $
         _offloadmodes      : obj_new(), $
+        _accel             : obj_new(), $
         INHERITS AOhelp $
     }
 end
