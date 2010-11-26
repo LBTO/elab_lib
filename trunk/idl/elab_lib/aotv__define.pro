@@ -19,15 +19,17 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
     binning = long(aoget_fits_keyword(fitsheader, 'ccd47.BINNING'))
 
     ; Pixelscale
-    pixelscale = 15./1024/binning
+    pixelscale = 15./1024*binning
 
     ; lambda:
-    if obj_valid( (root_obj->wfs_status())->filtw2() ) then $
-    lambda = ((root_obj->wfs_status())->filtw2())->cw() * 1d-9 $ 
-    else begin
+    lambda = !VALUES.F_NAN
+    if obj_valid( (root_obj->wfs_status())->filtw2() ) then begin
+        lambda = ((root_obj->wfs_status())->filtw2())->cw() * 1d-9 
+    endif 
+    if not finite(lambda) then begin
         lambda = 800d-9
-        message, 'Unknown filter on FW2. Setting central wavelength for TV to 800nm', /info
-    endelse 
+        message, 'Empty/Unknown filter on FW2. Setting central wavelength for TV to 800nm', /info
+    endif
     
     ;Framerate
 	framerate = float(aoget_fits_keyword(fitsheader, 'ccd47.FRAMERATE')) 
