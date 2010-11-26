@@ -13,10 +13,10 @@ function AOtel::Init, fitsfile
 								   self._rot_angle = !VALUES.F_NAN
 
 	az = float(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
-	if az ne -9999. then self._az = az else self._az = !VALUES.F_NAN
+	if az ne -9999. then self._az = az/3600. else self._az = !VALUES.F_NAN
 
 	el = float(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
-	if el ne -9999. then self._el = el else self._el = !VALUES.F_NAN
+	if el ne -9999. then self._el = el/3600. else self._el = !VALUES.F_NAN
 
     dec =  float(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
 	if dec ne -9999. then self._dec = dec * 180./!pi else self._dec = !VALUES.F_NAN
@@ -108,8 +108,8 @@ function AOtel::Init, fitsfile
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOtel', 'Represent TELESCOPE status') then return, 0
     self->addMethodHelp, "rot_angle()", "AGW rotator angle in degrees (float)"
-    self->addMethodHelp, "az()", "Telescope azimuth angle in arcseconds (float)"
-    self->addMethodHelp, "el()", "Telescope elevation angle in arcseconds (float)"
+    self->addMethodHelp, "az()", "Telescope azimuth angle in degrees (float)"
+    self->addMethodHelp, "el()", "Telescope elevation angle in degrees (float)"
     self->addMethodHelp, "ra()",  "Telescope pointing right ascension angle in hours (float)"
     self->addMethodHelp, "dec()", "Telescope pointing declination angle in degrees (float)"
     self->addMethodHelp, "istracking()", "Telescope tracking flag: 1L: Tracking. 0L: Not tracking. -1L: Unknown."
