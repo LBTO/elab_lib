@@ -147,7 +147,7 @@ function AOgaussfit::psffit
 end
 
 pro AOgaussfit::free
-	if ptr_valid(self._frame) then ptr_free, self._frame
+	;if ptr_valid(self._frame) then ptr_free, self._frame
 end
 
 pro AOgaussfit::Cleanup
