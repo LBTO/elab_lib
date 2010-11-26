@@ -18,10 +18,11 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
         if keyword_set(recompute) then begin
             nobj = n_elements(tags)
             case pos of
-             0:         tags = tags[1:*] 
-             nobj-1:    tags = tags[0:nobj-2]
-             else:      tags = [ tags[0:pos-1], tags[pos+1:*] ]
+                0:         tags = tags[1:*] 
+                nobj-1:    tags = tags[0:nobj-2]
+                else:      tags = [ tags[0:pos-1], tags[pos+1:*] ]
             endcase
+            self._obj_list->Remove, pos=pos
         endif else begin
             obj = self._obj_list->Get(pos=pos)
             if not obj_valid(obj) then message, 'Elablib error. aoelab object not valid '+tn
@@ -45,6 +46,20 @@ end
 pro aomultiton_elab::free
     objs = self._obj_list->Get(/all)
     for i=0,self._obj_list->Count()-1 do objs[i]->free
+end
+
+pro aomultiton_elab::release
+    for i=0L, self._obj_list->Count()-1 do begin
+        obj = self._obj_list->Get(pos=pos)
+        self._obj_list->Remove, pos=pos
+        obj_destroy,obj
+    endfor
+
+    ptr_free, self._tag_list
+    self._tag_list = ptr_new([''])
+    obj_destroy, self._obj_list
+    self._obj_list = obj_new('IDL_Container')
+    heap_gc
 end
 
 ; for debug
