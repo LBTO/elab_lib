@@ -168,10 +168,10 @@ end
 
 pro AOwfs_status::free
     ;if ptr_valid(self._header) then ptr_free, self._header
-    self._ccd39->free
-    self._pupils->free
-    self._filtw1->free
-    self._filtw2->free
+    IF (OBJ_VALID(self._ccd39 )) THEN  self._ccd39->free
+    IF (OBJ_VALID(self._pupils )) THEN  self._pupils->free
+    IF (OBJ_VALID(self._filtw1 )) THEN  self._filtw1->free
+    IF (OBJ_VALID(self._filtw2 )) THEN  self._filtw2->free
 end
 
 pro AOwfs_status::Cleanup
