@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     objref =  aodataset->Get(/all)
 
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
         ee = getaoelab(objref[i])
@@ -32,13 +32,14 @@ pro log_twiki, aodataset, ref_star=ref_star
             if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!' 
         endif else disturb='ONSKY'
 
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s | %s |")', $
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
-            obj_valid(ee->tel()) ? round( (ee->tel())->el()/3600.) : -1 , $
+            obj_valid(ee->tel()) ? round( (ee->tel())->el() ) : -1 , $
             obj_valid(ee->tel()) ? round( (ee->tel())->extern_wind_speed() ) : -1 , $
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing() : -1 , $
+            obj_valid(ee->olmodes()) ?  (ee->olmodes())->seeing() : -1 , $
             obj_valid(ee->modal_rec()) ? strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) : ' ', $
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->ccd39())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
