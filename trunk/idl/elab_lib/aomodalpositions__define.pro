@@ -10,6 +10,7 @@ function AOmodalpositions::Init, root_obj
     self._pos_obj = root_obj->positions()
     self._m2c_obj = root_obj->control()
     self._fc_obj  = root_obj->frames_counter()
+    self._root_obj = root_obj
     if not obj_valid(self._pos_obj) then return, 0
 
     self._store_fname = filepath(root=root_obj->elabdir(), 'modalpositions.sav')
@@ -57,6 +58,25 @@ function AOmodalpositions::GetDati
     return, self._modalpositions
 end
 
+pro AOmodalpositions::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, overplot=overplot
+    coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6
+    freq = self->freq(from=from_freq, to=to_freq)
+    tip  = self->power(0, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
+    tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
+    if not keyword_set(overplot) then begin
+    	plot, freq, sqrt(tip + tilt), $
+        	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
+    	oplot, freq, sqrt(tip), col='0000ff'x
+    	oplot, freq, sqrt(tilt), col='00ff00'x
+    	legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
+	endif else begin
+    	oplot, freq, sqrt(tip + tilt)
+    	oplot, freq, sqrt(tip), col='0000ff'x
+    	oplot, freq, sqrt(tilt), col='00ff00'x
+	endelse
+end
+
+
 pro AOmodalpositions::free
     if ptr_valid(self._modalpositions) then ptr_free, self._modalpositions
     self->AOtime_series::free
@@ -72,6 +92,7 @@ end
 pro AOmodalpositions__define
     struct = { AOmodalpositions, $
         _modalpositions    :  ptr_new(), $
+        _root_obj          :  obj_new(), $
         _m2c_obj           :  obj_new(), $
         _pos_obj           :  obj_new(), $
         _fc_obj            :  obj_new(), $
