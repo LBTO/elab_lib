@@ -126,10 +126,11 @@ pro AOpsf::addHelp, obj
     obj->addMethodHelp, "lambda()", 		"central filter wavelength [m]"
     obj->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
     obj->addMethodHelp, "exptime()",		"psf exposure time [s]"
+    obj->addMethodHelp, "binning()",		"ccd binning"
     obj->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
     obj->addMethodHelp, "bias()",			"bias level of the LE image"
     obj->addMethodHelp, "gaussfit()",  	"return reference to psf gaussfit object (AOgaussfit)"
-    obj->addMethodHelp, "sr_se([/PLOT])", 	"Strehl ratio estimated from the image"
+    obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
     obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
     obj->addMethodHelp, "prof_dist()", 	"profile distance vector in arcsec"
@@ -323,8 +324,8 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio
 function AOpsf::SR_se, plot=plot, ima=ima
-	if self._sr_se eq -1. then begin
-		if file_test(self._sr_se_fname) then begin
+	if (self._sr_se eq -1.) or keyword_set(plot) or keyword_set(ima) then begin
+		if file_test(self._sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._sr_se_fname
 			self._sr_se = sr_se
 		endif else begin
