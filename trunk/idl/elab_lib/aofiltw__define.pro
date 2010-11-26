@@ -96,7 +96,7 @@ pro AOfiltw::filtw_data, fw_number
 
 	'2': CASE self._fw_pos OF
 
-			0 OR 3 OR 5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
 									  "R"	,0.0				, $
 									  "T"	,1.0				, $
 									  "CW"	,!VALUES.F_INFINITY , $
@@ -114,11 +114,23 @@ pro AOfiltw::filtw_data, fw_number
 									  "CW"	,900. 				, $
 									  "BW"	,10.	)
 
+			3: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
 			4: data_struct = CREATE_STRUCT("name", 'FB950-10'	, $
 									  "R"	,0.50				, $
 									  "T"	,0.50				, $
 									  "CW"	,950. 				, $
 									  "BW"	,10.	)
+
+			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
 
 			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
 									  "R"	,!VALUES.F_NAN		, $
