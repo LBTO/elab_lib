@@ -54,6 +54,7 @@ pro log_twiki, aodataset, ref_star=ref_star
 			disturb,  $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $ 
         )
+        ee->free
     endfor
-
+    aodataset->free
 end
