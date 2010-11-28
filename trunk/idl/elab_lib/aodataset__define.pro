@@ -95,9 +95,11 @@ end
 
 
 
-pro AOdataset::RemoveTracknum, tracknum
-    idx = where (self->Get(/all) eq tracknum, cnt)
-    if cnt gt 0 then dum = self->Remove(idx)
+pro AOdataset::RemoveTracknum, tracknums
+    for i=0, n_elements(tracknums)-1 do begin
+        idx = where (self->Get(/all) eq tracknums[i], cnt)
+        if cnt gt 0 then dum = self->Remove(idx)
+    endfor
 end
 
 ;
@@ -344,14 +346,16 @@ function aodataset::Remove, idx
     if idx ge nobj then message, 'AOLIST::REMOVE: Index is out of range', /info
     res = vals[idx]
     ptr_free, self._values
+    ; decrement counter
+    self._nelems -= 1
+    ; if set contains just one elements simply return it
+    if nobj eq 1 then return, res
     case idx of
         0:        newvals = vals[1:*]
         nobj-1:   newvals = vals[0:nobj-2]
         else:     newvals = [ vals[0:idx-1], vals[idx+1:*] ]
     endcase
     self._values = ptr_new( newvals, /no_copy)
-    ; decrement counter
-    self._nelems -= 1
     return, res
 end
 
