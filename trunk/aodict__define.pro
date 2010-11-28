@@ -95,7 +95,14 @@ function aodict::where, op, key_value, count
 end
 
 function aodict::where_value, op, value, count
-    return, self->where_generic(self->values(), op, value, count)
+    catch, error
+    if error eq 0 then begin
+        return, self->where_generic(self->values(), op, value, count)
+    endif else begin
+        catch, /cancel
+        count = 0
+        return, -1
+    endelse
 end
 
 function aodict::where_generic, set, op, value, count
@@ -105,6 +112,7 @@ function aodict::where_generic, set, op, value, count
     endif
     case op of
         'eq' : idx=where( set eq value, count)
+        'ne' : idx=where( set ne value, count)
         'le' : idx=where( set lt value, count)
         'lt' : idx=where( set lt value, count)
         'ge' : idx=where( set gt value, count)
@@ -118,6 +126,13 @@ function aodict::where_generic, set, op, value, count
                 dum = intersection(idx1, idx2, idx)
                 count = n_elements(idx)
             endelse 
+            end
+        'like' : begin
+            if  test_type(set[0], /string) ne 0 then begin
+                count = 0
+                return, -1
+            endif
+            idx = where(strmatch(set, "*"+value+"*", /fold_case) eq 1, count)
             end
         else : begin 
             message, 'undefined operator '+op, /info
@@ -147,7 +162,6 @@ end
 function aodict::select, op, value, count
     idx = self->where_value(op, value, count)
     if count eq 0 then begin
-        message, 'query returned empty set', /info
         return, -1
     end
     return, (self->keys())[idx]  
@@ -161,10 +175,12 @@ end
 ; :Author: lbusoni
 ;-
 function aodict::values
+    if self->count() eq 0 then message, 'empty dictionary'
     return, (*self._values)[0:self->count()-1]
 end
 
 function aodict::keys
+    if self->count() eq 0 then message, 'empty dictionary'
     return, (*self._keys)[0:self->count()-1]
 end
 
@@ -192,13 +208,17 @@ pro aodict::remove, key
             ; remove key
             keys = self->keys()
             ptr_free, self._keys
-            if idx eq 0 then newkeys = keys[1:*] else if idx eq self->count()-1 then newkeys = keys[0:self->count()-2] else newkeys = [ keys[0:idx-1], keys[idx+1:*] ]
-            self._keys = ptr_new( newkeys, /no_copy )
+            if self->count() gt 1 then begin
+                if idx eq 0 then newkeys = keys[1:*] else if idx eq self->count()-1 then newkeys = keys[0:self->count()-2] else newkeys = [ keys[0:idx-1], keys[idx+1:*] ]
+                self._keys = ptr_new( newkeys, /no_copy )
+            endif
             ; now remove value
             vals = self->values()
             ptr_free, self._values
-            if idx eq 0 then newvals = vals[1:*] else if idx eq self->count()-1 then newvals = vals[0:self->count()-2] else newvals = [ vals[0:idx-1], vals[idx+1:*] ]
-            self._values = ptr_new( newvals, /no_copy)
+            if self->count() gt 1 then begin
+                if idx eq 0 then newvals = vals[1:*] else if idx eq self->count()-1 then newvals = vals[0:self->count()-2] else newvals = [ vals[0:idx-1], vals[idx+1:*] ]
+                self._values = ptr_new( newvals, /no_copy)
+            endif
             ; decrement counter
             self._nelems -= 1
             ; update allocated size
