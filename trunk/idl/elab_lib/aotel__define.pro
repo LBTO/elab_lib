@@ -1,4 +1,4 @@
-function AOtel::Init, fitsfile
+function AOtel::Init, root, fitsfile
     if not file_test(fitsfile) then begin
         message, fitsfile + ' not found', /info
         return,0
@@ -39,12 +39,6 @@ function AOtel::Init, fitsfile
     indoor_wind = float(aoget_fits_keyword(hdr, 'tel.AMB.WINDSPEED'))
 	if indoor_wind ne -9999. then self._indoor_wind = indoor_wind else self._indoor_wind = !VALUES.F_NAN
 
-    extern_wind_direction =  float(aoget_fits_keyword(hdr, 'tel.EXTERN.WINDDIRECTION'))
-	if extern_wind_direction ne -9999. then self._extern_wind_direction = extern_wind_direction else self._extern_wind_direction = !VALUES.F_NAN
-
-    extern_wind_speed =  float(aoget_fits_keyword(hdr, 'tel.EXTERN.WINDSPEED'))
-	if extern_wind_speed ne -9999. then self._extern_wind_speed = extern_wind_speed else self._extern_wind_speed = !VALUES.F_NAN
-
 	hex0 = float(aoget_fits_keyword(hdr, 'tel.HEXAPOD.ABS_POS0'))
 	hex1 = float(aoget_fits_keyword(hdr, 'tel.HEXAPOD.ABS_POS1'))
 	hex2 = float(aoget_fits_keyword(hdr, 'tel.HEXAPOD.ABS_POS2'))
@@ -70,11 +64,19 @@ function AOtel::Init, fitsfile
 	if ter2 ne -9999. then self._ter[2] = ter2 else self._ter[2] = !VALUES.F_NAN
 	if ter3 ne -9999. then self._ter[3] = ter3 else self._ter[3] = !VALUES.F_NAN
 
-    self._dimm_seeing           =  float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))
-    if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN
+    if root->tracknum() lt '20101127_000000' then begin
+        self._dimm_seeing           =  float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))
+        if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN
+    endif else begin
+        dimm = readfits(filepath(root=root->datadir(),  'Dimm_'+root->tracknum()+'.fits'))
+        self._dimm_seeing = median(dimm[0,*])
+    endelse
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
     self._guidecam_centroid_y   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.Y'))
-
+    extern_wind_direction =  float(aoget_fits_keyword(hdr, 'tel.EXTERN.WINDDIRECTION'))
+    if extern_wind_direction ne -9999. then self._extern_wind_direction = extern_wind_direction else self._extern_wind_direction = !VALUES.F_NAN
+    extern_wind_speed =  float(aoget_fits_keyword(hdr, 'tel.EXTERN.WINDSPEED'))
+    if extern_wind_speed ne -9999. then self._extern_wind_speed = extern_wind_speed else self._extern_wind_speed = !VALUES.F_NAN
 ;name                  type      description
 ; tel.AMB.WINDSPEED     real   wind speed in m/s  (on the swing arm)
 ; tel.HEXAPOD.ABS_POS0  real   hexapod position X (mm)
