@@ -51,12 +51,12 @@ function AOelab::Init, tracknum, $
     if not obj_valid(self._wfs_status) then return, 0
 
 	; create telescope leaf
-	self._tel = obj_new('AOtel', wfs_status_file)
+	self._tel = obj_new('AOtel', self, wfs_status_file)
 
 	; Operation mode: "RR"    : @SolarTower, or @Telescope with RR.
 	;				  "ONSKY" : @Telescope on-sky!
 	if obj_valid(self._tel) then begin
-		;if (self->tel())->el()/3600. lt 89. then self._operation_mode = "ONSKY" $
+		;if (self->tel())->el() lt 89. then self._operation_mode = "ONSKY" $
 		;if (self->wfs_status())->lamp_intensity() lt .001 then self._operation_mode = "ONSKY" $
 		if (self->wfs_status())->cube_stage() lt -40. then self._operation_mode = "ONSKY" $
 		else self._operation_mode = "RR"
@@ -372,7 +372,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %f %f |")','Gain minmax', gaintemp)
     endif
     if obj_valid(self->tel()) then begin
-        print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el()/3600. )
+        print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el() )
         print, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )
     endif
     if not keyword_set(PARAMS_ONLY) then begin
@@ -389,7 +389,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
 end
 
 
-pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
+pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
     if self->operation_mode() eq "RR" then begin
 		nmodes = (self->modalpositions())->nmodes()
 		clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
@@ -399,7 +399,7 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
     		yrange = sqrt(minmax([clvar,olvar]))
     	endif
         if not keyword_set(OVERPLOT) then  begin
-		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
         endif else begin
 		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
         endelse
@@ -411,7 +411,7 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR
 		olvar  = (self->olmodes())->time_variance() * (1e9*self->reflcoef())^2.
    		yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(OVERPLOT) then  begin
-			plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange
+			plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
         endif else begin
 		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
 		endelse
@@ -458,6 +458,11 @@ pro AOelab::modalSpecPlot, modenum
 	endif
 
 
+end
+
+
+pro AOelab::showIRTC
+    image_show, /as,/sh, /log, ((self->irtc())->longexposure())>1
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; access to leafs ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
