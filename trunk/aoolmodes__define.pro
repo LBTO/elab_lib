@@ -166,6 +166,10 @@ pro AOolmodes::estimate_r0
   nmodes  = self->nmodes()
   nnMax   = long(sqrt(8L*nmodes-7L)-1L)/2L
   nnRange = [self._nnMin,nnMax]
+    if nnRange[1]-nnRange[0]+1 eq 0 then begin
+        self._r0 = 0.
+        return
+    endif
   Zern_number = lindgen(nmodes)+2
   nn = long(sqrt(8L*Zern_number-7L)-1L)/2L
   nnValues = findgen(nnRange[1]-nnRange[0]+1)+nnRange[0]
