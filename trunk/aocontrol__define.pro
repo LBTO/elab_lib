@@ -53,6 +53,9 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self->addMethodHelp, "m2c()", "m2c matrix (modal -> zonal) "
     self->addMethodHelp, "c2m()", "c2m matrix (zonal -> modal) "
     self->addMethodHelp, "gain()", "gain vector"
+    self->addMethodHelp, "maxgain()", "max of gain vector"
+    self->addMethodHelp, "mingain()", "min of gain vector"
+    self->addMethodHelp, "zerogain()", "zero gain means open loop"
     ;self->addMethodHelp, "nmodes()", "number of non-null row in b0_a matrix"
     ;self->addMethodHelp, "modes_idx()", "index vector of non-null row in b0_a matrix"
     ;self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
@@ -131,6 +134,19 @@ function AOcontrol::gain
     endif
     return, *self._gain
 end
+
+function AOcontrol::maxgain
+    return, max(self->gain())
+end
+
+function AOcontrol::mingain
+    return, min(self->gain())
+end
+
+function AOcontrol::zerogain
+    if ( min(self->gain()) eq 0 ) and ( max(self->gain()) eq 0 )then return,1 else return, 0  
+end
+ 
 
 ; number of non-null rows in b0_a matrix
 function AOcontrol::nmodes
