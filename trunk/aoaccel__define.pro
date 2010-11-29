@@ -6,14 +6,12 @@
 
 ; accelerometers
 
-function AOaccel::Init, root_obj, proj, data=data, file=file
+function AOaccel::Init, root_obj, proj, file
   
-  if keyword_set(data) then self._data = ptr_new(data, /no_copy)
-  if keyword_set(file) then self._file_name = file
+  self._file_name = file
 
   fr = 4000.
   self._proj_fname = proj
-  
   self._store_fname     = filepath(root=root_obj->elabdir(), 'accel.sav')
   self._store_psd_fname = filepath(root=root_obj->elabdir(), 'accel_psd.sav')
   if root_obj->recompute() eq 1B then begin
@@ -53,24 +51,21 @@ pro AOaccel::datiProducer
   if file_test(self._store_fname) then begin
     restore, self._store_fname
   endif else begin
-    ;restore file if file name exists
-    if self._file_name ne "" then begin
-      restore, self._file_name
-      self._data = ptr_new(data, /no_copy)
-    endif
+    ;restore file
+    restore, self._file_name
     ; compute mechanical xyz displacements and rotations and centroid from accelerometers data
     P = readfits(self._proj_fname)
-    out00 = total(((*self._data).acc_0-mean((*self._data).acc_0))*self._dt,/cum)
+    out00 = total((data.acc_0-mean(data.acc_0))*self._dt,/cum)
     out0  = total((out00-mean(out00))*self._dt,/cum)
-    out20 = total(((*self._data).acc_2-mean((*self._data).acc_2))*self._dt,/cum)
+    out20 = total((data.acc_2-mean(data.acc_2))*self._dt,/cum)
     out2  = total((out20-mean(out20))*self._dt,/cum)
-    out30 = total(((*self._data).acc_3-mean((*self._data).acc_3))*self._dt,/cum)
+    out30 = total((data.acc_3-mean(data.acc_3))*self._dt,/cum)
     out3  = total((out30-mean(out30))*self._dt,/cum)
-    out40 = total(((*self._data).acc_4-mean((*self._data).acc_4))*self._dt,/cum)
+    out40 = total((data.acc_4-mean(data.acc_4))*self._dt,/cum)
     out4  = total((out40-mean(out40))*self._dt,/cum)
-    out50 = total(((*self._data).acc_5-mean((*self._data).acc_5))*self._dt,/cum)
+    out50 = total((data.acc_5-mean(data.acc_5))*self._dt,/cum)
     out5  = total((out50-mean(out50))*self._dt,/cum)
-    out60 = total(((*self._data).acc_6-mean((*self._data).acc_6))*self._dt,/cum)
+    out60 = total((data.acc_6-mean(data.acc_6))*self._dt,/cum)
     out6  = total((out60-mean(out60))*self._dt,/cum)
     xyzR = P##[[out0],[out2],[out3],[out4],[out5],[out6]]*coef ;out0=x, out2=y, out3=z, out4=Rx, out5=Ry, out6=Rz
     cx = (b*xyzR[*,0]-a*xyzR[*,4])/arcsec2rad  ;x-centroid=b*x-a*Ry
@@ -273,13 +268,11 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
 end
 
 pro AOaccel::free
-  if ptr_valid(self._data) then ptr_free, self._data
   if ptr_valid(self._accel) then ptr_free, self._accel
   self->AOtime_series::free
 end
 
 pro AOaccel::Cleanup
-  if ptr_valid(self._data) then ptr_free, self._data
   if ptr_valid(self._accel) then ptr_free, self._accel
   self->AOtime_series::Cleanup
   self->AOhelp::Cleanup
@@ -291,7 +284,6 @@ pro AOaccel__define
     _file_name  : "" , $
     _store_fname: "" , $
     _proj_fname : "" , $
-    _data       : ptr_new(), $
     _accel      : ptr_new(), $
     INHERITS    AOtime_series		, $
     INHERITS    AOhelp 			$
