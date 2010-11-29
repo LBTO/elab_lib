@@ -179,7 +179,7 @@ function AOelab::Init, tracknum, $
     temp0 = strmid(trnm_acc, 0, 8)
     temp1 = strmid(trnm_acc, 9)
     if temp0 ge 20101123 then begin
-      self._accel = obj_new('AOaccel', self, proj, data=data)
+      self._accel = obj_new('AOaccel', self, proj, filepath(root=self._datadir, 'adsec.sav'))
     endif else begin
       flag_acc = 0
       if FILE_TEST(dir+path_sep()+trnm_acc) eq 0 then begin
@@ -193,7 +193,7 @@ function AOelab::Init, tracknum, $
       endif
       if flag_acc eq 0 then begin
         acc_file = dir+path_sep()+trnm_acc+path_sep()+'acc.sav'
-        self._accel = obj_new('AOaccel', self, proj, file=acc_file)
+        self._accel = obj_new('AOaccel', self, proj, acc_file)
       endif
     endelse
 
