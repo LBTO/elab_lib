@@ -200,60 +200,64 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   if not keyword_set(plot) then plot = 0
   if not keyword_set(verbose) then verbose = 0
   
-  surf1=fltarr(3,672)
-  surf1[0,*]=(self->m2c())[0,*]
-  surf1[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
-  surf1a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
-  surf1a=surf1[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
-  fit_plane, surf1a, a=a1, b=b1, c=c1, plane=plane1, num=100.
-  tip_ang=a1
-  if verbose then begin
-    print, a1, b1, c1
-    print, 'TIP angle = '+strtrim(tip_ang/!pi*180.,2)
-    print, 'error std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
-                                                -plane1[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
-    print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+  if total(self->m2c()) gt 0 then begin
+  	surf1=fltarr(3,672)
+  	surf1[0,*]=(self->m2c())[0,*]
+  	surf1[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
+  	surf1a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
+  	surf1a=surf1[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
+  	fit_plane, surf1a, a=a1, b=b1, c=c1, plane=plane1, num=100.
+  	tip_ang=a1
+  	if verbose then begin
+  	  print, a1, b1, c1
+  	  print, 'TIP angle = '+strtrim(tip_ang/!pi*180.,2)
+  	  print, 'error std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
+  	                                              -plane1[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+  	  print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+  	endif
+  	if plot then begin
+  	  plane1=fltarr(672)
+  	  for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
+  	  loadct, 39
+  	  window, /free
+  	  display, surf1[0,*], /as,/sh, $
+  	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+  	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+  	  window, /free
+  	  display, plane1, /as,/sh, $
+  	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+  	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+  	endif
+  	surf2=fltarr(3,672)
+  	surf2[0,*]=(self->m2c())[1,*]
+  	surf2[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
+  	surf2a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
+  	surf2a=surf2[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
+  	fit_plane, surf2a, a=a2, b=b2, c=c2, plane=plane2, num=100.
+  	tilt_ang=a2
+  	if verbose then begin
+  	  print, a2, b2, c2
+  	  print, 'TILT angle = '+strtrim(tilt_ang/!pi*180.,2)
+  	  print, 'error std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
+  	                                             -plane2[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+  	  print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
+  	endif
+  	if plot eq 1 then begin
+  	  plane2=fltarr(672)
+  	  for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
+  	  window, /free
+  	  display, surf2[0,*], /as,/sh, $
+  	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+  	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
+  	  window, /free
+  	  display, plane2, /as,/sh, $
+  	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
+  	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
   endif
-  if plot then begin
-    plane1=fltarr(672)
-    for ii=0, 671 do plane1[ii] = b1*(surf1[1,ii]*cos(a1)+surf1[2,ii]*sin(a1))+c1
-    loadct, 39
-    window, /free
-    display, surf1[0,*], /as,/sh, $
-    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
-    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
-    window, /free
-    display, plane1, /as,/sh, $
-    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
-    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
-  endif
-  surf2=fltarr(3,672)
-  surf2[0,*]=(self->m2c())[1,*]
-  surf2[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
-  surf2a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
-  surf2a=surf2[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
-  fit_plane, surf2a, a=a2, b=b2, c=c2, plane=plane2, num=100.
-  tilt_ang=a2
-  if verbose then begin
-    print, a2, b2, c2
-    print, 'TILT angle = '+strtrim(tilt_ang/!pi*180.,2)
-    print, 'error std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
-                                               -plane2[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
-    print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
-  endif
-  if plot eq 1 then begin
-    plane2=fltarr(672)
-    for ii=0, 671 do plane2[ii] = b2*(surf2[1,ii]*cos(a2)+surf2[2,ii]*sin(a2))+c2
-    window, /free
-    display, surf2[0,*], /as,/sh, $
-    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
-    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
-    window, /free
-    display, plane2, /as,/sh, $
-    adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
-    SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
-  endif
-  return, [tip_ang,tilt_ang]
+  	return, [tip_ang,tilt_ang]
+  endif else begin
+	  return, -1
+  endelse
 end
 
 pro AOcontrol::free
