@@ -200,7 +200,7 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   if not keyword_set(plot) then plot = 0
   if not keyword_set(verbose) then verbose = 0
   
-  if total(self->m2c()) gt 0 then begin
+  if n_elements(self->m2c()) gt 1 then begin
   	surf1=fltarr(3,672)
   	surf1[0,*]=(self->m2c())[0,*]
   	surf1[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
@@ -253,10 +253,10 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   	  display, plane2, /as,/sh, $
   	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
   	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
-  endif
+  	endif
   	return, [tip_ang,tilt_ang]
   endif else begin
-	  return, -1
+	return, -1
   endelse
 end
 
