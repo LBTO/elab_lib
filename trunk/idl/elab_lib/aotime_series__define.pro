@@ -302,9 +302,10 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     endelse
 end
 
-function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
-	n_el=6 ;smooth
-
+function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, thr=thr, n_el=n_el
+	
+	if not keyword_set(n_el) then n_el=6 ;smooth
+  	if not keyword_set(thr) then thr=1e-3
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
@@ -323,11 +324,11 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	fr=*self._freq
 
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
-  if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
+  	if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
   
 	for kkk=0, n_elements(vtemp)-1 do begin
 		mode=vtemp[kkk]
-		if mode lt 2 then thr=0.005 else thr=0.01
+		if mode ge 2 then thr*=2
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
 		thrs=thr/n_el*tmax
 		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
@@ -342,7 +343,12 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 			l=0
 			f1=0
 			for i=1, n_elements(idx)-1 do begin
-				if idx[i] eq idx[i-1]+1 then begin
+			if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin
+				if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1
+			endif else begin
+				flag=1
+			endelse
+				if idx[i] eq idx[i-1]+1 and flag then begin
 					if j eq 0 then f1=fr[idx[i-1]]
 					if i eq 1 then begin
 						tempfr=fr[idx[i]]+fr[idx[i-1]]
@@ -364,6 +370,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					endif
 					l=0
 				endif else begin
+					flag=1
 					l+=1
 					if f1 ne 0 then f2=fr[idx[i-1]]
 					if tempfr ne 0 then begin
