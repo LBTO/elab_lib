@@ -9,6 +9,9 @@
 
 function AOresidual_modes::Init, root_obj
 
+	if not obj_valid(root_obj->modal_rec()) then return,0
+	if not obj_valid(root_obj->slopes()) then return,0
+
     self._store_fname     = filepath(root=root_obj->elabdir(), 'residual_modes.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'residual_modes_psd.sav')
     if root_obj->recompute() eq 1B then begin
