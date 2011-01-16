@@ -6,7 +6,7 @@ function aodb::Init, recompute=recompute
         res = dialog_message('Do you really want to rebuild the whole database?', /center, /question)
         if res eq 'Yes' then file_delete, self->db_fname(), /allow_nonexistent
     endif
-    
+
     if not self->AOhelp::Init('AOdb', 'The AO database') then return, 0
     self->addMethodHelp, "remove, tracknum_list", "Remove from the db the items in the tracknum_list"
     self->addMethodHelp, "insert, tracknum_list", "Insert in the db the items in the tracknum_list"
@@ -26,7 +26,7 @@ function aodb::Init, recompute=recompute
         self->restore
         return,1
     endif
-    
+
     cfg = [  $
         {name:'refStar',                            type:'string'}, $
         {name:'ignore',                             type:'integer'}, $
@@ -111,7 +111,7 @@ function aodb::Init, recompute=recompute
         {name:'control.iskalman',                   type:'integer'},  $
         {name:'control.maxgain',                    type:'real'},  $
         {name:'control.mingain',                    type:'real'}  $
-        
+
 ; {name:'control.maxgain',                   type:'real'}  $
 ; {name:'control.mingain',                   type:'real'}  $
 
@@ -121,23 +121,23 @@ function aodb::Init, recompute=recompute
     self._db_prop_dicts = obj_new('IDL_container')
 
     for i=0L, n_elements(cfg)-1 do begin
-        self._db_prop_dicts->add, obj_new('aodict', cfg[i].type, 'string') ;, /multi)             
+        self._db_prop_dicts->add, obj_new('aodict', cfg[i].type, 'string') ;, /multi)
     endfor
 
     self._db_prop_names = ptr_new(cfg(*).name)
-    
+
     return, 1
 end
 
 ; use with care, you can destroy the entire database
 pro aodb::addproperty, property, type
     if (type ne 'real') and (type ne 'integer') and (type ne 'string') then message, 'unsupport type '+type
- 
+
     self->save, /backup
 
     self._db_prop_dicts->add, obj_new('aodict', type, 'string')
     db_prop_names = self->property_names()
-    db_prop_names = [db_prop_names, property] 
+    db_prop_names = [db_prop_names, property]
     db_prop_dicts = self._db_prop_dicts
     save, db_prop_dicts, db_prop_names, file=self->db_fname()
     message, 'db saved. Exit IDL and restart elab-lib', /info
@@ -176,7 +176,7 @@ pro aodb::insert, tracknum_list, property=propertylist
                 ; insert the pair tracknum:value into the dictionary corresponding to the property
                 pos = where(self->property_names() eq func, count)
                 if  count eq 0 then message, func+': this property is not part of the database. Cannot insert'
-                (self._db_prop_dicts->get(pos=pos))->insert, ee->tracknum(), ee->ex(func)  ;i 
+                (self._db_prop_dicts->get(pos=pos))->insert, ee->tracknum(), ee->ex(func)  ;i
                 print, format='(%" %s: %s added to db")', func, ee->tracknum()
             endif else begin
                 catch, /cancel
@@ -225,7 +225,7 @@ pro aodb::alter, tracknum_list, property, value
             pos = where(self->property_names() eq property, count)
             if  count eq 0 then message, property+': this property is not part of the database. Cannot insert'
             (self._db_prop_dicts->get(pos=pos))->remove, tracknum_list[i]
-            (self._db_prop_dicts->get(pos=pos))->insert, tracknum_list[i], value  ;i 
+            (self._db_prop_dicts->get(pos=pos))->insert, tracknum_list[i], value  ;i
             print, format='(%" %s: %s added to db")', property, tracknum_list[i]
         endif else begin
             ; in case of error, simply continue
@@ -239,9 +239,17 @@ end
 ; e.g. select tracknum where wfs.ccd39.framerate between 50 and 500Hz
 function aodb::query, property, op, value, subset=subset
     pos = where(self->property_names() eq property, count)
-    if  count eq 0 then message, 'unknown property to select on'
+    if  count eq 0 then begin
+    	message, 'Unknown property', /info
+    	return, -1
+    endif
+
     tracks = (self._db_prop_dicts->get(pos=pos))->select(op, value, count_matching)
-    
+    if count_matching eq 0 then begin
+		message, 'No matching found in whole database',/info
+		return, obj_new('aodataset')
+	endif
+
     if n_elements(subset) ne 0 then begin
         count_matching = 0
         if obj_isa(subset, 'aodataset') then subsettn=subset->tracknums() else message, 'subset must be an aodataset'
@@ -252,18 +260,16 @@ function aodb::query, property, op, value, subset=subset
                 count_matching += 1
             endif
         endfor
-        tracks = res
+        if count_matching gt 0 then tracks = res else begin
+        	message, 'No matching found in subset', /info
+        	return, obj_new('aodataset')
+        endelse
     endif
 
-    if count_matching gt 0 then begin
-        print, 'select tracknum where '+property+' '+op+' '+strjoin(strtrim(string(value),2), ' ') 
-        ;print, tracks
-        return, obj_new('aodataset', tracks)
-    endif else begin
-        message, 'query returned empty set', /info
-        return, obj_new('aodataset')
-    endelse
+    print, 'select tracknum where '+property+' '+op+' '+strjoin(strtrim(string(value),2), ' ')
+    return, obj_new('aodataset', tracks)
 end
+
 
 pro aodb::show, tracknum, property=property ;, from=from, to=to
     if keyword_set(property) then begin
@@ -276,9 +282,9 @@ pro aodb::show, tracknum, property=property ;, from=from, to=to
         if error eq 0 then begin
             pos = where(self->property_names() eq func, count)
             if  count eq 0 then message, func+': this property is not part of the database'
-            idx = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknum, count) ;i 
+            idx = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknum, count) ;i
             if count gt 0 then begin
-                value = ((self._db_prop_dicts->get(pos=pos))->values())[idx]  
+                value = ((self._db_prop_dicts->get(pos=pos))->values())[idx]
                 print, format='(%" %s %s: %s")', tracknum, func, string(value)
             endif
         endif else begin
@@ -290,15 +296,18 @@ end
 
 function aodb::value, property,  subset=subset
     pos = where(self->property_names() eq property, count)
-    if  count eq 0 then message, property+': this property is not part of the database'
+    if  count eq 0 then begin
+    	message, property+': this property is not part of the database',/info
+    	return, -1
+    endif
     tracknums = n_elements(subset) ne 0 ? subset->tracknums() : self->tracknums()
     nel=0
     for i=0, n_elements(tracknums)-1 do begin
-        idx = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknums[i], count) ;i 
+        idx = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknums[i], count) ;i
         if count gt 0 then begin
             if nel eq 0 then value = ((self._db_prop_dicts->get(pos=pos))->values())[idx] else $
             value = [value, ((self._db_prop_dicts->get(pos=pos))->values())[idx] ]
-            nel+=1  
+            nel+=1
         endif
     endfor
     return, value
@@ -307,13 +316,13 @@ end
 function aodb::tracknums
     if self->count() eq 0 then message, 'db is empty'
     pos = where(self->property_names() eq 'tracknum', count)
-    tns = (self._db_prop_dicts->get(pos=pos))->values()     
+    tns = (self._db_prop_dicts->get(pos=pos))->values()
     return, tns
 end
 
 function aodb::count
     pos = where(self->property_names() eq 'tracknum', count)
-    return, (self._db_prop_dicts->get(pos=pos))->count()     
+    return, (self._db_prop_dicts->get(pos=pos))->count()
 end
 
 function aodb::property_names
@@ -352,7 +361,7 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;
 pro test_aodb
-    db = obj_new('aodb')    
+    db = obj_new('aodb')
 
     tracknums=['20100622_083355', '20100621_040247', '20100621_052151', '20100621_035214', '20100604_034224']
     db->insert, tracknums
@@ -367,8 +376,8 @@ pro test_aodb
     db->insert, '20100621_035214'
     stop
     obj_destroy, db
-    
-    
+
+
 ;    print, dict_binning->select('eq',1)
 ;    print, dict_binning->keys()
 ;    print, dict_binning->values()
