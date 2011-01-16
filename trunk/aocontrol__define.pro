@@ -13,17 +13,17 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
 
 	if self->b0_a_fname() ne "" then begin
     	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT, errmsg=errmsg)
-        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->b0_a_fname()+ ': '+ errmsg, /info 
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->b0_a_fname()+ ': '+ errmsg, /info
     	self._b0_a_fitsheader = ptr_new(header, /no_copy)
     endif
     if self->c_fname() ne "" then begin
     	header = headfits(ao_datadir()+path_sep()+self->c_fname(), /SILENT, errmsg=errmsg)
-        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->c_fname()+ ': '+ errmsg, /info 
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->c_fname()+ ': '+ errmsg, /info
     	self._c_fitsheader = ptr_new(header, /no_copy)
     endif
     if self->gain_fname() ne "" then begin
     	header = headfits(ao_datadir()+path_sep()+self->gain_fname(), /SILENT, errmsg=errmsg)
-        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->gain_fname()+ ': '+ errmsg, /info 
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->gain_fname()+ ': '+ errmsg, /info
     	self._gain_fitsheader = ptr_new(header, /no_copy)
     endif
 
@@ -129,6 +129,7 @@ end
 function AOcontrol::gain
     if not ptr_valid(self._gain) then begin
         gain_v = readfits(ao_datadir()+path_sep()+self->gain_fname(), header, /SILENT)
+        if obj_valid(self._root_obj->modal_rec()) then gain_v = gain_v[(self._root_obj->modal_rec())->modes_idx()]
         if max(gain_v)-min(gain_v) eq 0. then gain_v = gain_v[0]
         self._gain = ptr_new(gain_v, /no_copy)
     endif
@@ -144,9 +145,9 @@ function AOcontrol::mingain
 end
 
 function AOcontrol::zerogain
-    if ( min(self->gain()) eq 0 ) and ( max(self->gain()) eq 0 )then return,1 else return, 0  
+    if ( min(self->gain()) eq 0 ) and ( max(self->gain()) eq 0 )then return,1 else return, 0
 end
- 
+
 
 ; number of non-null rows in b0_a matrix
 function AOcontrol::nmodes
@@ -199,7 +200,7 @@ end
 function AOcontrol::ttdirections, plot=plot, verbose=verbose
   if not keyword_set(plot) then plot = 0
   if not keyword_set(verbose) then verbose = 0
-  
+
   if n_elements(self->m2c()) gt 1 then begin
   	surf1=fltarr(3,672)
   	surf1[0,*]=(self->m2c())[0,*]
@@ -261,7 +262,7 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
 end
 
 pro AOcontrol::free
-    if ptr_valid(self._modes_idx ) then ptr_free, self._modes_idx 
+    if ptr_valid(self._modes_idx ) then ptr_free, self._modes_idx
     if ptr_valid(self._gain) then ptr_free, self._gain
 end
 
