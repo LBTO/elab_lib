@@ -34,7 +34,7 @@ function AOelab::Init, tracknum, $
     endif
 
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
-    
+
     ; create adsec_status leaf
     tmp = filepath(root=self._datadir, 'adsec.sav')
     if file_test(tmp) eq 0 then begin
@@ -171,7 +171,7 @@ function AOelab::Init, tracknum, $
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
     self._offloadmodes = obj_new('AOoffloadmodes', self, pos2mod_fname)
-    
+
     ; accelerometers
     dir = ao_datadir()+path_sep()+'accel'
     proj = ao_elabdir()+path_sep()+'accelerometers'+path_sep()+'projection_matrix.fits'
@@ -221,7 +221,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
     if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
     if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes, 'offloadmodes'
-    if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'    
+    if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'
 
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -366,8 +366,8 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
         print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
     endif
-    if obj_valid(self->control()) and obj_valid(self->modal_rec()) then begin
-        gaintemp = minmax( ((self->control())->gain())[(self->modal_rec())->modes_idx()] )
+    if obj_valid(self->control()) then begin
+        gaintemp = minmax( (self->control())->gain() )
         if gaintemp[0] eq -1 then print, 'Gain: AUTO' else $
         print, string(format='(%"| %-30s | %f %f |")','Gain minmax', gaintemp)
     endif
@@ -608,7 +608,7 @@ end
 pro AOelab::free
     IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
     IF (OBJ_VALID(self._control )) THEN  self._control->free
-    IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free 
+    IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
     IF (OBJ_VALID(self._modes)) THEN  self._modes->free
@@ -625,7 +625,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
-    IF (OBJ_VALID(self._accel )) THEN  self._accel->free 
+    IF (OBJ_VALID(self._accel )) THEN  self._accel->free
 end
 
 pro AOelab::Cleanup
