@@ -363,8 +363,10 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())
         print, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )
         ;print, string(format='(%"%-30s %s")','B0_a matrix', (self->control())->b0_a_fname())
-        print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
-        print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
+        if obj_valid((self->wfs_status())->filtw1()) then $
+        	print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
+		if obj_valid((self->wfs_status())->filtw2()) then $
+        	print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
     endif
     if obj_valid(self->control()) then begin
         gaintemp = minmax( (self->control())->gain() )
