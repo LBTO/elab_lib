@@ -10,29 +10,29 @@ function AOolmodes::Init, root_obj
 
   self._totdelay   = 2L	;Assuming a total of 2 frames delay
   self._decimation = (root_obj->frames_counter())->decimation()
-  self._nnMin  =  3L
+  self._nnMin  =  4L
   self._r0	 =  -1.
-  
+
   if not total(self._decimation eq [0,1,2]) then begin
     message, 'OLmodes cannot be reconstructed: decimation unknown.',/info
     return, 0
   endif
-  
+
   if not obj_valid(root_obj->residual_modes()) then begin
     message, 'OLmodes cannot be reconstructed: residual modes not available.',/info
     return, 0
   endif
-  
+
   if not obj_valid(root_obj->modes()) then begin
     message, 'OLmodes cannot be reconstructed: integrated modes not available.',/info
     return, 0
   end
-  
+
   if (self._decimation eq 2) and not obj_valid(root_obj->modalpositions()) then begin
     message, 'OLmodes cannot be reconstructed: modal positions not available.',/info
     return, 0
   end
-  
+
   self._store_fname     = filepath(root=root_obj->elabdir(), 'olmodes.sav')
   self._store_psd_fname = filepath(root=root_obj->elabdir(), 'olmodes_psd.sav')
   self._r0_store_fname  = filepath(root=root_obj->elabdir(), 'olmodes_r0.sav')
@@ -41,15 +41,15 @@ function AOolmodes::Init, root_obj
     file_delete, self._store_psd_fname, /allow_nonexistent
     file_delete, self._r0_store_fname, /allow_nonexistent
   endif
-  
+
   if not self->AOtime_series::Init( (root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
   self._norm_factor   = 1e9 * root_obj->reflcoef()	;nm wf
   self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
   self._plots_title   = root_obj->tracknum()
-  
+
   ;Keep root_obj to easily retrieve residual_modes(), modes() and modalpositions()
   self._root_obj = root_obj
-  
+
   ; initialize help object and add methods and leafs
   if not self->AOhelp::Init('AOolmodes', 'Represent reconstructed open loop modes') then return, 0
   self->addMethodHelp, "modes()", "reconstructed open loop modes matrix [niter,nmodes]"
@@ -61,7 +61,7 @@ function AOolmodes::Init, root_obj
   self->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
                         "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
   self->AOtime_series::addHelp, self
-  
+
   return, 1
 end
 
@@ -75,9 +75,9 @@ pro AOolmodes::datiProducer
     sz = size(rmodes,/dim)
     nframes = sz[0]
     nmodes  = sz[1]
-    
+
     olmodes = fltarr(nframes,nmodes)
-    
+
     if self._decimation eq 2 then begin
       mpos = (self._root_obj->modalpositions())->modalpositions()
       mpos = mpos[*,0:nmodes-1]
@@ -87,7 +87,7 @@ pro AOolmodes::datiProducer
       dd = self._totdelay - self._decimation
       olmodes[dd:*,*] = rmodes[dd:*,*] + imodes[0:nframes-1-dd,0:nmodes-1]
     endelse
-    
+
     save, olmodes, file=self._store_fname
   endelse
   self._modes = ptr_new(olmodes, /no_copy)
@@ -113,7 +113,7 @@ pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
   oplot, freq, sqrt(tip), col='0000ff'x
   oplot, freq, sqrt(tilt), col='00ff00'x
   legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
-  
+
   sigmatot2 = max ( tip + tilt)  / 2
   ldmas = 1.6d-6 / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
   print, 'SR attenuation in H band due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
@@ -129,21 +129,23 @@ end
 ;-----------------------------------------------------
 function AOolmodes::r0, lambda=lambda, PLOT=PLOT
   if self._r0 eq -1. then self->retrieve_r0
-  
+
   if keyword_set(PLOT) then begin
     olrms = sqrt(self->time_variance()) * 1e9 * self._root_obj->reflcoef()	;nm wf rms
     nmodes = self->nmodes()
+    modes_idx = (self._root_obj->modal_rec())->modes_idx()
+    olrms = olrms[modes_idx]
     DpupM = ao_pupil_diameter()
     theovarfit = (4.*!PI^2) * (DpupM/self._r0)^(5./3.) * diag_matrix(kolm_mcovar(nmodes+1)) ;rad^2 @ 500nm
     theorms = sqrt(theovarfit) * 500./(2.*!PI)	; nm wf rms
     yrange = minmax([olrms,theorms])
     window,/free
-    plot_oo, lindgen(nmodes)+1, olrms, psym=-1, symsize=0.8, charsize=1.5, $
+    plot_oo, modes_idx+1, olrms, psym=-1, symsize=0.8, charsize=1.5, $
       ytitle='nm wf rms', xtitle='mode number', title=self._root_obj->tracknum(), yrange=yrange
     oplot, lindgen(nmodes)+1, theorms, color=255L
     legend, ['r0 = '+string(self._r0*1e2, format='(f4.1)')+'cm @ 500nm'], /right, charsize=1.2
   endif
-  
+
   if n_elements(lambda) ne 0 then return, self._r0*(lambda/500e-9)^(6./5.) else return, self._r0
 end
 
@@ -161,36 +163,48 @@ end
 pro AOolmodes::estimate_r0
 
   COMMON olmodes_data, olvarMean, theovar1
-  
+
   olvar = self->time_variance() * (self._root_obj->reflcoef()*2.*!PI/500e-9)^2.	;in rad^2 @ 500nm
-  nmodes  = self->nmodes()
+  nmodes    = self->nmodes()	;including maybe some non-reconstructed modes
+  modes_idx = (self._root_obj->modal_rec())->modes_idx()
+
   nnMax   = long(sqrt(8L*nmodes-7L)-1L)/2L
-  nnRange = [self._nnMin,nnMax]
-    if nnRange[1]-nnRange[0]+1 eq 0 then begin
-        self._r0 = 0.
-        return
-    endif
+  nnRange = [self._nnMin,nnMax-1]
+  if nnRange[1]-nnRange[0]+1 le 0 then begin
+  	message, 'Not enough OLmodes to perform r0 estimation',/info
+    self._r0 = 0.
+    return
+  endif
+
   Zern_number = lindgen(nmodes)+2
   nn = long(sqrt(8L*Zern_number-7L)-1L)/2L
   nnValues = findgen(nnRange[1]-nnRange[0]+1)+nnRange[0]
-  norders = n_elements(nnValues)
-  
+  norders  = n_elements(nnValues)
+
   ;Experimental data: the average per radial order of the coeff variances is computed:
   olvarMean = fltarr(norders)
+  nn_count  = lonarr(norders)
   FOR j=0, norders-1 DO BEGIN
-    FOR i = 0, nmodes-1 DO IF nn(i) EQ nnValues[j] THEN olvarMean[j] = olvarMean[j] + olvar[i]
-    olvarMean[j] = olvarMean[j] / (nnValues(j)+1.)
+  	FOR i=0, nmodes-1 DO BEGIN
+		IF where(modes_idx eq i) eq [-1] then continue
+    	IF nn(i) EQ nnValues[j] THEN BEGIN
+      		olvarMean[j] = olvarMean[j] + olvar[i]
+      		nn_count[j]  = nn_count[j] + 1
+    	ENDIF
+  	ENDFOR
+    ;olvarMean[j] = olvarMean[j] / (nnValues(j)+1.)
+    olvarMean[j] = olvarMean[j] / float(nn_count[j])
   ENDFOR
-  
+
   ;Theoretical data: a single variance per radial order:
   FirstZerns = (nnValues*(nnValues+1)/2)+1   ;Fist zernike of each radial order.
   theovar1 = (diag_matrix(kolm_mcovar(nmodes+1)))[FirstZerns-2]	;D/r0=1
-  
+
   ;Find best fit
   r0a=0.01 & r0b=1.   ;range of r0s in m
   minf_bracket, r0a,r0b,r0c, erra,errb, errc, FUNC_NAME='fit_r0_errfunc'
   minf_parabolic, r0a,r0b,r0c, r0fit, errmin, FUNC_NAME='fit_r0_errfunc'
-  
+
   ;Save results
   self._r0 = r0fit
   nnMin = self._nnMin
@@ -205,43 +219,43 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
 
   if not keyword_set(visu) then visu=0
   if not keyword_set(only_noise) then only_noise=0
-  
+
   CC = [-1,255.,255.*50,255.*100,255.*150,255.*256,255.*256*50,255.*256*100,255.*256*150,255.*256*256]
-  
+
   fp = self->findpeaks(mode_idx)
   frv = fp.(0).fr
   idx = where(fp.(0).pw100 ge 1. and fp.(0).fr ge 2.)
   nfr = n_elements(idx)
   f1 = max([frv[idx[0]]-5d,2])
   f2 = min([frv[idx[nfr-1]]+20d,(self->freq())[self->nfreqs()-1]])
-  
+
   if visu eq 1 then plot_oo, self->freq(), (self->psd(mode_idx))
-  
+
   idx1 = closest(f1, self->freq())
   idx2 = closest(f2, self->freq())
   nm = mean(((self._root_obj->residual_modes())->psd(mode_idx))[idx2:*])
   vnm = variance((self->psd(mode_idx))[idx2:*])
   fc = 1/self._dt
   noise = nm*fc
-  
+
   if only_noise eq 0 then begin
     p1 = (self->psd(mode_idx))[idx1]
     p2 = (self->psd(mode_idx))[idx2]
-    
+
     f1l = alog10(f1)
     f2l = alog10(f2)
     p1l = alog10(p1)
     p2l = alog10(p2)
     frl = alog10((self->freq())[idx1:idx2-2])
-    
+
     pl=interpol([p1l,p2l],[f1l,f2l],frl)
-    
+
     vectemp1 = (self->psd(mode_idx))
     vectemp2 = (self->psd(mode_idx))
     vectemp1[idx1:idx2-2] = 10.^(pl)
     idx3 = where(vectemp2 gt vectemp1+sqrt(vnm))
     if total(idx3) ne -1 then vectemp2[idx3] = vectemp1[idx3]+sqrt(vnm)
-    
+
     kkk1 = 5
     a = 1.0001d - log_array(1d-4, 5d-1, kkk1)
     kkk2 = 5
@@ -253,16 +267,16 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
     turbpar = turb_est2(vectemp2, a, b, res=res)
     fturb = -alog(turbpar[1:2])*fc/2/!pi
     kturb = turbpar[0]
-    
+
     CLT=fltarr(self->nfreqs())
     for k=1,self->nfreqs() do begin
       z = exp(complex(0, !pi/self->nfreqs()*k))
       CP = (1-turbpar(1)*z^(-1))*(1-turbpar(2)*z^(-1))
       CLT(k-1) = abs(turbpar(0)/CP)
     endfor
-    
+
     if visu eq 1 then oplot, self->freq(), CLT, col=cc[5]
-    
+
     fv=fltarr(nfr)
     par=fltarr(nfr,2)
     ppp = 50
@@ -293,7 +307,7 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
     vecv[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]=(self->psd(mode_idx))[mean(fv[nfr-2:nfr-1]):min([fv[nfr-1]+ppp,self->nfreqs()])]
     if visu eq 1 then print, 'vibration #'+strtrim(nfr-1,2)+' frequency ='+strtrim(frv[idx[nfr-1]],2)
     par[nfr-1,*]=vib_est(vecv-nm, fp.(0).fr[idx[nfr-1]], fc)
-    
+
     CLTv=fltarr(self->nfreqs())
     omega=2*!pi*frv[idx[nfr-1]]
     damp1=par[nfr-1,1]*omega
@@ -327,9 +341,9 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
       vib_damp: -1 $
       }
   endelse
-  
-  
-  
+
+
+
   return, model
 end
 
@@ -337,7 +351,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
   IF not keyword_set(nfr) THEN nfr=5
-  
+
   if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
   if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
   if from_freq ge to_freq then message, "from_freq must be less than to_freq"
@@ -345,19 +359,19 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
   if from_freq gt max(self->freq()) then from_freq = max(self->freq())
   if to_freq lt min(self->freq()) then to_freq = min(self->freq())
   if to_freq gt max(self->freq()) then to_freq = max(self->freq())
-  
+
   idx_from = closest(from_freq, self->freq())
   idx_to   = closest(to_freq, self->freq())
-  
+
   peaks=self->findpeaks([0,1], from_freq=from_freq, to_freq=to_freq)
-  
+
   frtemp=[peaks.(0).fr,peaks.(1).fr]
   pwtemp=[peaks.(0).pw,peaks.(1).pw]
   flag=0
   j=0
-  
+
   cc = [-1,255.,255.*256,255.*256*256,255.*256*100,255.*100]
-  
+
   while flag eq 0 do begin
     idx=where(abs(frtemp - frtemp[j]) lt 0.6)
     if total(idx) ne -1 then begin
@@ -377,7 +391,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     j+=1
     if j gt n_elements(frtemp)-1 then flag=1
   endwhile
-  
+
   if n_elements(pwtemp) lt nfr then nnn=n_elements(pwtemp) else nnn=nfr
   maxr=dblarr(nnn)
   idxmax=dblarr(nnn)
@@ -402,7 +416,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       a1t=fft((self->modes())[*,0])
       a2t=fft((self->modes())[*,1])
       p=self->niter()*(self._root_obj->frames_counter())->deltat()
-      
+
       if p*fstep lt 1 then fstep=1./p
       a1t[0:p*(fvibmax(ijk)-fstep)-1]=0
       a1t[p*(fvibmax(ijk)+fstep):p*(1./(self._root_obj->frames_counter())->deltat()-fvibmax(ijk)-fstep)-1]=0
@@ -457,7 +471,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     var=-1
     angle=-1
   endelse
-  
+
   directions={$
     freq: frvib, $
     power: pow, $
@@ -465,7 +479,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     signal_var: var, $
     angle: angle $
     }
-    
+
   return, directions
 end
 
@@ -495,6 +509,6 @@ pro AOolmodes__define
     INHERITS    AOtime_series		, $
     INHERITS    AOhelp 			$
     }
-    
+
 end
 

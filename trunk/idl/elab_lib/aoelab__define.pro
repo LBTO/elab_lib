@@ -408,16 +408,19 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 		if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
 		if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
 	endif else begin
-		nmodes = (self->residual_modes())->nmodes()
+;		nmodes = (self->residual_modes())->nmodes()
 		clvar  = (self->residual_modes())->time_variance() * (1e9*self->reflcoef())^2.
 		olvar  = (self->olmodes())->time_variance() * (1e9*self->reflcoef())^2.
+		modes_idx = (self->modal_rec())->modes_idx()
+		clvar  = clvar[modes_idx]
+		olvar  = olvar[modes_idx]
    		yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(OVERPLOT) then  begin
-			plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
+			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
         endif else begin
-		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
+		    oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
 		endelse
-		oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+		oplot, modes_idx+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
 	endelse
 end
 
