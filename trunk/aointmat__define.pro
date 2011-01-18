@@ -70,12 +70,12 @@ end
 function AOintmat::im
     im = readfits(ao_datadir()+path_sep()+self->fname(), /SILENT)
     if not ptr_valid(self._modes_idx) then begin
-    	self._modes_idx = ptr_new(where(total(im,2) ne 0, t_nmodes), /no_copy)
+    	self._modes_idx = ptr_new(where(total(im^2.,2) ne 0, t_nmodes), /no_copy)
     	if t_nmodes eq 0 then message, 'Null im matrix '+self->fname()
     	self._nmodes = t_nmodes
     endif
     if not ptr_valid(self._slopes_idx) then begin
-       	self._slopes_idx = ptr_new(where(total(im,1) ne 0, t_nslopes), /no_copy)
+       	self._slopes_idx = ptr_new(where(total(im^2.,1) ne 0, t_nslopes), /no_copy)
     	if t_nslopes eq 0 then message, 'Null im matrix '+self->fname()
     	self._nslopes = t_nslopes
     endif
@@ -84,8 +84,8 @@ end
 
 ; returns Sx in im matrix
 function AOintmat::sx, mode_num_idx
-	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
 	im = self->im()
+	if n_params() eq 0 then mode_num_idx = lindgen(max(self->modes_idx())+1)
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	sx = im[mode_num_idx,*]
 	sx = sx[*,0:nsub*2-1]
@@ -95,8 +95,8 @@ end
 
 ; returns Sy in im matrix
 function AOintmat::sy, mode_num_idx
-	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
 	im = self->im()
+	if n_params() eq 0 then mode_num_idx = lindgen(max(self->modes_idx())+1)
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	sy = im[mode_num_idx,*]
 	sy = sy[*,0:nsub*2-1]
@@ -163,14 +163,14 @@ end
 
 ; returns Sx in 2D
 function AOintmat::sx2d, mode_num_idx
-	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	if n_params() eq 0 then mode_num_idx = lindgen(max(self->modes_idx())+1)
 	if not ptr_valid(self._sx2d_cube) then self->im2d
 	return, (*(self._sx2d_cube))[*,*,mode_num_idx]
 end
 
 ; returns Sy in 2D
 function AOintmat::sy2d, mode_num_idx
-	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	if n_params() eq 0 then mode_num_idx = lindgen(max(self->modes_idx())+1)
 	if not ptr_valid(self._sy2d_cube) then self->im2d
 	return, (*(self._sy2d_cube))[*,*,mode_num_idx]
 end
@@ -186,6 +186,7 @@ pro AOintmat::im2d
 	mypup = 0	;use this pupil info to remap signals
 	sx = self->sx()
 	sy = self->sy()
+	nm = max(self->modes_idx())+1
 	indpup = ((self->wfs_status())->pupils())->indpup()
 	nsub   = ((self->wfs_status())->pupils())->nsub()
 	fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
@@ -199,9 +200,9 @@ pro AOintmat::im2d
 	im2d_h = yr[1]-yr[0]+1
 
 	s2d  = fltarr(fr_sz,fr_sz)
-	sx2d = fltarr(im2d_w,im2d_h,self->nmodes())
-	sy2d = fltarr(im2d_w,im2d_h,self->nmodes())
-	for ii=0, self->nmodes()-1 do begin
+	sx2d = fltarr(im2d_w,im2d_h,nm)
+	sy2d = fltarr(im2d_w,im2d_h,nm)
+	for ii=0, nm-1 do begin
 		s2d[indpup[*,mypup]] = sx[ii,*]
 		sx2d[*,*,ii] = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 		s2d[indpup[*,mypup]] = sy[ii,*]
@@ -216,7 +217,7 @@ end
 
 
 pro AOintmat::visu_im2d, mode_num_idx, ncol=ncol, nrows=nrows, ct=ct, zoom=zoom
-	if n_params() eq 0 then mode_num_idx = lindgen(self->nmodes())
+	if n_params() eq 0 then mode_num_idx = self->modes_idx()
 	if not keyword_set(ct) then ct=3
 	if not keyword_set(zoom) then zoom=1
 

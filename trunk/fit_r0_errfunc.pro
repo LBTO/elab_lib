@@ -11,7 +11,8 @@ FUNCTION fit_r0_errfunc, r0i
 	theoVar = (4.*!pi^2) * (DpupM/r0)^(5./3.) * theovar1
 
 	;Minimizing criterion:
-	ResError = total( ((olvarMean - theoVar) / olvarMean)^2.)
+	 ResError = total( abs(olvarMean - theoVar) / olvarMean)
+	;ResError = total( ((olvarMean - theoVar) / olvarMean)^2.)
 	;ResError = total( (olvarMean - theoVar)^2. / olvarMean)
 
 	return, resError

@@ -46,7 +46,7 @@ pro AOresidual_modes::datiProducer
         restore, self._store_fname
     endif else begin
         ; compute residual modes from slopes and modal rec
-        t_rec = ((self._root_obj->modal_rec())->rec())[*,(self._root_obj->modal_rec())->modes_idx()]
+        t_rec = ((self._root_obj->modal_rec())->rec())[*, 0:(self._root_obj->modal_rec())->lastmode()]
         modes =  t_rec ##  (self._root_obj->slopes())->slopes()
         save, modes, file=self._store_fname
     endelse

@@ -100,7 +100,7 @@ end
 function AOcontrol::b0_a
     _b0_a = readfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT)
     if not ptr_valid(self._modes_idx) then begin
-        self._modes_idx = ptr_new(where(total(_b0_a,1) ne 0, t_nmodes), /no_copy)
+        self._modes_idx = ptr_new(where(total(_b0_a^2.,1) ne 0, t_nmodes), /no_copy)
         if t_nmodes eq 0 then message, 'Matrix b0_a is null'
         self._nmodes = t_nmodes
     endif
