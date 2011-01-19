@@ -9,7 +9,7 @@
 function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
-    
+
 	if n_elements(tracknumlist) eq 0 then begin
 	    if (keyword_set(from_tracknum) eq 0) and (keyword_set(to_tracknum) eq 0) then return, 1
     	if not keyword_set(from_tracknum) then from_tracknum = ""
@@ -53,7 +53,11 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
         	obj_destroy, o_track
     	end
 	endif else begin
-		for ii=0, n_elements(tracknumlist)-1 do self->add, tracknumlist[ii]
+		; check that the values are string representing tracknums
+		for ii=0, n_elements(tracknumlist)-1 do begin
+			if not stregex(tracknumlist[ii], '^[0-9]{8}_[0-9]{6}$', /bool) then continue
+			self->add, tracknumlist[ii]
+		endfor
 	endelse
 
     if keyword_set(recompute) then begin
@@ -124,7 +128,7 @@ pro AOdataset::free
         if obj_valid(ee) eq 0 then begin
             message, tns[i] + ' skipped because it lacks required data', /info
             continue
-        endif 
+        endif
         ee->free
     endfor
 end
@@ -150,7 +154,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
         if obj_valid(tmpobj) eq 0 then begin
             message, objref[i] + ' skipped because it lacks required data', /info
             continue
-        endif 
+        endif
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
       	for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
@@ -249,7 +253,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
         if obj_valid(tmpobj) eq 0 then begin
             message, objref[i] + ' skipped because it lacks required data', /info
             continue
-        endif 
+        endif
         for j=0L, n_elements(cmds)-2 do begin
             method_name = (strsplit(cmds[j], '(', /extr))[0]
             add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
@@ -315,14 +319,14 @@ end
 
 function aodataset::Get, pos=pos, all=all
     if self->count() eq 0 then return, ""
-    if n_elements(pos) ne 0  then begin 
-        if max(pos) ge self->count() then begin 
+    if n_elements(pos) ne 0  then begin
+        if max(pos) ge self->count() then begin
             message, 'aodataset::Get: Index is out of range', /info
             return, ""
         endif
         return, (*self._values)[pos]
     endif
-    return, *self._values  
+    return, *self._values
 end
 
 
