@@ -64,6 +64,7 @@ function aodb::Init, recompute=recompute
         {name:'intmat.fname',                       type:'string'}, $
         {name:'intmat.modalamp_fname',              type:'string'}, $
         {name:'intmat.modal_dist_fname',            type:'string'}, $
+        {name:'intmat.basis',            			type:'string'}, $
         {name:'frames.nphsub_per_int_av',           type:'real'}, $
         {name:'disturb.fname',                      type:'string'}, $
         {name:'disturb.type',                       type:'string'}, $
@@ -224,6 +225,11 @@ pro aodb::alter, tracknum_list, property, value
             ; insert the pair tracknum:value into the dictionary corresponding to the property
             pos = where(self->property_names() eq property, count)
             if  count eq 0 then message, property+': this property is not part of the database. Cannot insert'
+            merdalorenzo = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknum_list[i], count)
+            if count eq 0 then begin
+            	message, Tracknum_list[i]+' not in db. NOT altered.', /info
+            	return
+            endif
             (self._db_prop_dicts->get(pos=pos))->remove, tracknum_list[i]
             (self._db_prop_dicts->get(pos=pos))->insert, tracknum_list[i], value  ;i
             print, format='(%" %s: %s added to db")', property, tracknum_list[i]
