@@ -154,7 +154,7 @@ function AOslopes::slopes2d, iter_idx=iter_idx
 
 	s2d = fltarr(fr_sz,fr_sz)
 	sl_2d = fltarr(sl2d_w*2, sl2d_h, niter)
-	for kk=0, niter-1 do begin
+	for kk=0L, long(niter)-1 do begin
 		s2d[indpup[*,mypup]] = sx[kk,*]
 		s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 		s2d[indpup[*,mypup]] = sy[kk,*]
