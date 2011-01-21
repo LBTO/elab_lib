@@ -225,10 +225,12 @@ pro aodb::alter, tracknum_list, property, value
             ; insert the pair tracknum:value into the dictionary corresponding to the property
             pos = where(self->property_names() eq property, count)
             if  count eq 0 then message, property+': this property is not part of the database. Cannot insert'
-            merdalorenzo = (self._db_prop_dicts->get(pos=pos))->where('eq', tracknum_list[i], count)
+            ;Alter must verify that a valid tracknum exists already in database
+            postr =  where(self->property_names() eq 'tracknum')
+            merdalorenzo = (self._db_prop_dicts->get(pos=postr))->where('eq', tracknum_list[i], count)
             if count eq 0 then begin
             	message, Tracknum_list[i]+' not in db. NOT altered.', /info
-            	return
+            	continue
             endif
             (self._db_prop_dicts->get(pos=pos))->remove, tracknum_list[i]
             (self._db_prop_dicts->get(pos=pos))->insert, tracknum_list[i], value  ;i

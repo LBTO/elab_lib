@@ -28,7 +28,11 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 	    to_julday   = objto_tracknum->julday()
 	    obj_destroy, objfrom_tracknum
 	    obj_destroy, objto_tracknum
-
+		;Check that from_julday is before to_julday
+		if from_julday gt to_julday then begin
+			message, 'The "to" tracknum date is earlier than the "from" tracknum date!', /info
+			return,0
+		endif
         date0 = strmid(from_tracknum,0,8)
         date1 = strmid(to_tracknum,0,8)
         if date0 eq date1 then begin
