@@ -152,8 +152,13 @@ end
 pro AOolmodes::retrieve_r0
   if file_test(self._r0_store_fname) then begin
     restore, self._r0_store_fname
-    self._r0 = r0fit
-    self._nnMin = nnMin
+    if n_elements(r0fit) eq 0 then begin
+    	file_delete, self._r0_store_fname
+    	self->estimate_r0
+    endif else begin
+    	self._r0 = r0fit
+    	self._nnMin = nnMin
+    endelse
   endif else begin
     self->estimate_r0
   endelse
