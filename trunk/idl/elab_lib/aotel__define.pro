@@ -68,7 +68,7 @@ function AOtel::Init, root, fitsfile
         self._dimm_seeing           =  float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))
         if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN
     endif else begin
-        dimm = readfits(filepath(root=root->datadir(),  'Dimm_'+root->tracknum()+'.fits', /SILENT))
+        dimm = readfits(filepath(root=root->datadir(),  'Dimm_'+root->tracknum()+'.fits'), /SILENT)
         self._dimm_seeing = median(dimm[0,*])
     endelse
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
