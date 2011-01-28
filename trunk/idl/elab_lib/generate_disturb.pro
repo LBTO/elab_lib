@@ -100,14 +100,15 @@ pro generate_disturb, disturb_type, $
 		n_steps			=			n_steps			, $
 		hz				=			hz  			, $
 		vib      		=    		vib     		, $
-		datavib  		=    		datavib
+		datavib  		=    		datavib			, $
+		Dpix			=			Dpix			, $
+		mirmodes_file	=			mirmodes_file
 
 ; General Parameters
 ;*************************************************************
 lambda 		  = 0.75d-6 	; WFS wavelength	[m]
 Refl_coeff	  = 4.			; 2 times the number if reflections on the screen (4 when working with retroreflector)
 Diam		  = 8.222		; pupil diameter on sky	[m]
-Dpix		  = 233			; pupil diameter [pix]
 
 ; Phase screen parameters
 ;*************************************************************
@@ -143,9 +144,6 @@ endif
 if n_elements(n_steps)		eq 0 then n_steps 	= 4000				; buffer size on the Adsec unit  		[steps]
 if n_elements(hz)			eq 0 then hz		= 1000.				; frequency of the oversampling loop 	[Hz]
 
-;mirror modes file (required to compute zonal IFmatrix)
-mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'
-
 
 ; Derived parameters
 ;*************************************************************
@@ -158,7 +156,8 @@ scr_size_m_y = (v_wind*t_int*n_steps)*angle_coef[1]	; screen dimension 		[m]
 scr_size_m   = max([scr_size_m_x,scr_size_m_y], ang_idx)		;
 scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 
-rname = 'dist_'+disturb_type
+;rname = 'dist_'+disturb_type		;FLAO1
+rname = 'dist_flao2'+disturb_type	;FLAO2
 
 
 ; Vibration Disturbance Handling
@@ -291,13 +290,13 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	endif
 
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
-	if file_test(disturb_dir+'inv_IFmatrix.sav') then begin
+	if file_test(disturb_dir+'inv_IFmatrix_flao2.sav') then begin
 		undefine, IFmatrix
-		restore, disturb_dir+'inv_IFmatrix.sav'
+		restore, disturb_dir+'inv_IFmatrix_flao2.sav'
 	endif else begin
 		if n_elements(IFmatrix) eq 0 then IFmatrix = modalif_to_zonalif(mirmodes_file, idx_mask=idx_mask)
 		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE)
-		save, inv_IFmatrix, Dpix, idx_mask, filename=disturb_dir+'inv_IFmatrix.sav', /compress
+		save, inv_IFmatrix, Dpix, idx_mask, filename=disturb_dir+'inv_IFmatrix_flao2.sav', /compress
 		undefine, IFmatrix
 	endelse
 

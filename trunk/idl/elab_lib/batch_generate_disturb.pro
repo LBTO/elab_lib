@@ -2,17 +2,27 @@
 
 ;disturbance parameters
 ;******************************************************************
-disturb_type = 'vib' ;'vib', 'atm', 'atm+vib'
-disturb_dir = 'phase_screens/'
+disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
+;disturb_dir = 'phase_screens/'
+disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
 
 ;atmospheric parameters
 ;******************************************************************
 seeing = 0.8
-L0 = 40.
+L0 = 100.
 v_wind = 15.
-seed = 1358L
+seed = 3145L
 n_steps = 4000
 hz = 1000.
+
+;mirror parameters:
+;******************************************************************
+;Dpix		  = 233			; pupil diameter [pix]			;FLAO1
+Dpix		  = 232			; pupil diameter [pix]			;FLAO2
+
+;mirror modes file (required to compute zonal IFmatrix)
+;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'	;FLAO1
+mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sav'	;FLAO2
 
 ; Pre-correction parameters:
 ;*************************************************************
@@ -25,39 +35,39 @@ hz = 1000.
 
 ;compile general disturb procedure
 ;******************************************************************
-.com generate_disturb
+;.com generate_disturb
 
-;vibration parameters
-;******************************************************************
-modes = [1,2]			;modes with vibrations (line # in M2C)
-dampvibTIP =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
-dampvibTILT =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
-dTIP =  [0.]
-dTILT =  [0.]
-fTIP =  [20.8]		;[Hz]
-fTILT =  [20.8]		;[Hz]
-stddevTIP = [0.1]/sqrt(2) 	;[arcsec]
-stddevTILT = [0.1]/sqrt(2)	;[arcsec]
-
-dampvib = [[dampvibTIP],[dampvibTILT]]
-d = [[dTIP],[dTILT]]
-f = [[fTIP],[fTILT]]
-ttsec = [[stddevTIP],[stddevTILT]]
-
-TTm2sec, 8.222, ttsec=ttsec, ttm=s	;determine standard deviation of vibrations on TIP and TILT in m
-
-;vibration structure
-;******************************************************************
-vib={$
-      m2c_file	: 'adsec_calib/M2C/KL/m2c.fits', 	$
-      modes	: modes, 				$
-      dampvib	: dampvib, 				$
-      d		: d, 					$
-      f		: f, 					$
-      s		: s					$
-      }
-
-undefine, s 				;ttm must not be definite at the next TTm2sec call
+;;vibration parameters
+;;******************************************************************
+;modes = [1,2]			;modes with vibrations (line # in M2C)
+;dampvibTIP =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
+;dampvibTILT =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
+;dTIP =  [0.]
+;dTILT =  [0.]
+;fTIP =  [20.8]		;[Hz]
+;fTILT =  [20.8]		;[Hz]
+;stddevTIP = [0.1]/sqrt(2) 	;[arcsec]
+;stddevTILT = [0.1]/sqrt(2)	;[arcsec]
+;
+;dampvib = [[dampvibTIP],[dampvibTILT]]
+;d = [[dTIP],[dTILT]]
+;f = [[fTIP],[fTILT]]
+;ttsec = [[stddevTIP],[stddevTILT]]
+;
+;TTm2sec, 8.222, ttsec=ttsec, ttm=s	;determine standard deviation of vibrations on TIP and TILT in m
+;
+;;vibration structure
+;;******************************************************************
+;vib={$
+;      m2c_file	: 'adsec_calib/M2C/KL/m2c.fits', 	$
+;      modes	: modes, 				$
+;      dampvib	: dampvib, 				$
+;      d		: d, 					$
+;      f		: f, 					$
+;      s		: s					$
+;      }
+;
+;undefine, s 				;ttm must not be definite at the next TTm2sec call
 
 ;;analyse data from IRTC
 ;;******************************************************************
@@ -104,4 +114,6 @@ generate_disturb, disturb_type      	, $
 	nmodes_cor	  =		nmodes_cor		, $
 	first_mode_cor=		first_mode_cor	, $
 	m2c_cor_fname =		m2c_cor_fname	, $
-	boost_tt	  = 	boost_tt
+	boost_tt	  = 	boost_tt		, $
+	Dpix		  =		Dpix			, $
+	mirmodes_file =		mirmodes_file
