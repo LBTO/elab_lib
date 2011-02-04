@@ -250,6 +250,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
     self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
     self->addMethodHelp, "accel", "accelerometer data (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz)"
+    self->addMethodHelp, "psf", "quick psf display"
     ; free memory
     self->free
 
@@ -332,6 +333,13 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	return, exp(-total(pos_coef_var))
 end
 
+pro AOelab::psf, WINDOW = WINDOW
+    psf = (self->irtc())->longexposure()
+    loadct,3
+    if keyword_set(WINDOW) then www=WINDOW else www=0
+    window, www, title=self->tracknum()
+    image_show, /as, /sh, /log, psf>0.1
+end
 
 
 pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
