@@ -8,12 +8,14 @@ disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
 
 ;atmospheric parameters
 ;******************************************************************
-seeing = 0.8
-L0 = 100.
+seeing = [1.5]
+nseeing = n_elements(seeing)
+L0 = 40.
 v_wind = 15.
-seed = 3145L
+seed = 1983L
 n_steps = 4000
-hz = 1000.
+hz = [200.,400.]
+nhz = n_elements(hz)
 
 ;mirror parameters:
 ;******************************************************************
@@ -101,14 +103,16 @@ mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sa
 
 ;generate disturbance
 ;******************************************************************
-generate_disturb, disturb_type      	, $
-    seeing        =     seeing      	, $
+for ii=0, nseeing-1 do $
+  for jj=0, nhz-1 do $
+    generate_disturb, disturb_type      , $
+    seeing        =     seeing[ii]     	, $
     L0            =     L0          	, $
     v_wind        =     v_wind      	, $
     seed          =     seed        	, $
     disturb_dir   =     disturb_dir 	, $
     n_steps       =     n_steps     	, $
-    hz            =     hz          	, $
+    hz            =     hz[jj]         	, $
     vib           =     vib	    		, $
     datavib	  	  =		datavib			, $
 	nmodes_cor	  =		nmodes_cor		, $
