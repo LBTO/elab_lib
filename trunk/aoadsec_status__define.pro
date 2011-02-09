@@ -50,9 +50,11 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
 			all_files_julday[ii] = julday(m,d,y,0,0,0)
 		endfor
 		diffJulday = thisJulday - all_files_julday
-		idx = where(diffJulday  ge 0d)
-		idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
-		self._adsec_struct_file = all_files[idx1]
+		idx = where(diffJulday  ge 0d, count)
+                if count gt 0 then begin
+		   idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
+		   self._adsec_struct_file = all_files[idx1]
+                endif else self._adsec_struct_file = ''
 	endif
   ; con il filename corrispondente (e.g. 'adsec_structs_20100101.sav') lo passiamo al multiton che ti rende la referenza a quell'oggetto
   self._adsec_structs = getadsecstructs(self._adsec_struct_file)
