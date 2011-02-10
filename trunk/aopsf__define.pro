@@ -184,6 +184,8 @@ function AOpsf::maneggiaFrame, psf_in, dark, badpixelmap
         mask = where(psf[j,*] lt threshold, cnt) * (~(badpixelmap[j,*]))
         psf[j,*] -= median(psf[j,mask])
     endfor
+
+
     ; subtract from each row its median computed on points outside the mask
     ;for j=0L, self->frame_h()-1 do begin
     ;	mask = where(psf[*,j,i] lt threshold, cnt)
@@ -338,7 +340,9 @@ function AOpsf::SR_se, plot=plot, ima=ima
         		psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale()) ; wl [m] and scala [arcsec/pixel]
         		save, psf_dl_ima, file=psf_dl_fname
     		endelse
-    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot)
+    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg)
+            if sresposito_err_msg ne '' then self._aopsf_err_msg += sresposito_err_msg
+
     		save, sr_se, filename=self._sr_se_fname
     		self._sr_se = sr_se
     	endelse
@@ -689,8 +693,23 @@ pro AOpsf::Cleanup
     self->AOhelp::Cleanup
 end
 
+;Returns the error messages
+;-----------------------------------------------------
+function AOpsf::isok, cause=cause
+    ; Check if SR calculation is good
+    dummy = self->sr_se()
+    isok=1B
+    if self._aopsf_err_msg ne '' then begin
+        isok*=0B
+        cause += self._aopsf_err_msg
+    endif
+    return, isok
+end
+
+
 pro AOpsf__define
     struct = { AOpsf					, $
+        _aopsf_err_msg  :  ""           , $
         _fname          :  ""			, $
         _dark_fname     :  ""			, $
         _fitsheader     :  ptr_new()	, $

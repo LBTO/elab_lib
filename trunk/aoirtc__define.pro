@@ -215,6 +215,7 @@ end
 ;-----------------------------------------------------
 function AOIRTC::isok, cause=cause
 	isok=1B
+    isok *= self->AOpsf::isok(cause=cause)
 	if n_elements(self._irtc_err_msg) gt 1 then begin
 		isok*=0B
 		cause += self._irtc_err_msg
