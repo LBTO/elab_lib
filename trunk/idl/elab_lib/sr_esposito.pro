@@ -27,7 +27,7 @@
 ;end
 
 ; from Simone's calc_sr1 17 nov 09
-function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot
+function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg
 ;irtc_pix = 0.01 ;;; arcsec
 ;data_dir = 'C:\simone_work\FLAO\calcolo psf\Data_20091117_114815\'
 ;bg_file = data_dir+'20091117_114104.fits_cube.fits'
@@ -97,10 +97,20 @@ if n_elements(plot) ne 0 then begin
     plot_io, ima_bs[xc-side10/2:xc+side10/2-1,yc]-new_bg + 40, psym =4, charsize=2
     oplot, psf_difflim[250-side10/2:250+side10/2-1,250]+40, thick=1.5
     oplot, ima_fit[xc-side10/2:xc+side10/2-1,yc]-new_bg + 40, color=200L
-    plot_io, side_size, sr_side, charsize=2, /xstyle, yrange=[0.01,1.2]
+    plot_io, side_size, sr_side, charsize=2, /xstyle, yrange=[0.1,1.2], /ystyle
     oplot, side_size, flux/max(flux), color=200
     !p.multi=0
 endif
+
+; Test per problemi sul background
+n_points=5
+test = flux/max(flux)
+ss = (test-shift(test,1))[1:*]
+tt = ss[n_elements(ss)-n_points:*]
+n = where(tt lt 0, count)
+if count gt n_points/2 then errmsg = 'Flux calculation did not converge. SR may be in error' $
+else errmsg=''
+
 
 return, sr
 end
