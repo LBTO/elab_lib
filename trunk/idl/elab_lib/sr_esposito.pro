@@ -108,7 +108,7 @@ test = flux/max(flux)
 ss = (test-shift(test,1))[1:*]
 tt = ss[n_elements(ss)-n_points:*]
 n = where(tt lt 0, count)
-if count gt n_points/2 then errmsg = 'Flux calculation did not converge. SR may be in error' $
+if count gt n_points/2 then errmsg = 'SR may be in error' $
 else errmsg=''
 
 
