@@ -76,7 +76,7 @@ function AOframes_counter::isok, cause=cause
         return, 0
     endif
     max_stop = max(self->lost_frames(),idx)
-    if max_stop gt 10 then begin
+    if max_stop gt 50 then begin
         cause += " - long stop of "+strtrim(max_stop,2) +" frames at frame "+strtrim((self->lost_frames_idx())[idx],2)
         return, 0
     endif

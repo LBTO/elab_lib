@@ -330,6 +330,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
 		if file_test(self._sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._sr_se_fname
 			self._sr_se = sr_se
+            if sresposito_err_msg ne '' then self._aopsf_err_msg += sresposito_err_msg
 		endif else begin
             if not keyword_set(ima) then ima = self->longExposure()
     		psf_dl_fname = filepath( root=ao_elabdir(), $
@@ -343,7 +344,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
     		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg)
             if sresposito_err_msg ne '' then self._aopsf_err_msg += sresposito_err_msg
 
-    		save, sr_se, filename=self._sr_se_fname
+    		save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
     		self._sr_se = sr_se
     	endelse
     endif
