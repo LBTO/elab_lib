@@ -1,45 +1,6 @@
-;function airy, lambda, D, teta
-;;; lambda in micron
-;;; D Diametro in m
-;;; teta fuoriasse in arcsec
-;x = !pi*(teta*4.848)/(lambda/D)
-;if x EQ 0.0 then begin
-;  val = 1
-;endif else begin
-;  val = (2*beselj(x,1,/DOUBLE)/x)^2
-;endelse
-;return, val
-;end
-
-;function psf_dl, irtc_sampling
-;    ;irtc_sampling = 0.01 ;;;; arcsec/px
-;    lambda = 1.6 ;;; filtro H 1.6 micron
-;    D = 8.25 ;;; diametro di LBT in m
-;    np_psf = 5000  ;;; punti della psf_dl
-;    psf_dl = fltarr(np_psf, np_psf)
-;    for i=0,np_psf-1 do begin
-;        for j=0,np_psf-1 do begin
-;        teta1 = sqrt((1.*i-np_psf/2)^2+(1.*J-np_psf/2)^2)*irtc_sampling/10.
-;        psf_dl(i,j) = airy(lambda, D, teta1)
-;        endfor
-;    endfor
-;    return, psf_dl
-;end
-
 ; from Simone's calc_sr1 17 nov 09
-function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg
-;irtc_pix = 0.01 ;;; arcsec
-;data_dir = 'C:\simone_work\FLAO\calcolo psf\Data_20091117_114815\'
-;bg_file = data_dir+'20091117_114104.fits_cube.fits'
-;ima_file = data_dir+'irtc.fits'
-;bg = readfits(bg_file)
-;nbg = n_elements(bg(0,0,*))
-;ima = readfits(ima_file)
-;nima = n_elements(ima(0,0,*))
+function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg, FIX_BG = FIX_BG
 
-;ima1 = total(float(ima),3)/nima
-;bg1 = total(float(bg),3)/nbg
-;ima_bs = ima1-bg1
 ima_bs(319,255)= 0 ;;; set the bad pixel to zero
 ima_bs[0:9,*] = 0
 ima_bs[310:*,*] = 0
@@ -47,13 +8,10 @@ ima_bs[*,0:9] = 0
 ima_bs[*,246:*] = 0
 max_ima = max(ima_bs,h)
 
-
-
 if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/320,h-h/320*320
 ima_fit = gauss2dfit(double(ima_bs),coeff)
 xc = round(coeff(4))
 yc = round(coeff(5))
-new_bg = coeff(0)
 
 npx = n_elements(ima_bs(*,0))
 npy = n_elements(ima_bs(0,*))
@@ -64,18 +22,44 @@ ima_dummy(a:npx-a-1,a:npy-a-1) = 0.0
 ind0= where(ima_dummy EQ 0.0,count0)
 npbg = float(1.0*npx*npy)-count0
 new_bg = total(ima_dummy)/ npbg
-side = min([xc,320-xc,yc,256-yc],h)
-side10 = fix(side)/10*10
-nside = side10/10 * 2 -1
-flux = fltarr(nside)
-side_size= fltarr(nside)
-for i= 1, nside do begin
-  side_size(i-1) = 10*i
-  ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
-  flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i))
-endfor
+fixbg=0
+counter=0
+
+repeat begin
+   new_bg += fixbg
+   side = min([xc,320-xc,yc,256-yc],h)
+   side10 = fix(side)/10*10
+   nside = side10/10 * 2 -1
+   flux = fltarr(nside)
+   side_size= fltarr(nside)
+   for i= 1, nside do begin
+      side_size(i-1) = 10*i
+      ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
+      flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i))
+   endfor
+
+   if keyword_set(FIX_BG) then begin
+
+      dflux = flux-shift(flux,1)
+      ssize = side_size^2
+      dssize = ssize-shift(ssize,1)
+      aaa = dflux / dssize
+      aaa_len = n_elements(aaa)
+      fixbg = mean(aaa[aaa_len-4:aaa_len-1])
+      print,'Background modified by ',fixbg,' counts'
+   endif
+
+counter += 1
+endrep until (abs(fixbg) lt 0.001) or (counter gt 10)
+
+if counter gt 10 then begin
+    errmsg = 'Background correction failed'
+    print, errmsg
+    return, 0
+endif
+ 
+
 ;irtc_sampling = 0.01 ;;;; arcsec
-;lambda = 1.6 ;;; filtro H 1.6 micron
 D = 8.22 ;;; diametro di LBT in m
 np_psf = 5000  ;;; punti della psf_difflim
 
@@ -103,15 +87,25 @@ if n_elements(plot) ne 0 then begin
 endif
 
 ; Test per problemi sul background
+errmsg=''
 n_points=5
-test = flux/max(flux)
-ss = (test-shift(test,1))[1:*]
-tt = ss[n_elements(ss)-n_points:*]
-n = where(tt lt 0, count)
-if count gt n_points/2 then errmsg = 'SR may be in error' $
-else errmsg=''
+; 20110211_123412 = 0.0057 (forte sottostima)
+; 20110211_123445 = 0.00025 (buona)
+; 20110211_123843 = 0.0033 (sovrastima)
+; 20110211_123916 = 0.0036 (sottostima)
 
-
+threshold = 0.001
+if n_elements(flux) gt n_points then begin
+   test = flux/max(flux)
+;   print, test
+   ss = (test-shift(test,1))[1:*]
+   mm = mean(ss[n_elements(ss)-n_points:*])
+   if abs(mm) gt threshold then errmsg = 'SR may be in error' 
+   print,mm
+endif else begin
+   errmsg = 'Cannot test SR quality'
+endelse
+;stop
 return, sr
 end
 

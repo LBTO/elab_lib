@@ -176,23 +176,27 @@ function AOpsf::maneggiaFrame, psf_in, dark, badpixelmap
     frame_h = sz[1]
     ; subtract dark from frames
 	psf = psf_in-dark
+
+    ; AP Removed this because it causes big "holes" in the image that screw up SR calculations
     ; determine mask = points where signal > median(frame)+3*rms(frame)
-	threshold = median(psf[badpixelmap]) + 1 * rms(psf[badpixelmap])
+	;threshold = median(psf[badpixelmap]) + 1 * rms(psf[badpixelmap])
     ;;;;self->set_threshold, threshold
     ; subtract from each column its median computed on points outside the mask
-    for j=0L, frame_w-1 do begin
-        mask = where(psf[j,*] lt threshold, cnt) * (~(badpixelmap[j,*]))
-        psf[j,*] -= median(psf[j,mask])
-    endfor
-
-
-    ; subtract from each row its median computed on points outside the mask
-    ;for j=0L, self->frame_h()-1 do begin
-    ;	mask = where(psf[*,j,i] lt threshold, cnt)
-    ;	psf[*,j,i] -= median(psf[mask,j,i])
+    ;for j=0L, frame_w-1 do begin
+    ;    mask = where(psf[j,*] lt threshold, cnt) * (~(badpixelmap[j,*]))
+    ;    psf[j,*] -= median(psf[j,mask])
     ;endfor
-    ; remove bad pixels interpolating with neighbours
-    ; TODO UNCOMMENT THIS psf = mad_correct_bad_pixel(~badpixelmap, psf)
+
+
+    ; This was already commented before...
+    ;
+    ;; subtract from each row its median computed on points outside the mask
+    ;;for j=0L, self->frame_h()-1 do begin
+    ;;	mask = where(psf[*,j,i] lt threshold, cnt)
+    ;;	psf[*,j,i] -= median(psf[mask,j,i])
+    ;;endfor
+    ;; remove bad pixels interpolating with neighbours
+    ;; TODO UNCOMMENT THIS psf = mad_correct_bad_pixel(~badpixelmap, psf)
     return, psf
 end
 
@@ -325,7 +329,7 @@ function AOpsf::gaussfit, debug=debug
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio
-function AOpsf::SR_se, plot=plot, ima=ima
+function AOpsf::SR_se, plot=plot, ima=ima, FIX_BG = FIX_BG
 	if (self._sr_se eq -1.) or keyword_set(plot) or keyword_set(ima) then begin
 		if file_test(self._sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._sr_se_fname
@@ -342,7 +346,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
         		psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale()) ; wl [m] and scala [arcsec/pixel]
         		save, psf_dl_ima, file=psf_dl_fname
     		endelse
-    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg)
+    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, FIX_BG = FIX_BG)
             if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += sresposito_err_msg
 
     		save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
