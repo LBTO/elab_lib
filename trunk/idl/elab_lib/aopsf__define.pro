@@ -305,14 +305,14 @@ end
 
 function AOpsf::shiftAndAdd
     sha = fltarr(self->frame_w(), self->frame_h())
-    cc = ( self->centroid() ) / self->pixelscale() 
+    cc = ( self->centroid() ) / self->pixelscale()
     for i=0L, self->nframes()-1 do begin
         imas = (self->image())[*,*,i]
         ; TODO implement subpixel shift
         sha += shift(imas,-cc[i,0], -cc[i,1])
     endfor
     sha /= self->nframes()
-    return, sha 
+    return, sha
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 2D Gaussian Fit
@@ -330,7 +330,8 @@ function AOpsf::SR_se, plot=plot, ima=ima
 		if file_test(self._sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._sr_se_fname
 			self._sr_se = sr_se
-            if sresposito_err_msg ne '' then self._aopsf_err_msg += sresposito_err_msg
+			if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
+            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += sresposito_err_msg
 		endif else begin
             if not keyword_set(ima) then ima = self->longExposure()
     		psf_dl_fname = filepath( root=ao_elabdir(), $
@@ -342,7 +343,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
         		save, psf_dl_ima, file=psf_dl_fname
     		endelse
     		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg)
-            if sresposito_err_msg ne '' then self._aopsf_err_msg += sresposito_err_msg
+            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += sresposito_err_msg
 
     		save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
     		self._sr_se = sr_se
@@ -496,7 +497,7 @@ pro AOpsf::compute_centroid
 end
 
 ;
-; centroid of short-exposures in arcsec wrt to the longexp centroid (gaussfit->center()) 
+; centroid of short-exposures in arcsec wrt to the longexp centroid (gaussfit->center())
 ;
 function AOpsf::centroid
     if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
@@ -700,7 +701,7 @@ function AOpsf::isok, cause=cause
     ; Check if SR calculation is good
     dummy = self->sr_se()
     isok=1B
-    if self._aopsf_err_msg ne '' then begin
+    if strtrim(self._aopsf_err_msg,2) ne '' then begin
         isok*=0B
         cause += self._aopsf_err_msg
     endif

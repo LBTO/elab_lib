@@ -85,7 +85,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     	if valid_exptime and valid_filt_number then begin
     		thisJulday = (root_obj->obj_tracknum())->JulDay()
     		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, filter_number, err_msg=dark_err_msg)
-   			if n_elements(dark_err_msg) gt 1 then self._irtc_err_msg += dark_err_msg
+   			if strtrim(dark_err_msg,2) ne '' then self._irtc_err_msg += dark_err_msg
    		endif else begin
 			msg_temp = 'IRTC dark cannot be searched: ('
 			if not valid_exptime then msg_temp += 'exptime '
@@ -216,7 +216,7 @@ end
 function AOIRTC::isok, cause=cause
 	isok=1B
     isok *= self->AOpsf::isok(cause=cause)
-	if n_elements(self._irtc_err_msg) gt 1 then begin
+	if strtrim(self._irtc_err_msg,2) ne '' then begin
 		isok*=0B
 		cause += self._irtc_err_msg
 	endif
