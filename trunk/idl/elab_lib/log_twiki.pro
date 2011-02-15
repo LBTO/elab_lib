@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star, FIX_BG = FIX_BG
 
     objref =  aodataset->Get(/all)
 
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
     for i=0, aodataset->Count()-1 do begin
         ee = getaoelab(objref[i])
@@ -31,7 +31,9 @@ pro log_twiki, aodataset, ref_star=ref_star, FIX_BG = FIX_BG
             if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
         endif else disturb='ONSKY'
 
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %6.1f | %s | %d | %d | %s | %s |")', $
+		if obj_valid(ee->frames()) then ad_status = (ee->frames())->antidrift_status() ? 'ON':'OFF'
+
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -46,6 +48,7 @@ pro log_twiki, aodataset, ref_star=ref_star, FIX_BG = FIX_BG
             gaintemp[0], gaintemp[1] ,$
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
+            obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se(FIX_BG = FIX_BG)*100 : -1, $
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
