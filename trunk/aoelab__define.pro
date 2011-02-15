@@ -158,7 +158,8 @@ function AOelab::Init, tracknum, $
 
     ; ccd39 frames
     frames_fname = filepath(root=self._datadir,  'Frames_'+tracknum+'.fits')
-    self._frames = obj_new('AOframes', self, frames_fname)
+    antidrift_fname = filepath(root=self._datadir, 'AntiDrift_'+tracknum+'.fits')
+    self._frames = obj_new('AOframes', self, frames_fname, antidrift_fname)
 
     ; TV
     tv_fnames=file_search(filepath(root=self._datadir, 'psf*.fits'))
@@ -359,6 +360,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
 	  endif
     endif
     if obj_valid(self->frames()) then begin
+    	print, string(format='(%"| %-30s | %s |")','AntiDrift', (self->frames())->antidrift_status() ? 'ON':'OFF' )
         print, string(format='(%"| %-30s | %f |")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())
     endif
     print, string(format='(%"| %-30s | %f |")','Magnitude', self->mag())

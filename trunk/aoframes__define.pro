@@ -3,7 +3,7 @@
 ;
 ;-
 
-function AOframes::Init, root_obj, frames_file
+function AOframes::Init, root_obj, frames_file, antidrift_fname
 
     if file_test(frames_file) eq 0 then begin
         message, 'Cannot find frames  file: '+frames_file, /inform
@@ -20,6 +20,10 @@ function AOframes::Init, root_obj, frames_file
 
 	; filename
     self._filename = frames_file
+
+	; antidrift data
+	if file_test(antidrift_fname) then self._antidrift_fname = antidrift_fname
+	self._antidrift_status = -1
 
 	; pointer to wfs status
 	self._wfs_status = ptr_new(root_obj->wfs_status())
@@ -51,6 +55,9 @@ function AOframes::Init, root_obj, frames_file
     self->addMethodHelp, "nph_per_sec_av()",  "total number of photons per second, time-averaged"
     self->addMethodHelp, "nphsub_per_int_av()", "number of photons per frame per subaperture, time-averaged"
     self->addMethodHelp, "adu_per_quadrant()", "ADU per quadrant"
+    self->addMethodHelp, "antidrift_fname()", "AntiDrift correction file name (string)"
+    self->addMethodHelp, "antidrift_values()", "AntiDrift correction history (float)"
+    self->addMethodHelp, "antidrift_status()", "Returns 1 if AntiDrift is activated, 0 otherwise (integer)"
     return, 1
 end
 
@@ -104,6 +111,25 @@ function AOframes::header
     if (PTR_VALID(self._header)) THEN return, *(self._header) else return, 0d
 end
 
+function AOframes::antidrift_fname
+	return, self._antidrift_fname
+end
+
+function AOframes::antidrift_values
+	fname = self->antidrift_fname()
+	if strtrim(fname,2) eq "" then return, fltarr(self->nframes()) else $
+	return, readfits(fname,/SILENT)
+end
+
+function AOframes::antidrift_status
+	if self._antidrift_status eq -1 then begin
+		ad = self->antidrift_values()
+		if total(ad) eq 0. then self._antidrift_status = 0 else $
+								self._antidrift_status = 1
+	endif
+	return, self._antidrift_status
+end
+
 pro AOframes::Cleanup
     ptr_free, self._header
     ptr_free, self._nph_per_int
@@ -118,8 +144,9 @@ function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
 	fr = float(readfits(self._filename, /SILENT))
 	if keyword_set(DARK_SUBTRACTED) then begin
 		dark = (*self._wfs_status->ccd39())->dark()
+		ad = self->antidrift_values()
 		if n_elements(dark) eq 1 then print, 'CCD39 DARK FILE NOT FOUND -> DARK NOT SUBTRACTED' else $
-			for ii=0L, self._nframes-1 do fr[*,*,ii] = fr[*,*,ii] - dark
+			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - (dark + ad[ii])
 	endif
 	return, fr
 end
@@ -196,6 +223,8 @@ pro AOframes__define
         _nph_per_sec_av    : 0.0		, $
         _nphsub_per_int_av : 0.0		, $
         _fluxdata_fname	   : ""			, $
+        _antidrift_fname   : ""			, $
+        _antidrift_status  : 0			, $
         INHERITS AOhelp 				  $
     }
 end
