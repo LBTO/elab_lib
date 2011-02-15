@@ -304,11 +304,17 @@ end
 
 function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, thr=thr, n_el=n_el
 	
-	if not keyword_set(n_el) then n_el=6 ;smooth
-  	if not keyword_set(thr) then thr=1e-3
+	; this function returns a structure with three vectors:
+	; fr = frequencies where it finds peaks,
+	; pw = power of the peaks found,
+	; pw100 = relative power of the peaks found
+	
+	if not keyword_set(n_el) then n_el=6 ; smooth coefficient
+  if not keyword_set(thr) then thr=1e-3 ; threshold
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
-
+	
+  ; if from_freq and/or to_freq keywords are set the function find the peaks between these frequencies
 	if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
 	if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
 	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
@@ -322,89 +328,97 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 
 	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
 	fr=*self._freq
-
+  
+  ; if spectrum_idx is not set the function runs for each mode else it runs for the modes selected in spectrum_idx
 	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
-  	if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
+	; ntot is needed to the structure creation function
+  if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
   
 	for kkk=0, n_elements(vtemp)-1 do begin
-		mode=vtemp[kkk]
-		if mode ge 2 then thr*=2
-		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) )
-		thrs=thr/n_el*tmax
-		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df
-		if thrs lt mean(spsd) then thrs=mean(spsd)
-		idx=where(spsd gt thrs)+idx_from
-		if total(idx) ne -1 then begin
+		mode=vtemp[kkk] ; mode number
+		if mode ge 2 then thr*=2 ; the threshold for modes greater than Tip and Tilt is doubled
+		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
+		thrs=thr/n_el*tmax ; the threshold is normalized by the smooth coefficient and multiplied by the delta power of the measurement
+		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df ;smooth of the psd
+		if thrs lt mean(spsd) then thrs=mean(spsd) ; the threshold must be greater than the mean value of the psd
+		idx=where(spsd gt thrs)+idx_from ; index of the frequencies over the threshold
+		if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
+		  ; initialize the variables
 			ofr=-1
 			opw=-1
 			opw100=-1
-			j=0
+			j=0 ; coefficient which measure the number of consecutive frequencies over the threshold
 			tempfr=0
-			l=0
+			l=0 ; if it is equal to 1 it gives the information that this frequency and the previous frequency
+			    ; are not consecutive or that this frequency and the next frequency are not consecutive,
+			    ; if it is equal to 2 this frequency is an isolated frequency (over the threshold)
 			f1=0
-			for i=1, n_elements(idx)-1 do begin
-			if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin
-				if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1
+			for i=1, n_elements(idx)-1 do begin ; for cycle of each frequencies over the threshold
+			if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin ; if there are at least two consecutive frequencies and we are not at the end of the psd
+				if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1 ;it checks if it is in a local minimum, if so flag=0
 			endif else begin
 				flag=1
 			endelse
-				if idx[i] eq idx[i-1]+1 and flag then begin
-					if j eq 0 then f1=fr[idx[i-1]]
-					if i eq 1 then begin
-						tempfr=fr[idx[i]]+fr[idx[i-1]]
+				if idx[i] eq idx[i-1]+1 and flag then begin ; case of two consecutive frequencies and no local minimum
+					if j eq 0 then f1=fr[idx[i-1]] ; set the starting frequency
+					if i eq 1 then begin ; if it is the first step
+						tempfr=fr[idx[i]]+fr[idx[i-1]] ; temporary frequency
 						j=2
 					endif else begin
-				    tempfr=tempfr+fr[idx[i]]
+				    tempfr=tempfr+fr[idx[i]] ; temporary frequency
 						j+=1
 					endelse
-					if i eq n_elements(idx)-1 then begin
-						f2=fr[idx[i]]
-						temppw=self->power(from_freq=f1,to_freq=f2,mode)
-						if total(ofr) eq -1 then begin
-							ofr=tempfr/j
-							opw=temppw
+					if i eq n_elements(idx)-1 then begin ; if it is the last step
+						f2=fr[idx[i]] ; set the ending frequency
+						temppw=self->power(from_freq=f1,to_freq=f2,mode) ; power
+						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+							ofr=tempfr/j ; mean frequency
+							opw=temppw ; power
 						endif else begin
-							ofr=[ofr, tempfr/j]
-							opw=[opw, temppw]
+							ofr=[ofr, tempfr/j] ; frequency vector
+							opw=[opw, temppw] ; power vector
 						endelse
 					endif
 					l=0
-				endif else begin
-					flag=1
+				endif else begin ; case of no consecutive frequencies and/or local minimum
+					flag=1 ; it exits local minimum condition
 					l+=1
-					if f1 ne 0 then f2=fr[idx[i-1]]
+					if f1 ne 0 then f2=fr[idx[i-1]] ; set the ending frequency if exists the starting one
 					if tempfr ne 0 then begin
-						temppw=self->power(from_freq=f1,to_freq=f2,mode)
-						if total(ofr) eq -1 then begin
-							ofr=tempfr/j
-							opw=temppw
+						temppw=self->power(from_freq=f1,to_freq=f2,mode) ; power
+						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+							ofr=tempfr/j ; mean frequency
+							opw=temppw ; power
 						endif else begin
-							ofr=[ofr, tempfr/j]
-							opw=[opw, temppw]
+							ofr=[ofr, tempfr/j] ; frequency vector
+							opw=[opw, temppw] ; power vector
 						endelse
 						l=0
 					endif
-					if l eq 2 then begin
+					if l eq 2 then begin ; if it is an isolated frequency over the threshold
 						if i gt 1 then temppw=$
 							(self->power(mode,/cum))[idx[i-1]]-(self->power(mode,/cum))[idx[i-1]-1] $
-							else temppw=0
-						if total(ofr) eq -1 then begin
-							ofr=fr[idx[i-1]]
-							opw=temppw
+							else temppw=0 ;gives a pw > 0 only if it is not the first frequency
+						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+							ofr=fr[idx[i-1]] ; mean frequency
+							opw=temppw ; power
 						endif else begin
-							ofr=[ofr, fr[idx[i-1]]]
-							opw=[opw, temppw]
+							ofr=[ofr, fr[idx[i-1]]] ; frequency vector
+							opw=[opw, temppw] ; power vector
 						endelse
 						l=1
 					endif
+					; set to 0 the number of consecutive frequencies, the temporary frequency,
+					; and the starting and ending frequencies
 					j=0
 					tempfr=0
 					f1=0
 					f2=0
 				endelse
 			endfor
-			opw100=opw/tmax*100.
+			opw100=opw/tmax*100. ; relative power vector
 		endif else begin
+		  ; case of no frequencies over the threshold
 			ofr=-1
 			opw=-1
 			opw100=-1
