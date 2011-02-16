@@ -124,7 +124,7 @@ end
 function AOframes::antidrift_status
 	if self._antidrift_status eq -1 then begin
 		ad = self->antidrift_values()
-		if total(ad) eq 0. then self._antidrift_status = 0 else $
+		if total(abs(ad)) eq 0. then self._antidrift_status = 0 else $
 								self._antidrift_status = 1
 	endif
 	return, self._antidrift_status
@@ -146,7 +146,7 @@ function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
 		dark = (*self._wfs_status->ccd39())->dark()
 		ad = self->antidrift_values()
 		if n_elements(dark) eq 1 then print, 'CCD39 DARK FILE NOT FOUND -> DARK NOT SUBTRACTED' else $
-			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - (dark + ad[ii])
+			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark ;- (dark + ad[ii])
 	endif
 	return, fr
 end
