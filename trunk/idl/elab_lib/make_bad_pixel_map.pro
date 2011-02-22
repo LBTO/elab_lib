@@ -5,7 +5,7 @@ pro make_bad_pixel_map
     nfile = n_elements(files)
     for i = 0,nfile-1 do begin
 
-        cubo= float(readfits(files[i]))
+        cubo= float(readfits(files[i],/SILENT))
         s = size(cubo,/DIM)
         median_im = fltarr(s[0],s[1])
         rms_im = median_im
@@ -46,7 +46,7 @@ pro make_bad_pixel_map
     if count ge 1 then  badpixels[index] = 1
     index = where(median_im eq 0,count)
     if count ge 1 then badpixels[index] = 1
-    
+
     writefits,filepath(root=path, 'badpixelmap.fits'),badpixels
     return
 end

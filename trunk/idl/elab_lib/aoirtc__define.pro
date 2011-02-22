@@ -200,7 +200,7 @@ function AOIRTC::dark_image
     	cube_fname = self->dark_fname()
     	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='irtc_darks', $
     		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
-		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname)) else begin
+		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname,/SILENT)) else begin
 			dark = self->AOPSF::dark_image()
 			if not file_test(file_dirname(saved_dark_fname), /dir) then file_mkdir, file_dirname(saved_dark_fname)
        		writefits, saved_dark_fname, dark
