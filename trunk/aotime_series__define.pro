@@ -339,9 +339,9 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 		if mode ge 2 then thr*=2 ; the threshold for modes greater than Tip and Tilt is doubled
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
 		thrs=thr/n_el*tmax ; the threshold is normalized by the smooth coefficient and multiplied by the delta power of the measurement
-		spsd=smooth((*(self._psd))[idx_from:idx_to, mode],n_el)*df ;smooth of the psd
+		spsd=smooth((*(self._psd))[*, mode],n_el)*df ;smooth of the psd
 		if thrs lt mean(spsd) then thrs=mean(spsd) ; the threshold must be greater than the mean value of the psd
-		idx=where(spsd gt thrs)+idx_from ; index of the frequencies over the threshold
+		idx=where(spsd gt thrs) ; index of the frequencies over the threshold
 		if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
 		  ; initialize the variables
 			ofr=-1
@@ -372,11 +372,15 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 						f2=fr[idx[i]] ; set the ending frequency
 						temppw=self->power(from_freq=f1,to_freq=f2,mode) ; power
 						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-							ofr=tempfr/j ; mean frequency
-							opw=temppw ; power
+							if tempfr/j ge from_freq and tempfr/j le to_freq then begin
+							  ofr=tempfr/j ; mean frequency
+                opw=temppw ; power
+              endif
 						endif else begin
-							ofr=[ofr, tempfr/j] ; frequency vector
-							opw=[opw, temppw] ; power vector
+						  if tempfr/j ge from_freq and tempfr/j le to_freq then begin
+							  ofr=[ofr, tempfr/j] ; frequency vector
+                opw=[opw, temppw] ; power vector
+							endif
 						endelse
 					endif
 					l=0
@@ -387,11 +391,15 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					if tempfr ne 0 then begin
 						temppw=self->power(from_freq=f1,to_freq=f2,mode) ; power
 						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-							ofr=tempfr/j ; mean frequency
-							opw=temppw ; power
+						  if tempfr/j ge from_freq and tempfr/j le to_freq then begin
+							  ofr=tempfr/j ; mean frequency
+                opw=temppw ; power
+							endif
 						endif else begin
-							ofr=[ofr, tempfr/j] ; frequency vector
-							opw=[opw, temppw] ; power vector
+						  if tempfr/j ge from_freq and tempfr/j le to_freq then begin
+							  ofr=[ofr, tempfr/j] ; frequency vector
+                opw=[opw, temppw] ; power vector
+							endif
 						endelse
 						l=0
 					endif
@@ -400,11 +408,15 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 							(self->power(mode,/cum))[idx[i-1]]-(self->power(mode,/cum))[idx[i-1]-1] $
 							else temppw=0 ;gives a pw > 0 only if it is not the first frequency
 						if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-							ofr=fr[idx[i-1]] ; mean frequency
-							opw=temppw ; power
+						  if fr[idx[i-1]] ge from_freq and fr[idx[i-1]] le to_freq then begin
+							  ofr=fr[idx[i-1]] ; mean frequency
+                opw=temppw ; power
+							endif
 						endif else begin
-							ofr=[ofr, fr[idx[i-1]]] ; frequency vector
-							opw=[opw, temppw] ; power vector
+						  if fr[idx[i-1]] ge from_freq and fr[idx[i-1]] le to_freq then begin
+							  ofr=[ofr, fr[idx[i-1]]] ; frequency vector
+                opw=[opw, temppw] ; power vector
+              endif
 						endelse
 						l=1
 					endif
@@ -424,9 +436,9 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 			opw100=-1
 		endelse
 		if kkk eq 0 then begin
-			res=create_struct('mode'+string(mode,format='(i0'+strtrim(ntot,2)+')'),{fr: ofr, pw: opw, pw100: opw100})
+			res=create_struct('spec'+string(mode,format='(i04)'),{fr: ofr, pw: opw, pw100: opw100})
 		endif else begin
-			res=create_struct(res,'mode'+string(mode,format='(i0'+strtrim(ntot,2)+')'),{fr: ofr, pw: opw, pw100: opw100})
+			res=create_struct(res,'spec'+string(mode,format='(i04)'),{fr: ofr, pw: opw, pw100: opw100})
 		endelse
 	endfor
 	return, res
