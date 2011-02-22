@@ -7,7 +7,7 @@ function db_good_for_onsky_sr
 	setstar = setstar->union(db->query('refStar', 'eq', 'Wref7'))
 	setstar = setstar->union(db->query('refStar', 'eq', 'Wref9'))
 ;	setstar = setstar->union(db->query('refStar', 'eq', 'Wref11'))  ;aka Wref32: pianetino
-	setstar = setstar->union(db->query('refStar', 'eq', 'Wref20'))
+;	setstar = setstar->union(db->query('refStar', 'eq', 'Wref20'))	;stella multipla
 ;	setstar = setstar->union(db->query('refStar', 'eq', 'Wref32'))  ;pianetino
 ;	setstar = setstar->union(db->query('refStar', 'eq', 'Wref39'))	;stella doppia
 	setstar = setstar->union(db->query('refStar', 'eq', 'Wref41'))
@@ -128,6 +128,7 @@ function db_good_for_onsky_sr
 
 	; saturata
 	setstar->removeTracknum, ['20100604_035732', '20100604_040051', '20100604_040130', '20100604_044853', '20100604_044918']
+	setstar->removeTracknum, (obj_new('aodataset', from='20100622_054733', to='20100622_061250'))->tracknums()
 	setstar->removeTracknum, (obj_new('aodataset', from='20100626_084620', to='20100626_085437'))->tracknums()
 
 	; dark too old
@@ -138,12 +139,16 @@ function db_good_for_onsky_sr
 	; very few number of controlled modes
 	setstar->removeTracknum, ['20100621_112006']
 
+	; Problems with telescope:
+	setstar->removeTracknum, '20101127_043437'		;close to zenith (fast rotation of telescope)
+
 	; boh?
 	setstar->removeTracknum, '20101123_030855'
 	setstar->removeTracknum, '20101127_034913'
 
 	; test particolare (test ADC, dice five, e altre minchiate)
 	setstar->removeTracknum, (obj_new('aodataset', from='20100622_113459', to='20100622_114451'))->tracknums()
+	setstar->removeTracknum, '20101127_025816'	;verification of TT coefficient estimation.
 
 	heap_gc
 	return, setstar
