@@ -141,17 +141,11 @@ end
 ;
 ;
 function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
-	apex = string(39B)
-  	nparams = n_params()
 
-    ;if nparams eq 2 then objref = self->Get(pos=index) else begin
     objref = self->Get(/all)
     index = lindgen(self->count())
-    ;endelse
 	nel = n_elements(objref)
     isvalid = bytarr(nel)
-
-    cmds = strsplit(cmd, '.', /extr)
 
 	for i=0L, nel-1 do begin
 		tmpobj=getaoelab(objref[i])
@@ -160,32 +154,21 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
             continue
         endif
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
-      	for j=0L, n_elements(cmds)-2 do begin
-            method_name = (strsplit(cmds[j], '(', /extr))[0]
-            add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
-            r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
-            r=execute('if (hasmethod) then tmpobj= tmpobj->'+cmds[j]+add_brackets)
-            if not obj_valid(tmpobj) then break ;
-        endfor
-        if j eq n_elements(cmds)-1 then begin
-            method_name = (strsplit(cmds[j], '(', /extr))[0]
-            add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
-            r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
-            r=execute('if (hasmethod) then begin & value = tmpobj->'+cmds[j]+add_brackets+'  & isvalid[i]=1 & endif')
-            if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid[i]=0
-        endif
+      	value = tmpobj->ex(cmd, isvalid=iv)
+      	isvalid[i] = iv
+
         if isvalid[i] eq 1 then begin
             if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
-            v[i]=ptr_new(value, /no_copy)
+            v[i] = ptr_new(value, /no_copy)
             if keyword_set(verbose) then print, 'data found'
         endif else if keyword_set(verbose) then print, 'data NOT found'
-        if obj_valid(tmpobj) then $
-        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
-	endfor
-    valid = where(isvalid eq 1, cntvalid)
 
-	; If data has different characteristics (dimensions, type, etc) return a pointer.
-	; Otherwise, return a data array.
+       	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+	endfor
+
+	;;;; If data has different characteristics (dimensions, type, etc) return a pointer.
+	;;;; Otherwise, return a data array.
+    valid = where(isvalid eq 1, cntvalid)
 	if cntvalid ne 0 then begin
 
     	if arg_present(set_out) then set_out = obj_new('aodataset', self->Get(pos=index[where(isvalid)]))
@@ -196,26 +179,36 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 		if max(type_all)-min(type_all) ne 0 then return, v
 		type = type_all[0]
 
-		;check number of dimensions
-		ndim_all = lonarr(cntvalid)
-		for jj=0L, cntvalid-1 do ndim_all[jj] = size( *v[valid[jj]], /n_dim)
-		if max(ndim_all)-min(ndim_all) ne 0 then return, v
-		n_dim = ndim_all[0]
+		if type eq 8 then begin		;;;case of data structures
 
-		;check number of elements in each dimension
-		if n_dim ne 0 then dim_all = make_array(cntvalid, n_dim, /LONG) else $
-						   dim_all = make_array(cntvalid, /LONG)
-		for jj=0L, cntvalid-1 do dim_all[jj,*] = size( *v[valid[jj]], /dim)
-		if n_dim eq 0 then zero = 0 else zero = lonarr(n_dim)
-		if total( max(dim_all, dim=1)-min(dim_all, dim=1) ne zero ) then return, v
-		dim = reform(dim_all[0,*])
+			for i=0L, cntvalid-1 do $
+			  if i eq 0 then data = create_struct(     'item'+string(i,format='(I5.5)'),*v[valid[i]]) else $
+							 data = create_struct(data,'item'+string(i,format='(I5.5)'),*v[valid[i]])
 
-		;create the data array
-		n_ele = size( *v[valid[0]], /n_elements)
-		if n_dim eq 0 then data = make_array(dim=cntvalid, type=type) else $
-						   data = make_array(dim=[dim,cntvalid], type=type)
+		endif else begin			;;;case of other data types
 
-    	for i=0L, cntvalid-1 do data[n_ele*i] = reform(*v[valid[i]],n_ele)
+			;check number of dimensions
+			ndim_all = lonarr(cntvalid)
+			for jj=0L, cntvalid-1 do ndim_all[jj] = size( *v[valid[jj]], /n_dim)
+			if max(ndim_all)-min(ndim_all) ne 0 then return, v
+			n_dim = ndim_all[0]
+
+			;check number of elements in each dimension
+			if n_dim ne 0 then dim_all = make_array(cntvalid, n_dim, /LONG) else $
+							   dim_all = make_array(cntvalid, /LONG)
+			for jj=0L, cntvalid-1 do dim_all[jj,*] = size( *v[valid[jj]], /dim)
+			if n_dim eq 0 then zero = 0 else zero = lonarr(n_dim)
+			if total( max(dim_all, dim=1)-min(dim_all, dim=1) ne zero ) then return, v
+			dim = reform(dim_all[0,*])
+
+			;create the data array
+			n_ele = size( *v[valid[0]], /n_elements)
+			if n_dim eq 0 then data = make_array(dim=cntvalid, type=type) else $
+							   data = make_array(dim=[dim,cntvalid], type=type)
+
+    		for i=0L, cntvalid-1 do data[n_ele*i] = reform(*v[valid[i]],n_ele)
+    	endelse
+
     	ptr_free, v
 		return, data
 
@@ -235,43 +228,20 @@ end
 ;
 ;
 function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
-    apex = string(39B)
 
     objref = self->Get(/all)
     nel = self->Count()
     isvalid = bytarr(nel)
 
-    cmds = strsplit(cmd, '.', /extr)
-
     for i=0L, nel-1 do begin
-        ; tmpobj = (*self._array)[i]
-        ; for j=0, n_elements(cmds)-2 do begin
-        ;   hasmethod = obj_hasmethod(tmpobj, '$cmds[j]$')
-        ;   if (hasmethod) then tmpobj= tmpobj->$cmds[j]$()
-        ;   if not obj_valid(tmpobj) then break;
-        ; endfor
-        ; hasmethod = obj_hasmethod(tmpobj, '$cmds[j]$')
-        ; if (hasmethod) then value = tmpobj->$cmds[j]$()
-        ;
-        tmpobj = getaoelab(objref[i])      ; (*self._array)[i]
+        tmpobj = getaoelab(objref[i])
         if obj_valid(tmpobj) eq 0 then begin
             message, objref[i] + ' skipped because it lacks required data', /info
             continue
         endif
-        for j=0L, n_elements(cmds)-2 do begin
-            method_name = (strsplit(cmds[j], '(', /extr))[0]
-            add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
-            r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
-            r=execute('if (hasmethod) then tmpobj= tmpobj->'+cmds[j]+add_brackets)
-            if not obj_valid(tmpobj) then break ;
-        endfor
-        if j eq n_elements(cmds)-1 then begin
-            method_name = (strsplit(cmds[j], '(', /extr))[0]
-            add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
-            r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
-            r=execute('if (hasmethod) then begin & value = tmpobj->'+cmds[j]+add_brackets+'  & isvalid[i]=1 & endif')
-            if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid[i]=0
-        endif
+
+      	value = tmpobj->ex(cmd, isvalid=iv)
+      	isvalid[i] = iv
 
         ; if it is invalid (maybe method or object not-existing) skip to next record
         if isvalid[i] eq 0 then continue
@@ -304,6 +274,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
         if obj_valid(tmpobj) then $
         	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
     endfor
+
     valid = where(isvalid eq 1, cntvalid)
     if arg_present(ptrdata) then ptrdata = cntvalid eq 0 ? ptr_new() : v[valid]
 	if cntvalid eq 0 then return, obj_new()

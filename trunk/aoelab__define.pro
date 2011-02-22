@@ -574,7 +574,7 @@ function AOelab::accel
   IF (OBJ_VALID(self._accel)) THEN return, self._accel else return, obj_new()
 end
 
-function AOelab::ex, cmd  ;,  isvalid=isvalid
+function AOelab::ex, cmd,  isvalid=isvalid
     apex = string(39B)
   	;nparams = n_params()
 
@@ -596,17 +596,29 @@ function AOelab::ex, cmd  ;,  isvalid=isvalid
         r=execute('if (hasmethod) then tmpobj= tmpobj->'+cmds[j]+add_brackets)
         if not obj_valid(tmpobj) then break ;
     endfor
-    if j eq n_elements(cmds)-1 then begin
-        method_name = (strsplit(cmds[j], '(', /extr))[0]
-        add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
-        r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
-        r=execute('if (hasmethod) then begin & value = tmpobj->'+cmds[j]+add_brackets+'  & isvalid=1 & endif')
-        if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid=0
-    endif
+
+    if test_type(tmpobj, /struct) eq 0 then begin
+    	tmpstruct = tmpobj
+    	for k=j+1, n_elements(cmds)-1 do begin
+    		tag_name = cmds[k]
+		    r=execute('hastag = tag_exist(tmpstruct, '+apex+tag_name+apex+')')
+		    r=execute('if (hastag) then begin & tmpstruct = tmpstruct.'+tag_name+' & isvalid=1 & endif else isvalid=0')
+		endfor
+		value = tmpstruct
+    endif else begin
+    	if j eq n_elements(cmds)-1 then begin
+        	method_name = (strsplit(cmds[j], '(', /extr))[0]
+        	add_brackets = strpos(cmds[j], '(') eq -1 ? '()' : ''
+        	r=execute('hasmethod = obj_hasmethod(tmpobj, '+apex+method_name+apex+')')
+        	r=execute('if (hasmethod) then begin & value = tmpobj->'+cmds[j]+add_brackets+'  & isvalid=1 & endif')
+        	if test_type(value, /obj_ref) eq 0 then if obj_valid(value) eq 0 then isvalid=0
+    	endif
+    endelse
+
     if isvalid eq 1 then begin
         return, value
     endif else begin
-        message, 'invalid function '+cmd
+        message, '...INVALID FUNCTION: '+cmd, /info
         return, -1
     endelse
 
