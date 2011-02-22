@@ -7,7 +7,7 @@
 ; accelerometers
 
 function AOaccel::Init, root_obj, proj, file
-  
+
   self._file_name = file
 
   fr = 4000.
@@ -18,15 +18,15 @@ function AOaccel::Init, root_obj, proj, file
     file_delete, self._store_fname, /allow_nonexistent
     file_delete, self._store_psd_fname, /allow_nonexistent
   endif
-  
+
   if not self->AOtime_series::Init( 1./fr, fftwindow="hamming", nwindows=root_obj->n_periods() ) then return,0
   self._norm_factor   = 1e0
   ;  self._spectra_units = textoidl('[arcsec Hz^{-1/2}]')
   self._plots_title   = root_obj->tracknum()
-  
+
   ;Keep root_obj to easily retrieve residual_modes(), modes() and modalpositions()
   self._root_obj = root_obj
-  
+
   ; initialize help object and add methods and leafs
   if not self->AOhelp::Init('AOaccel', 'data from the accelerometers') then return, 0
   self->addMethodHelp, "X()", "x-displacement determined from the accelerometers"
@@ -38,7 +38,7 @@ function AOaccel::Init, root_obj, proj, file
   self->addMethodHelp, "centroid()", "centroid determined from the accelerometers"
   self->addMethodHelp, "plotJitter(from_freq=from_freq, to_freq=to_freq, _extra=ex)", ""
   self->AOtime_series::addHelp, self
-  
+
   return, 1
 end
 
@@ -54,7 +54,7 @@ pro AOaccel::datiProducer
     ;restore file
     restore, self._file_name
     ; compute mechanical xyz displacements and rotations and centroid from accelerometers data
-    P = readfits(self._proj_fname)
+    P = readfits(self._proj_fname,/SILENT)
     out00 = total((data.acc_0-mean(data.acc_0))*self._dt,/cum)
     out0  = total((out00-mean(out00))*self._dt,/cum)
     out20 = total((data.acc_2-mean(data.acc_2))*self._dt,/cum)
@@ -85,7 +85,7 @@ pro AOaccel::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
   oplot, freq, sqrt(tip), col='0000ff'x
   oplot, freq, sqrt(tilt), col='00ff00'x
   legend, ['X+Y', 'X', 'Y'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
-  
+
   sigmatot2 = max ( tip + tilt)  / 2
   ldmas = 1.6d-6 / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
   print, 'SR attenuation in H band due to XY jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
@@ -135,7 +135,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
   IF not keyword_set(nfr) THEN nfr=5
-  
+
   if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
   if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
   if from_freq ge to_freq then message, "from_freq must be less than to_freq"
@@ -143,19 +143,19 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
   if from_freq gt max(self->freq()) then from_freq = max(self->freq())
   if to_freq lt min(self->freq()) then to_freq = min(self->freq())
   if to_freq gt max(self->freq()) then to_freq = max(self->freq())
-  
+
   idx_from = closest(from_freq, self->freq())
   idx_to   = closest(to_freq, self->freq())
-  
+
   peaks=self->findpeaks([0,1], from_freq=from_freq, to_freq=to_freq)
-  
+
   frtemp = [peaks.(0).fr,peaks.(1).fr]
   pwtemp = [peaks.(0).pw,peaks.(1).pw]
   flag = 0
   j = 0
-  
+
   cc = [-1,255.,255.*256,255.*256*256,255.*256*100,255.*100]
-  
+
   while flag eq 0 do begin
     idx = where(abs(frtemp - frtemp[j]) lt 0.6)
     if total(idx) ne -1 then begin
@@ -175,7 +175,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     j+=1
     if j gt n_elements(frtemp)-1 then flag=1
   endwhile
-  
+
   if n_elements(pwtemp) lt nfr then nnn=n_elements(pwtemp) else nnn=nfr
   maxr = dblarr(nnn)
   idxmax = dblarr(nnn)
@@ -200,7 +200,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       a1t = fft((self->modes())[*,0])
       a2t = fft((self->modes())[*,1])
       p = self->niter()*(self._root_obj->frames_counter())->deltat()
-      
+
       if p*fstep lt 1 then fstep=1./p
       a1t[0:p*(fvibmax(ijk)-fstep)-1] = 0
       a1t[p*(fvibmax(ijk)+fstep):p*(1./(self._root_obj->frames_counter())->deltat()-fvibmax(ijk)-fstep)-1] = 0
@@ -255,7 +255,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     var = -1
     angle = -1
   endelse
-  
+
   directions={$
     freq: frvib, $
     power: pow, $
@@ -263,7 +263,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     signal_var: var, $
     angle: angle $
     }
-    
+
   return, directions
 end
 
