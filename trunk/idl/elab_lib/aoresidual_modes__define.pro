@@ -23,7 +23,7 @@ function AOresidual_modes::Init, root_obj
 
     if not self->AOtime_series::Init((root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
 	self._norm_factor   = 1e9 * self._root_obj->reflcoef()	;nm wf
-	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
+	self._spectra_units = textoidl('[nm-wf]')
 	self._plots_title = root_obj->tracknum()
 
     ; create residual_modes and analyze
