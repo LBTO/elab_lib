@@ -348,8 +348,8 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 		if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
 		  ; initialize the variables
 			ofr=-1
-			ofmax=-1
-			ofmin=-1
+			ofrmax=-1
+			ofrmin=-1
 			opw=-1
 			opw100=-1
 			j=0 ; coefficient which measure the number of consecutive frequencies over the threshold
