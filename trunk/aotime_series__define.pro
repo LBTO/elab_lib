@@ -302,7 +302,7 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     endelse
 end
 
-function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, thr=thr, n_el=n_el, thr100=thr100
+function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, thr=thr, n_el=n_el, t100=t100
 	
 	; this function returns a structure with three vectors:
 	; fr = frequencies where it finds peaks,
@@ -311,7 +311,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 	
 	if not keyword_set(n_el) then n_el=1 ; smooth coefficient
   if not keyword_set(thr) then thr=1e-3 ; threshold
-  if not keyword_set(thr100) then thr100=0. ; threshold on the minimum power of the returned results
+  if not keyword_set(t100) then t100=0. ; threshold on the minimum power of the returned results
 	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 	
@@ -340,7 +340,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 		mode=vtemp[kkk] ; mode number
 		if mode ge 2 then thr*=2 ; the threshold for modes greater than Tip and Tilt is doubled
 		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
-		thr100=thr100*tmax/100.
+		t100=t100*tmax/100.
 		thrs=thr/n_el*tmax ; the threshold is normalized by the smooth coefficient and multiplied by the delta power of the measurement
 		if n_el ge 2 then spsd=smooth((*(self._psd))[*, mode],n_el)*df $ ;smooth of the psd
 		else spsd=pw[*,mode]
@@ -372,7 +372,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 						f2=idx[i] ; set the ending frequency
 						temppw=total(pw[f1:f2])
 						tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
-						if tempfr ge from_freq and tempfr le to_freq and temppw gt thr100 then begin
+						if tempfr ge from_freq and tempfr le to_freq and temppw gt t100 then begin
 						  if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
 						    ofr=tempfr ; weighted mean frequency
 						    ofrmax=fr[f2]
@@ -394,7 +394,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					  f2=idx[i-1] 
             temppw=total(pw[f1:f2])
             tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
-            if tempfr ge from_freq and tempfr le to_freq and temppw gt thr100 then begin
+            if tempfr ge from_freq and tempfr le to_freq and temppw gt t100 then begin
               if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
                 ofr=tempfr ; weighted mean frequency
                 ofrmax=fr[f2]
@@ -411,7 +411,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 					endif
 					if l eq 2 then begin ; if it is an isolated frequency over the threshold
 						if i gt 1 then temppw=pw[idx[i-1]] else temppw=0 ;gives a pw > 0 only if it is not the first frequency
-						if fr[idx[i-1]] ge from_freq and fr[idx[i-1]] le to_freq and temppw gt thr100 then begin
+						if fr[idx[i-1]] ge from_freq and fr[idx[i-1]] le to_freq and temppw gt t100 then begin
 						  if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
 							  ofr=fr[idx[i-1]] ; mean frequency
 							  ofrmax=fr[idx[i-1]]
