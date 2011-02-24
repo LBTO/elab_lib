@@ -19,6 +19,8 @@ function AOtime_series::Init, dt, fftwindow=fftwindow, nwindows=nwindows;, nospe
     self._nseries=-1
     self._nfreqs=-1
     self._nspectra=-1
+    self._smooth=1
+    self._thr_peaks=1e-3
     if n_elements(fftwindow) ne 0 then self._window = fftwindow else self._window = "hamming"
     if n_elements(nwindows) ne 0 then self._nwindows = nwindows else self._nwindows = 1L
 	self._norm_factor = 1.
@@ -302,155 +304,251 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     endelse
 end
 
-function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, thr=thr, n_el=n_el, t100=t100
-	
-	; this function returns a structure with three vectors:
-	; fr = frequencies where it finds peaks,
-	; pw = power of the peaks found,
-	; pw100 = relative power of the peaks found
-	
-	if not keyword_set(n_el) then n_el=1 ; smooth coefficient
-  if not keyword_set(thr) then thr=1e-3 ; threshold
+function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100
+
+  IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
   if not keyword_set(t100) then t100=0. ; threshold on the minimum power of the returned results
-	IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
-	IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
-	
   ; if from_freq and/or to_freq keywords are set the function find the peaks between these frequencies
-	if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
-	if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
-	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-	if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
-	if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
-	if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
-	if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
-
-	idx_from = closest(from_freq, *(self._freq))
-	idx_to   = closest(to_freq, *(self._freq))
-
-	df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
-	fr=*self._freq
-	pw=(*(self._psd))*df
+  if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
+  if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+  if from_freq ge to_freq then message, "from_freq must be less than to_freq"
+  if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
+  if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
+  if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
+  if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
+  
+  tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
   
   ; if spectrum_idx is not set the function runs for each mode else it runs for the modes selected in spectrum_idx
-	if n_elements(spectrum_idx) eq 0 then vtemp=findgen((size(self->psd(),/dim))[1]) else vtemp=spectrum_idx
-	; ntot is needed to the structure creation function
-  if max(vtemp) ge 10 then ntot = fix(alog10(max(vtemp)))+1 else ntot=1
+  if n_elements(spectrum_idx) eq 0 then begin
+    if t100 eq 0 and to_freq eq max(*(self._freq)) and from_freq eq min(*(self._freq)) then begin
+      return, *(self._peaks)
+    endif else begin
+      nt = n_tags(*(self._peaks))
+      for i=0, nt-1 do begin
+        q=string(i,format='(i04)')
+        temp0='ofr=(*(self._peaks)).('+q+').fr'
+        temp1='ofrmax=(*(self._peaks)).('+q+').frmax'
+        temp2='ofrmin=(*(self._peaks)).('+q+').frmin'
+        temp3='opw=(*(self._peaks)).('+q+').pw'
+        temp4='opw100=(*(self._peaks)).('+q+').pw100'
+        ftemp0=execute(temp0)
+        ftemp1=execute(temp1)
+        ftemp2=execute(temp2)
+        ftemp3=execute(temp3)
+        ftemp4=execute(temp4)
+        if t100 gt 0 then begin
+          idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
+        endif else begin
+          idx=where(ofr ge from_freq and ofr le to_freq)
+        endelse
+        if i eq 0 then begin
+          if total(idx) ne -1 then $
+          res=create_struct('spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
+          else res=create_struct('spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
+        endif else begin
+          if total(idx) ne -1 then $
+          res=create_struct(res,'spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
+          else res=create_struct(res,'spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
+        endelse
+      endfor
+      return, res
+    endelse
+  endif else begin
+    if t100 eq 0 and to_freq eq max(*(self._freq)) and from_freq eq min(*(self._freq)) then begin
+      q=string(spectrum_idx,format='(i04)')
+      temp='tempr=(*(self._peaks)).('+q+')'
+      ftemp=execute(temp)
+      return, tempr
+    endif else begin
+      q=string(spectrum_idx,format='(i04)')
+      temp0='ofr=(*(self._peaks)).('+q+').fr'
+      temp1='ofrmax=(*(self._peaks)).('+q+').frmax'
+      temp2='ofrmin=(*(self._peaks)).('+q+').frmin'
+      temp3='opw=(*(self._peaks)).('+q+').pw'
+      temp4='opw100=(*(self._peaks)).('+q+').pw100'
+      ftemp0=execute(temp0)
+      ftemp1=execute(temp1)
+      ftemp2=execute(temp2)
+      ftemp3=execute(temp3)
+      ftemp4=execute(temp4)
+      if t100 gt 0 then begin
+        idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
+      endif else begin
+        idx=where(ofr ge from_freq and ofr le to_freq)
+      endelse
+        if total(idx) ne -1 then $
+        res={fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)} $
+        else res={fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1}
+      return, res
+    endelse
+  endelse
+end
+
+pro AOtime_series::set_smooth, smooth
+  if n_params() ne 1 then begin
+    message, 'Missing parameter: Usage: (...)->set_smooth, smooth', /info
+    return
+  endif
+  if smooth le 0 then begin
+    message, "Smooth must be greater than 0", /info
+    return
+  endif
+  if smooth eq self._smooth then return else begin
+    self._smooth = smooth
+    file_delete, self._store_peaks_fname, /allow_nonexistent
+    ptr_free, self._peaks
+  endelse
+end
+
+pro AOtime_series::set_threshold, threshold
+  if n_params() ne 1 then begin
+    message, 'Missing parameter: Usage: (...)->set_threshold, threshold', /info
+    return
+  endif
+  if threshold le 0 or threshold ge 1 then begin
+    message, "Threshold must be >0 and <1", /info
+    return
+  endif
+  if threshold eq self._thr_peaks then return else begin
+    self._thr_peaks = threshold
+    file_delete, self._store_peaks_fname, /allow_nonexistent
+    ptr_free, self._peaks
+  endelse
+end
+
+pro AOtime_series::PeaksCompute
+  if file_test(self._store_peaks_fname) then begin
+    restore, self._store_peaks_fname
+    self._smooth = smooth
+    self._thr_peaks=threshold
+  endif else begin
+  ; this function returns a structure with three vectors:
+  ; fr = frequencies where it finds peaks,
+  ; pw = power of the peaks found,
+  ; pw100 = relative power of the peaks found
+
+  IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
+  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
+
+  df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
+  fr=*self._freq
+  pw=(*(self._psd))*df
+  smooth=self._smooth
+  threshold=self._thr_peaks
   
-	for kkk=0, n_elements(vtemp)-1 do begin
-		mode=vtemp[kkk] ; mode number
-		if mode ge 2 then thr*=2 ; the threshold for modes greater than Tip and Tilt is doubled
-		tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
-		t100=t100*tmax/100.
-		thrs=thr/n_el*tmax ; the threshold is normalized by the smooth coefficient and multiplied by the delta power of the measurement
-		if n_el ge 2 then spsd=smooth((*(self._psd))[*, mode],n_el)*df $ ;smooth of the psd
-		else spsd=pw[*,mode]
-		idx=where(spsd gt thrs) ; index of the frequencies over the threshold
-		if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
-		  ; initialize the variables
-			ofr=-1
-			ofrmax=-1
-			ofrmin=-1
-			opw=-1
-			opw100=-1
-			j=0 ; coefficient which measure the number of consecutive frequencies over the threshold
-			tempfr=0
-			temppw=0
-			l=0 ; if it is equal to 1 it gives the information that this frequency and the previous frequency
-			    ; are not consecutive or that this frequency and the next frequency are not consecutive,
-			    ; if it is equal to 2 this frequency is an isolated frequency (over the threshold)
-			f1=0
-			for i=1, n_elements(idx)-1 do begin ; for cycle of each frequencies over the threshold
-			if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin ; if there are at least two consecutive frequencies and we are not at the end of the psd
-				if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1 ;it checks if it is in a local minimum, if so flag=0
-			endif else begin
-				flag=1
-			endelse
-				if idx[i] eq idx[i-1]+1 and flag then begin ; case of two consecutive frequencies and no local minimum
-					if j eq 0 then f1=idx[i-1] ; set the starting frequency
-					if i eq 1 then j=2 else j+=1
-					if i eq n_elements(idx)-1 then begin ; if it is the last step
-						f2=idx[i] ; set the ending frequency
-						temppw=total(pw[f1:f2])
-						tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
-						if tempfr ge from_freq and tempfr le to_freq and temppw gt t100 then begin
-						  if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-						    ofr=tempfr ; weighted mean frequency
-						    ofrmax=fr[f2]
-						    ofrmin=fr[f1]
-                opw=temppw ; power
-              endif else begin
-						    ofr=[ofr, tempfr] ; frequency vector
-						    ofrmax=[ofrmax, fr[f2]]
-                ofrmin=[ofrmin, fr[f1]]
-                opw=[opw, temppw] ; power vector
-              endelse
-            endif
-					endif
-					l=0
-				endif else begin ; case of no consecutive frequencies and/or local minimum
-					flag=1 ; it exits local minimum condition
-					l+=1
-					if f1 ne 0 then begin ; set the ending frequency if exists the starting one
-					  f2=idx[i-1] 
+  modes=findgen((size(self->psd(),/dim))[1])
+  
+  for kkk=0, n_elements(modes)-1 do begin
+    mode=modes[kkk] ; mode number
+    tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
+    thrs=threshold*tmax ; the threshold is multiplied by the delta power of the measurement
+    if smooth ge 2 then spsd=smooth((*(self._psd))[*, mode],smooth)*df $ ;smooth of the psd
+    else spsd=pw[*,mode]
+    idx=where(spsd gt thrs) ; index of the frequencies over the threshold
+    if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
+      ; initialize the variables
+      ofr=-1
+      ofrmax=-1
+      ofrmin=-1
+      opw=-1
+      opw100=-1
+      j=0 ; coefficient which measure the number of consecutive frequencies over the threshold
+      tempfr=0
+      temppw=0
+      l=0 ; if it is equal to 1 it gives the information that this frequency and the previous frequency
+          ; are not consecutive or that this frequency and the next frequency are not consecutive,
+          ; if it is equal to 2 this frequency is an isolated frequency (over the threshold)
+      f1=0
+      for i=1, n_elements(idx)-1 do begin ; for cycle of each frequencies over the threshold
+      if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin ; if there are at least two consecutive frequencies and we are not at the end of the psd
+        if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1 ;it checks if it is in a local minimum, if so flag=0
+      endif else begin
+        flag=1
+      endelse
+        if idx[i] eq idx[i-1]+1 and flag then begin ; case of two consecutive frequencies and no local minimum
+          if j eq 0 then f1=idx[i-1] ; set the starting frequency
+          if i eq 1 then j=2 else j+=1
+          if i eq n_elements(idx)-1 then begin ; if it is the last step
+            f2=idx[i] ; set the ending frequency
             temppw=total(pw[f1:f2])
             tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
-            if tempfr ge from_freq and tempfr le to_freq and temppw gt t100 then begin
-              if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-                ofr=tempfr ; weighted mean frequency
-                ofrmax=fr[f2]
-                ofrmin=fr[f1]
-                opw=temppw ; power
-              endif else begin
-                ofr=[ofr, tempfr] ; frequency vector
-                ofrmax=[ofrmax, fr[f2]]
-                ofrmin=[ofrmin, fr[f1]]
-                opw=[opw, temppw] ; power vector
-              endelse
-            endif
-						l=0
-					endif
-					if l eq 2 then begin ; if it is an isolated frequency over the threshold
-						if i gt 1 then temppw=pw[idx[i-1]] else temppw=0 ;gives a pw > 0 only if it is not the first frequency
-						if fr[idx[i-1]] ge from_freq and fr[idx[i-1]] le to_freq and temppw gt t100 then begin
-						  if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-							  ofr=fr[idx[i-1]] ; mean frequency
-							  ofrmax=fr[idx[i-1]]
-                ofrmin=fr[idx[i-1]]
-                opw=temppw ; power
-              endif else begin
-							  ofr=[ofr, fr[idx[i-1]]] ; frequency vector
-                ofrmax=[ofrmax, fr[idx[i-1]]]
-                ofrmin=[ofrmin, fr[idx[i-1]]]
-                opw=[opw, temppw] ; power vector
-              endelse
-            endif
-						l=1
-					endif
-					; set to 0 the number of consecutive frequencies, the temporary frequency,
-					; and the starting and ending frequencies
-					j=0
-					tempfr=0
-					temppw=0
-					f1=0
-					f2=0
-				endelse
-			endfor
-			opw100=opw/tmax*100. ; relative power vector
-		endif else begin
-		  ; case of no frequencies over the threshold
-			ofr=-1
-			ofrmax=-1
-			ofrmin=-1
-			opw=-1
-			opw100=-1
-		endelse
-		if kkk eq 0 then begin
-			res=create_struct('spec'+string(mode,format='(i04)'),{fr: ofr, frmax: ofrmax, frmin: ofrmin, pw: opw, pw100: opw100})
-		endif else begin
-			res=create_struct(res,'spec'+string(mode,format='(i04)'),{fr: ofr, frmax: ofrmax, frmin: ofrmin, pw: opw, pw100: opw100})
-		endelse
-	endfor
-	return, res
+            if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+              ofr=tempfr ; weighted mean frequency
+              ofrmax=fr[f2]
+              ofrmin=fr[f1]
+              opw=temppw ; power
+            endif else begin
+              ofr=[ofr, tempfr] ; frequency vector
+              ofrmax=[ofrmax, fr[f2]]
+              ofrmin=[ofrmin, fr[f1]]
+              opw=[opw, temppw] ; power vector
+            endelse
+          endif
+          l=0
+        endif else begin ; case of no consecutive frequencies and/or local minimum
+          flag=1 ; it exits local minimum condition
+          l+=1
+          if f1 ne 0 then begin ; set the ending frequency if exists the starting one
+            f2=idx[i-1] 
+            temppw=total(pw[f1:f2])
+            tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
+            if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+              ofr=tempfr ; weighted mean frequency
+              ofrmax=fr[f2]
+              ofrmin=fr[f1]
+              opw=temppw ; power
+            endif else begin
+              ofr=[ofr, tempfr] ; frequency vector
+              ofrmax=[ofrmax, fr[f2]]
+              ofrmin=[ofrmin, fr[f1]]
+              opw=[opw, temppw] ; power vector
+            endelse
+            l=0
+          endif
+          if l eq 2 then begin ; if it is an isolated frequency over the threshold
+            if i gt 1 then temppw=pw[idx[i-1]] else temppw=0 ;gives a pw > 0 only if it is not the first frequency
+            if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
+              ofr=fr[idx[i-1]] ; mean frequency
+              ofrmax=fr[idx[i-1]]
+              ofrmin=fr[idx[i-1]]
+              opw=temppw ; power
+            endif else begin
+              ofr=[ofr, fr[idx[i-1]]] ; frequency vector
+              ofrmax=[ofrmax, fr[idx[i-1]]]
+              ofrmin=[ofrmin, fr[idx[i-1]]]
+              opw=[opw, temppw] ; power vector
+            endelse
+            l=1
+          endif
+          ; set to 0 the number of consecutive frequencies, the temporary frequency,
+          ; and the starting and ending frequencies
+          j=0
+          tempfr=0
+          temppw=0
+          f1=0
+          f2=0
+        endelse
+      endfor
+      opw100=opw/tmax*100. ; relative power vector
+    endif else begin
+      ; case of no frequencies over the threshold
+      ofr=-1
+      ofrmax=-1
+      ofrmin=-1
+      opw=-1
+      opw100=-1
+    endelse
+    if kkk eq 0 then begin
+      res=create_struct('spec'+string(mode,format='(i04)'),{fr: ofr, frmax: ofrmax, frmin: ofrmin, pw: opw, pw100: opw100})
+    endif else begin
+      res=create_struct(res,'spec'+string(mode,format='(i04)'),{fr: ofr, frmax: ofrmax, frmin: ofrmin, pw: opw, pw100: opw100})
+    endelse
+  endfor
+  save, res, smooth, threshold, file=self._store_peaks_fname
+  endelse
+  if (ptr_valid(self._peaks))  THEN ptr_free, self._peaks
+  self._peaks = ptr_new(res, /no_copy)
 end
 
 ;function AOtime_series::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
@@ -598,8 +696,10 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "fftwindow()", "returns the type of apodization window applied in the computation of the PSD."
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
     obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative, /sumspectra)", "return power of idx-th spectrum between frequencies from_freq and to_freq, eventually cumulating on freqs and/or summing on spectra"
-    obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq"
-;    obj->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
+    obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to, t100=t100)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq, t100 = % threshold of the returned results"
+    obj->addMethodHelp, "set_smooth,smooth", "sets the smooth to be used in the computation of the PEAKS."
+    obj->addMethodHelp, "set_threshold,threshold", "ATTENTION: You are advise not to modify this value! sets the threshold to be used in the computation of the PEAKS."
+    ;    obj->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
 ;                        "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
     obj->addMethodHelp, "SpecPlot, idx", "plot psd of idx-th spectrum"
 end
@@ -628,6 +728,7 @@ pro AOtime_series::free
     ptr_free, self._ensemble_variance
     ptr_free, self._ensemble_average
     ptr_free, self._freq
+    ptr_free, self._peaks
 end
 
 
@@ -635,7 +736,6 @@ pro AOtime_series::forceCompute
     file_delete, self._store_psd_fname, /allow_nonexistent
     self->AOtime_series::free
 end
-
 
 pro AOtime_series::Cleanup
     ;ptr_free, self._dati
@@ -645,6 +745,7 @@ pro AOtime_series::Cleanup
     ptr_free, self._ensemble_average
     ptr_free, self._psd
     ptr_free, self._freq
+    ptr_free, self._peaks
 end
 
 pro AOtime_series__define
@@ -654,6 +755,8 @@ struct = { AOtime_series, $
     _nseries           :  0L		, $
     _nfreqs            :  0L		, $
     _nspectra          :  0L		, $
+    _smooth            :  0L    , $
+    _thr_peaks         :  0.    , $
 ;    _nospectra         :  0B       , $
     _time_variance     :  ptr_new()	, $
     _time_average      :  ptr_new()	, $
@@ -661,8 +764,10 @@ struct = { AOtime_series, $
     _ensemble_average  :  ptr_new()	, $
     _psd               :  ptr_new()	, $
     _freq              :  ptr_new()	, $
+    _peaks             :  ptr_new() , $
     _norm_factor	   :  0.		, $
     _store_psd_fname   :  ""		, $
+    _store_peaks_fname     :  ""    , $
     _window            :  ""		, $
     _nwindows		   :  0L		, $
     _dt                :  0d  		, $

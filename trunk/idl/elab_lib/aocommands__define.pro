@@ -15,9 +15,11 @@ function AOcommands::Init, root_obj, commands_file, fc_obj
 
     self._store_fname = filepath(root=root_obj->elabdir(), 'commands.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'commands_psd.sav')
+    self._store_peaks_fname = filepath(root=root_obj->elabdir(), 'commands_peaks.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
     if not self->AOtime_series::Init(fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0

@@ -14,9 +14,11 @@ function AOresidual_modes::Init, root_obj
 
     self._store_fname     = filepath(root=root_obj->elabdir(), 'residual_modes.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'residual_modes_psd.sav')
+    self._store_peaks_fname = filepath(root=root_obj->elabdir(), 'residual_modes_peaks.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
     self._root_obj = root_obj

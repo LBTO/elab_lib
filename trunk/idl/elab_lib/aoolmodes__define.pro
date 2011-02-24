@@ -36,10 +36,12 @@ function AOolmodes::Init, root_obj
   self._store_fname     = filepath(root=root_obj->elabdir(), 'olmodes.sav')
   self._store_psd_fname = filepath(root=root_obj->elabdir(), 'olmodes_psd.sav')
   self._r0_store_fname  = filepath(root=root_obj->elabdir(), 'olmodes_r0.sav')
+  self._store_peaks_fname = filepath(root=root_obj->elabdir(), 'olmodes_peaks.sav'
   if root_obj->recompute() eq 1B then begin
     file_delete, self._store_fname, /allow_nonexistent
     file_delete, self._store_psd_fname, /allow_nonexistent
     file_delete, self._r0_store_fname, /allow_nonexistent
+    file_delete, self._store_peaks_fname, /allow_nonexisten
   endif
 
   if not self->AOtime_series::Init( (root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0

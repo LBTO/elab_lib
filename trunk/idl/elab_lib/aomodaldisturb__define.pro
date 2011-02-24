@@ -14,9 +14,11 @@ function AOmodaldisturb::Init, root_obj
 
     self._store_fname       = filepath(root=root_obj->elabdir(), 'modaldisturb.sav')
     self._store_psd_fname   = filepath(root=root_obj->elabdir(), 'modaldisturb_psd.sav')
+    self._store_peaks_fname   = filepath(root=root_obj->elabdir(), 'modaldisturb_peaks.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
 	dist_freq = self._disturb_obj->dist_freq()
