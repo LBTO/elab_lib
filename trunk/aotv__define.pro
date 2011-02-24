@@ -58,6 +58,7 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
 
     self._centroid_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcentroid.sav')
     self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_psd.sav')
+    self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_peaks.sav')
 	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'tv_psf_le.sav')
 	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'tv_psf_elab.sav')
 	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'tv_sr_se.sav')

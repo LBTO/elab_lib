@@ -16,9 +16,11 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
 
     self._store_fname       = filepath(root=root_obj->elabdir(), 'disturb.sav')
     self._store_psd_fname   = filepath(root=root_obj->elabdir(), 'disturb_psd.sav')
+    self._store_peaks_fname   = filepath(root=root_obj->elabdir(), 'disturb_peaks.sav')
     if keyword_set(recompute) then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
 	; Read disturbance file header and retrieve general disturbance parameters:

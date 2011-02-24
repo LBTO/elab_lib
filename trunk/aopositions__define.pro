@@ -16,9 +16,11 @@ function AOpositions::Init, root_obj, positions_file, fc_obj
 
     self._store_fname = filepath(root=self._root_obj->elabdir(), 'positions.sav')
     self._store_psd_fname = filepath(root=self._root_obj->elabdir(), 'positions_psd.sav')
+    self._store_peaks_fname = filepath(root=self._root_obj->elabdir(), 'positions_peaks.sav')
     if self._root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
     if not self->AOtime_series::Init(fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
