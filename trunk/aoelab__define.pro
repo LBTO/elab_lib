@@ -575,18 +575,25 @@ function AOelab::accel
 end
 
 function AOelab::ex, cmd,  isvalid=isvalid
-    apex = string(39B)
-  	;nparams = n_params()
+  	apex = string(39B)
 
-    ;if nparams eq 2 then objref = self->Get(pos=index) else begin
-    ; 	objref = self->Get(/all)
-    ;	index = lindgen(self->count())
-    ;endelse
-	;nel = n_elements(objref)
-    ;isvalid = bytarr(nel)
+	;Split cmd string
+	level=0
+	pos=0
+	for i=0,strlen(cmd)-1 do begin
+		c = strmid(cmd, i, 1)
+		if c eq '(' then level +=1
+		if c eq ')' then level -=1
+		if c eq '.' AND level eq 0 then begin
+			s = strmid(cmd,pos,i-pos)
+			if n_elements(cmds) eq 0 then cmds = s else cmds = [cmds,s]
+			pos=i+1
+		endif
+	endfor
+	s = strmid(cmd,pos,i-pos)
+	if n_elements(cmds) eq 0 then cmds = s else cmds = [cmds,s]
 
-    cmds = strsplit(cmd, '.', /extr)
-
+	;Start processing each substring
     isvalid=0
 	tmpobj=self
     for j=0L, n_elements(cmds)-2 do begin
