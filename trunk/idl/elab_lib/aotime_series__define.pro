@@ -282,16 +282,16 @@ function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_fre
     IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
     IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
-    if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
-    if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+    if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
+    if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
     if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-    if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
-    if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
-    if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
-    if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
+    if from_freq lt min(self->freq()) then from_freq = min(self->freq())
+    if from_freq gt max(self->freq()) then from_freq = max(self->freq())
+    if to_freq lt min(self->freq()) then to_freq = min(self->freq())
+    if to_freq gt max(self->freq()) then to_freq = max(self->freq())
 
-    idx_from = closest(from_freq, *(self._freq))
-    idx_to   = closest(to_freq, *(self._freq))
+    idx_from = closest(from_freq, self->freq())
+    idx_to   = closest(to_freq, self->freq())
 
     df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
     if n_elements(spectrum_idx) eq 0 then begin
@@ -309,19 +309,17 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
   IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
   if not keyword_set(t100) then t100=0. ; threshold on the minimum power of the returned results
   ; if from_freq and/or to_freq keywords are set the function find the peaks between these frequencies
-  if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
-  if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+  if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
+  if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
   if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-  if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
-  if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
-  if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
-  if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
-  
-  tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
-  
+  if from_freq lt min(self->freq()) then from_freq = min(self->freq())
+  if from_freq gt max(self->freq()) then from_freq = max(self->freq())
+  if to_freq lt min(self->freq()) then to_freq = min(self->freq())
+  if to_freq gt max(self->freq()) then to_freq = max(self->freq())
+
   ; if spectrum_idx is not set the function runs for each mode else it runs for the modes selected in spectrum_idx
   if n_elements(spectrum_idx) eq 0 then begin
-    if t100 eq 0 and to_freq eq max(*(self._freq)) and from_freq eq min(*(self._freq)) then begin
+    if t100 eq 0 and to_freq eq max(self->freq()) and from_freq eq min(self->freq()) then begin
       return, *(self._peaks)
     endif else begin
       nt = n_tags(*(self._peaks))
@@ -355,7 +353,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
       return, res
     endelse
   endif else begin
-    if t100 eq 0 and to_freq eq max(*(self._freq)) and from_freq eq min(*(self._freq)) then begin
+    if t100 eq 0 and to_freq eq max(self->freq()) and from_freq eq min(self->freq()) then begin
       q=string(spectrum_idx,format='(i04)')
       temp='tempr=(*(self._peaks)).('+q+')'
       ftemp=execute(temp)
@@ -428,23 +426,23 @@ pro AOtime_series::PeaksCompute
   ; pw = power of the peaks found,
   ; pw100 = relative power of the peaks found
 
-  IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
-  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
+;  IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
+;  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
   df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
-  fr=*self._freq
-  pw=(*(self._psd))*df
+  fr = self->freq()
+  pw=self->psd()*df
   smooth=self._smooth
   threshold=self._thr_peaks
-  
+
   modes=findgen((size(self->psd(),/dim))[1])
-  
+
   for kkk=0, n_elements(modes)-1 do begin
     mode=modes[kkk] ; mode number
     tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
     thrs=threshold*tmax ; the threshold is multiplied by the delta power of the measurement
-    if smooth ge 2 then spsd=smooth((*(self._psd))[*, mode],smooth)*df $ ;smooth of the psd
-    else spsd=pw[*,mode]
+    if smooth ge 2 then spsd=smooth(self->psd(mode),smooth)*df $ ;smooth of the psd
+    	else spsd=pw[*,mode]
     idx=where(spsd gt thrs) ; index of the frequencies over the threshold
     if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
       ; initialize the variables
@@ -490,7 +488,7 @@ pro AOtime_series::PeaksCompute
           flag=1 ; it exits local minimum condition
           l+=1
           if f1 ne 0 then begin ; set the ending frequency if exists the starting one
-            f2=idx[i-1] 
+            f2=idx[i-1]
             temppw=total(pw[f1:f2])
             tempfr=total(fr[f1:f2]*pw[f1:f2])/temppw
             if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
@@ -557,29 +555,29 @@ end
 ;  IF not keyword_set(nfr) THEN nfr=5
 ;  IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
 ;  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
-;  
-;  if n_elements(from_freq) eq 0 then from_freq = min(*(self._freq))
-;  if n_elements(to_freq)   eq 0 then to_freq = max(*(self._freq))
+;
+;  if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
+;  if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
 ;  if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-;  if from_freq lt min(*(self._freq)) then from_freq = min(*(self._freq))
-;  if from_freq gt max(*(self._freq)) then from_freq = max(*(self._freq))
-;  if to_freq lt min(*(self._freq)) then to_freq = min(*(self._freq))
-;  if to_freq gt max(*(self._freq)) then to_freq = max(*(self._freq))
-;  
+;  if from_freq lt min(self->freq()) then from_freq = min(self->freq())
+;  if from_freq gt max(self->freq()) then from_freq = max(self->freq())
+;  if to_freq lt min(self->freq()) then to_freq = min(self->freq())
+;  if to_freq gt max(self->freq()) then to_freq = max(self->freq())
+;
 ;  if self._niter eq -1 then self->Compute
-;  
-;  idx_from = closest(from_freq, *(self._freq))
-;  idx_to   = closest(to_freq, *(self._freq))
-;  
+;
+;  idx_from = closest(from_freq, self->freq())
+;  idx_to   = closest(to_freq, self->freq())
+;
 ;  peaks=self->findpeaks([0,1], from_freq=from_freq, to_freq=to_freq)
 ;
 ;  frtemp=[peaks.(0).fr,peaks.(1).fr]
 ;  pwtemp=[peaks.(0).pw,peaks.(1).pw]
 ;  flag=0
 ;  j=0
-;  
+;
 ;  cc = [-1,255.,255.*256,255.*256*256,255.*256*100,255.*100]
-;  
+;
 ;  while flag eq 0 do begin
 ;    idx=where(abs(frtemp - frtemp[j]) lt 0.6)
 ;    if total(idx) ne -1 then begin
@@ -614,7 +612,7 @@ end
 ;  plt=0
 ;  if plot eq 1 then $
 ;    window, /free
-;  for ijk = 0, nnn-1 do begin 
+;  for ijk = 0, nnn-1 do begin
 ;    if ijk eq 0 then pw=pwtemp else pw[idxmax(ijk-1)]=0
 ;    maxr(ijk) = max(pw,idxmaxtemp)
 ;    idxmax(ijk) = idxmaxtemp
@@ -623,7 +621,7 @@ end
 ;    a1t=fft((*(self->GetDati()))[*,0])
 ;    a2t=fft((*(self->GetDati()))[*,1])
 ;    p=self._niter*self._dt
-;    
+;
 ;    if p*fstep lt 1 then fstep=1./p
 ;    a1t[0:p*(fvibmax(ijk)-fstep)-1]=0
 ;    a1t[p*(fvibmax(ijk)+fstep):p*(1./self._dt-fvibmax(ijk)-fstep)-1]=0
