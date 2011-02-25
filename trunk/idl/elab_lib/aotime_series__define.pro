@@ -325,16 +325,12 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
       nt = n_tags(*(self._peaks))
       for i=0, nt-1 do begin
         q=string(i,format='(i04)')
-        temp0='ofr=(*(self._peaks)).('+q+').fr'
-        temp1='ofrmax=(*(self._peaks)).('+q+').frmax'
-        temp2='ofrmin=(*(self._peaks)).('+q+').frmin'
-        temp3='opw=(*(self._peaks)).('+q+').pw'
-        temp4='opw100=(*(self._peaks)).('+q+').pw100'
-        ftemp0=execute(temp0)
-        ftemp1=execute(temp1)
-        ftemp2=execute(temp2)
-        ftemp3=execute(temp3)
-        ftemp4=execute(temp4)
+        tag_spec = 'spec'+q
+        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofr = (*(self._peaks)).(i).fr
+        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofrmax = (*(self._peaks)).(i).frmax
+        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofrmin = (*(self._peaks)).(i).frmin
+        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then opw = (*(self._peaks)).(i).pw
+        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then opw100 = (*(self._peaks)).(i).pw100
         if t100 gt 0 then begin
           idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
         endif else begin
@@ -354,30 +350,41 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
     endelse
   endif else begin
     if t100 eq 0 and to_freq eq max(self->freq()) and from_freq eq min(self->freq()) then begin
-      q=string(spectrum_idx,format='(i04)')
-      temp='tempr=(*(self._peaks)).('+q+')'
-      ftemp=execute(temp)
-      return, tempr
+      for i=0, n_elements(spectrum_idx)-1 do begin
+        q=string(spectrum_idx[i],format='(i04)')
+        tag_spec = 'spec'+q
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then tempr = (*(self._peaks)).(spectrum_idx[i])
+        if i eq 0 then begin
+          res=create_struct('spec'+q,tempr)
+        endif else begin
+          res=create_struct(res,'spec'+q,tempr)
+        endelse
+      endfor
+      return, res
     endif else begin
-      q=string(spectrum_idx,format='(i04)')
-      temp0='ofr=(*(self._peaks)).('+q+').fr'
-      temp1='ofrmax=(*(self._peaks)).('+q+').frmax'
-      temp2='ofrmin=(*(self._peaks)).('+q+').frmin'
-      temp3='opw=(*(self._peaks)).('+q+').pw'
-      temp4='opw100=(*(self._peaks)).('+q+').pw100'
-      ftemp0=execute(temp0)
-      ftemp1=execute(temp1)
-      ftemp2=execute(temp2)
-      ftemp3=execute(temp3)
-      ftemp4=execute(temp4)
-      if t100 gt 0 then begin
-        idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
-      endif else begin
-        idx=where(ofr ge from_freq and ofr le to_freq)
-      endelse
-        if total(idx) ne -1 then $
-        res={fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)} $
-        else res={fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1}
+      for i=0, n_elements(spectrum_idx)-1 do begin
+        q=string(spectrum_idx[i],format='(i04)')
+        tag_spec = 'spec'+q
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then ofr = (*(self._peaks)).(spectrum_idx[i]).fr
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then ofrmax = (*(self._peaks)).(spectrum_idx[i]).frmax
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then ofrmin = (*(self._peaks)).(spectrum_idx[i]).frmin
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then opw = (*(self._peaks)).(spectrum_idx[i]).pw
+        if tag_exist(*(self._peaks), tag_spec, index=spectrum_idx[i], /top) then opw100 = (*(self._peaks)).(spectrum_idx[i]).pw100
+        if t100 gt 0 then begin
+          idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
+        endif else begin
+          idx=where(ofr ge from_freq and ofr le to_freq)
+        endelse
+        if i eq 0 then begin
+          if total(idx) ne -1 then $
+          res=create_struct('spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
+          else res=create_struct('spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
+        endif else begin
+          if total(idx) ne -1 then $
+          res=create_struct(res,'spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
+          else res=create_struct(res,'spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
+        endelse
+      endfor
       return, res
     endelse
   endelse
