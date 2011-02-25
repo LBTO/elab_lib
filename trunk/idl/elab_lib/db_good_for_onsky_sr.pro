@@ -90,7 +90,7 @@ function db_good_for_onsky_sr
 	setstar = setstar->union(db->query('refStar', 'eq', 'Brilla1'))
 ;	setstar = setstar->union(db->query('refStar', 'eq', 'LKHA330')) ;scientific target
 	setstar = setstar->union(db->query('refStar', 'eq', 'AO_04P000M08_2'))
-
+	setstar = setstar->union(db->query('refStar', 'eq', 'Ignoto1'))
 
 	; is a dark
 	setstar->removeTracknum, ['20100526_043707', '20100526_045607', '20100526_064255', '20100526_082344', '20100526_083258', '20100526_083435', '20100526_084526']
@@ -121,7 +121,6 @@ function db_good_for_onsky_sr
 
 	; dark is bad
 	setstar->removeTracknum, (obj_new('aodataset', from='20100527_042822', to='20100527_043942'))->tracknums()
-	setstar->removeTracknum, '20101028_051938'
 
 	; bias
 	setstar->removeTracknum, ['20100603_045748','20100603_045845', '20100603_050100', '20100603_050303']
@@ -135,6 +134,8 @@ function db_good_for_onsky_sr
 	setstar->removeTracknum, ['20100531_075529']
 	setstar->removeTracknum, (obj_new('aodataset', from='20100531_102705', to='20100531_105144'))->tracknums()
 	setstar->removeTracknum, (obj_new('aodataset', from='20100619_072029', to='20100619_072732'))->tracknums()
+	setstar->removeTracknum, (obj_new('aodataset', from='20101126_110353', to='20101126_110844'))->tracknums()
+	setstar->removeTracknum, (obj_new('aodataset', from='20101126_132424', to='20101126_132747'))->tracknums()
 
 	; very few number of controlled modes
 	setstar->removeTracknum, ['20100621_112006']
@@ -149,6 +150,9 @@ function db_good_for_onsky_sr
 	; test particolare (test ADC, dice five, e altre minchiate)
 	setstar->removeTracknum, (obj_new('aodataset', from='20100622_113459', to='20100622_114451'))->tracknums()
 	setstar->removeTracknum, '20101127_025816'	;verification of TT coefficient estimation.
+
+	; is open-loop, but for some reason was identified as closed-loop....
+	setstar->removeTracknum, ['20101028_051938', '20101028_052025']
 
 	heap_gc
 	return, setstar
