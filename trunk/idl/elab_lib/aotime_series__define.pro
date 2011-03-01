@@ -308,14 +308,16 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 
   IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
   if not keyword_set(t100) then t100=0. ; threshold on the minimum power of the returned results
+
   ; if from_freq and/or to_freq keywords are set the function find the peaks between these frequencies
-  if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
-  if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
-  if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-  if from_freq lt min(self->freq()) then from_freq = min(self->freq())
-  if from_freq gt max(self->freq()) then from_freq = max(self->freq())
-  if to_freq lt min(self->freq()) then to_freq = min(self->freq())
-  if to_freq gt max(self->freq()) then to_freq = max(self->freq())
+  if n_elements(from_freq) eq 0 then from_freq = min(self->freq()) else $
+  				from_freq = min(self->freq()) > from_freq < max(self->freq())
+  if n_elements(to_freq)   eq 0 then to_freq = max(self->freq()) else $
+  				to_freq = min(self->freq()) > to_freq < max(self->freq())
+  if from_freq ge to_freq then begin
+  	message, "from_freq must be less than to_freq", /info
+  	return, -1
+  endif
 
   ; if spectrum_idx is not set the function runs for each mode else it runs for the modes selected in spectrum_idx
   if n_elements(spectrum_idx) eq 0 then begin
