@@ -143,9 +143,10 @@ function AOolmodes::r0, lambda=lambda, PLOT=PLOT
     yrange = minmax([olrms,theorms])
     window,/free
     plot_oo, modes_idx+1, olrms, psym=-1, symsize=0.8, charsize=1.5, $
-      ytitle='nm wf rms', xtitle='mode number', title=self._root_obj->tracknum(), yrange=yrange
+      ytitle='nm wf rms', xtitle='mode number', title=self._root_obj->tracknum(), yrange=yrange $
+      	, xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1
     oplot, lindgen(nmodes)+1, theorms, color=255L
-    legend, ['r0 = '+string(self._r0*1e2, format='(f4.1)')+'cm @ 500nm'], /right, charsize=1.2
+    legend, ['r0 = '+string(self._r0*1e2, format='(f4.1)')+'cm @ 500nm'], /right, charsize=1.5
   endif
 
   if n_elements(lambda) ne 0 then return, self._r0*(lambda/500e-9)^(6./5.) else return, self._r0
