@@ -56,7 +56,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
     if not self->AOtime_series::Init(dt, fftwindow="") then return,0
  	self._norm_factor   = 1.0   ;self->pixelscale()
 	self._spectra_units = 'arcsec';
-	self._plots_title = root_obj->tracknum()+' centroid'
+	self._plots_title = root_obj->tracknum()
 
     self._threshold = -1.
     ;self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
@@ -532,7 +532,7 @@ pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
     tip  = self->power(0, from=from_freq, to=to_freq, /cum)
     tilt = self->power(1, from=from_freq, to=to_freq, /cum)
     plot, freq, sqrt(tip + tilt), $
-        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [mas]', _extra=ex
+        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
     oplot, freq, sqrt(tip), col='0000ff'x
     oplot, freq, sqrt(tilt), col='00ff00'x
     legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
