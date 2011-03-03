@@ -11,19 +11,22 @@
 ;-
 function generate_dampvib, damp, fvib, fc, nstep, seed=seed
   if n_elements(seed) eq 0 then seed = 1
-  viba1 = complex(0,0)
-  omega = 2 * !pi * fvib
+  omega = 2d * !pi * fvib
+  damp = damp * omega
+  ndamp = omega
   viba1 = -real(2 * exp(- damp / fc) * cos( sqrt(complex( omega^2 - damp^2 )) / fc ))
   viba2 = exp(- 2 * damp / fc)
+  vibb1 = -real(2 * exp(- ndamp / fc) * cos( sqrt(complex( omega^2 - ndamp^2 )) / fc ))*0
+  vibb2 = exp(- 2* ndamp / fc)*0
   out = dblarr(nstep)
   z1 = dblarr(nstep+1)
   z2 = dblarr(nstep+1)
   v = dblarr(nstep)
-  for i = 0L, nstep-1 do begin
+  for i = 0, nstep-1 do begin
     v[i] = randomn(seed)
     out[i] = v[i] + z1[i]
-    z1[i+1] = z2[i] -viba1*out[i]
-    z2[i+1] = viba2*out[i]
+    z1[i+1] = vibb1*v[i] +z2[i] -viba1*out[i]
+    z2[i+1] = vibb2*v[i] -viba2*out[i]  
   endfor
   fft1, out, 1/fc, SPEC=spec, /NOPLOT
   out = real_part(fft(abs(spec),1))
