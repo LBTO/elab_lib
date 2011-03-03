@@ -30,8 +30,6 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
 
 	; get frames parameters
     self._header = ptr_new(headfits(self._filename, /SILENT), /no_copy)
-    ;frames = readfits(frames_file, header, /SILENT)
-    ;ss = size(frames)
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
     self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes  = long(aoget_fits_keyword(self->header(), 'NAXIS3'))
@@ -130,12 +128,28 @@ function AOframes::antidrift_status
 	return, self._antidrift_status
 end
 
-pro AOframes::Cleanup
-    ptr_free, self._header
-    ptr_free, self._nph_per_int
-    self->AOhelp::Cleanup
-end
+function AOframes::dark
+	dark_ok = 1B
+	dark_fname = (*self._wfs_status->ccd39())->dark_fname()
 
+	;;;;;First implementation of Antidrift: DARK was overwritten!!!
+	if file_basename(dark_fname) eq 'darktmp.fits' then begin
+		dark_dir = file_dirname(dark_fname)
+		ad_fname = self->antidrift_fname()
+		if strtrim(ad_fname,2) ne "" then begin
+			ad_hdr = headfits(ad_fname,/SILENT)
+			dark_fname =filepath(root=dark_dir,  aoget_fits_keyword(ad_hdr, 'DARK'))
+			dark = float(readfits(dark_fname, /silent))
+			ad_values = self->antidrift_values()
+			dark += ad_values[0]
+		endif else begin
+			dark_ok = 0B
+			dark = -1
+		endelse
+	endif else dark = float(readfits(dark_fname, /silent))
+
+	return, dark
+end
 
 ;+
 ; RESTORES THE FRAMES DATA
@@ -143,10 +157,10 @@ end
 function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
 	fr = float(readfits(self._filename, /SILENT))
 	if keyword_set(DARK_SUBTRACTED) then begin
-		dark = (*self._wfs_status->ccd39())->dark()
-		ad = self->antidrift_values()
-		if n_elements(dark) eq 1 then print, 'CCD39 DARK FILE NOT FOUND -> DARK NOT SUBTRACTED' else $
-			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark ;- (dark + ad[ii])
+;		dark = (*self._wfs_status->ccd39())->dark()
+		dark = self->dark()
+		if n_elements(dark) eq 1 then message, 'CCD39 DARK FILE NOT FOUND -> DARK NOT SUBTRACTED',/info else $
+			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark
 	endif
 	return, fr
 end
@@ -197,7 +211,6 @@ pro AOframes::free
     if ptr_valid(self._adu_per_quadrant) then ptr_free, self._adu_per_quadrant
     if ptr_valid(self._nph_per_int) then ptr_free, self._nph_per_int
 end
-
 
 pro AOframes::Cleanup
     if ptr_valid(self._header) then ptr_free, self._header
