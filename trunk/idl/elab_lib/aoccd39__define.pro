@@ -16,16 +16,16 @@ function AOccd39::Init, wfs_header, wunit
 	dark_filename 		= aoget_fits_keyword(hdr,'ccd39.DARK_FILENAME')
 	dark_subdir 		= ['wfs_calib_'+wunit,'ccd39','backgrounds','bin'+strtrim(self._binning,2)]
 	self._dark_filename = filepath(root=ao_datadir(), sub=dark_subdir,  dark_filename)
-  
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOccd39', 'Represent CCD39') then return, 0
     self->addMethodHelp, "framerate()", "frame rate [Hz] (float)"
     self->addMethodHelp, "readout_speed ()", "readout speed [kpix/s] (float)"
     self->addMethodHelp, "binning()", "binning (long)"
     self->addMethodHelp, "status()", "status (string)"
-    self->addMethodHelp, "dark()", "dark frame"
+;    self->addMethodHelp, "dark()", "dark frame"
     self->addMethodHelp, "dark_fname()", "filename of dark frame"
-	
+
     return, 1
 end
 
@@ -45,9 +45,9 @@ function AOccd39::status
 	return, self._status
 end
 
-function AOccd39::dark
-	return, float(readfits(self._dark_filename, /silent))
-end
+;function AOccd39::dark
+;	return, float(readfits(self._dark_filename, /silent))
+;end
 
 function AOccd39::dark_fname
 	return, self._dark_filename
@@ -58,7 +58,7 @@ pro AOccd39::test
     d = self->readout_speed()
     d = self->binning()
     d = self->status()
-    d = self->dark()
+;    d = self->dark()
     d = self->dark_fname()
 end
 
