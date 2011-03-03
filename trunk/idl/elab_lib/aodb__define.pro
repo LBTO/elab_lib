@@ -66,6 +66,7 @@ function aodb::Init, recompute=recompute
         {name:'intmat.modal_dist_fname',            type:'string'}, $
         {name:'intmat.basis',            			type:'string'}, $
         {name:'frames.nphsub_per_int_av',           type:'real'}, $
+        {name:'frames.antidrift_status', 			type:'integer'}, $
         {name:'disturb.fname',                      type:'string'}, $
         {name:'disturb.type',                       type:'string'}, $
         {name:'disturb.dist_freq',                  type:'real'}, $
