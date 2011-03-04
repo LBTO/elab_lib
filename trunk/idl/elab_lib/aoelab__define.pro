@@ -625,8 +625,7 @@ function AOelab::ex, cmd,  isvalid=isvalid
     if isvalid eq 1 then begin
         return, value
     endif else begin
-        message, '...INVALID FUNCTION: '+cmd, /info
-        return, -1
+        message, '...INVALID FUNCTION: '+cmd
     endelse
 
 end
