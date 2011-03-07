@@ -308,7 +308,6 @@ end
 function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100
 
 	IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
-
   	; threshold on the minimum power of the returned results
   	if not keyword_set(t100) then t100=0.
 
@@ -501,8 +500,8 @@ pro AOtime_series::PeaksCompute
 ;  IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
   df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
-  fr = self->freq()
-  pw=self->psd()*df
+;  fr = self->freq()
+;  pw=self->psd()*df
   smooth=self._smooth
   threshold=self._thr_peaks
 
@@ -513,7 +512,7 @@ pro AOtime_series::PeaksCompute
     tmax=( max( self->power(mode,/cum) )-min( self->power(mode,/cum) ) ) ; delta power of the measurement
     thrs=threshold*tmax ; the threshold is multiplied by the delta power of the measurement
     if smooth ge 2 then spsd=smooth(self->psd(mode),smooth)*df $ ;smooth of the psd
-    	else spsd=pw[*,mode]
+    	else spsd=self->psd(mode)*df
     idx=where(spsd gt thrs) ; index of the frequencies over the threshold
     if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
       ; initialize the variables
@@ -536,21 +535,21 @@ pro AOtime_series::PeaksCompute
         flag=1
       endelse
         if idx[i] eq idx[i-1]+1 and flag then begin ; case of two consecutive frequencies and no local minimum
-          if j eq 0 then f1=idx[i-1] ; set the starting frequency
+          if j eq 0 then f1=(self->freq())[idx[i-1]] ; set the starting frequency
           if i eq 1 then j=2 else j+=1
           if i eq n_elements(idx)-1 then begin ; if it is the last step
-            f2=idx[i] ; set the ending frequency
-            temppw=total(pw[f1:f2,mode])
-            tempfr=total(fr[f1:f2]*pw[f1:f2,mode])/temppw
+            f2=(self->freq())[idx[i]] ; set the ending frequency
+            temppw=self->power(mode,from=f1,to=f2)
+            tempfr=total(self->freq(from=f1,to=f2)*(self->psd(mode))[closest(f1, self->freq()):closest(f2, self->freq())]*df)/temppw
             if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
               ofr=tempfr ; weighted mean frequency
-              ofrmax=fr[f2]
-              ofrmin=fr[f1]
+              ofrmax=f2
+              ofrmin=f1
               opw=temppw ; power
             endif else begin
               ofr=[ofr, tempfr] ; frequency vector
-              ofrmax=[ofrmax, fr[f2]]
-              ofrmin=[ofrmin, fr[f1]]
+              ofrmax=[ofrmax, f2]
+              ofrmin=[ofrmin, f1]
               opw=[opw, temppw] ; power vector
             endelse
           endif
@@ -559,33 +558,34 @@ pro AOtime_series::PeaksCompute
           flag=1 ; it exits local minimum condition
           l+=1
           if f1 ne 0 then begin ; set the ending frequency if exists the starting one
-            f2=idx[i-1]
-            temppw=total(pw[f1:f2,mode])
-            tempfr=total(fr[f1:f2]*pw[f1:f2,mode])/temppw
+            f2=(self->freq())[idx[i-1]]
+            temppw=self->power(mode,from=f1,to=f2)
+            tempfr=total(self->freq(from=f1,to=f2)*(self->psd(mode))[closest(f1, self->freq()):closest(f2, self->freq())]*df)/temppw
             if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
               ofr=tempfr ; weighted mean frequency
-              ofrmax=fr[f2]
-              ofrmin=fr[f1]
+              ofrmax=f2
+              ofrmin=f1
               opw=temppw ; power
             endif else begin
               ofr=[ofr, tempfr] ; frequency vector
-              ofrmax=[ofrmax, fr[f2]]
-              ofrmin=[ofrmin, fr[f1]]
+              ofrmax=[ofrmax, f2]
+              ofrmin=[ofrmin, f1]
               opw=[opw, temppw] ; power vector
             endelse
             l=0
           endif
           if l eq 2 then begin ; if it is an isolated frequency over the threshold
-            if i gt 1 then temppw=pw[idx[i-1],mode] else temppw=0 ;gives a pw > 0 only if it is not the first frequency
+            if i gt 1 then temppw=self->power(mode,from=(self->freq())[idx[i-1]-1],to=(self->freq())[idx[i-1]+1]) $
+            else temppw=0 ;gives a pw > 0 only if it is not the first frequency
             if total(ofr) eq -1 then begin ; it initializes the vectors if they do not exists
-              ofr=fr[idx[i-1]] ; mean frequency
-              ofrmax=fr[idx[i-1]]
-              ofrmin=fr[idx[i-1]]
+              ofr=(self->freq())[idx[i-1]] ; mean frequency
+              ofrmax=(self->freq())[idx[i-1]]
+              ofrmin=(self->freq())[idx[i-1]]
               opw=temppw ; power
             endif else begin
-              ofr=[ofr, fr[idx[i-1]]] ; frequency vector
-              ofrmax=[ofrmax, fr[idx[i-1]]]
-              ofrmin=[ofrmin, fr[idx[i-1]]]
+              ofr=[ofr, (self->freq())[idx[i-1]]] ; frequency vector
+              ofrmax=[ofrmax, (self->freq())[idx[i-1]]]
+              ofrmin=[ofrmin, (self->freq())[idx[i-1]]]
               opw=[opw, temppw] ; power vector
             endelse
             l=1
