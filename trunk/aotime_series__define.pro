@@ -599,7 +599,7 @@ pro AOtime_series::PeaksCompute
           f2=0
         endelse
       endfor
-      opw100=opw/tmax*100. ; relative power vector
+      opw100=opw/max(self->power(mode,/cum))*100. ; relative power vector
     endif else begin
       ; case of no frequencies over the threshold
       ofr=-1
