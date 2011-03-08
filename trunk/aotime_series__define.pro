@@ -335,7 +335,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
         					   peaks = create_struct(peaks, tag_spec, tempr)
         	endif
         endfor
-	if n_elements(peaks) eq 0 then message, 'Requested SPECs not found'
+	if n_elements(peaks) eq 0 then message, 'Requested SPECs not found.'
 
 
 	;Extract selected intervals
@@ -344,8 +344,8 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 		nt  = n_tags(peaks)
 		tg1 = tag_names(peaks)
 		for i=0, nt-1 do begin
-			fridx = where_tag(peaks.(i), tag_name='fr', range=[from_freq, to_freq])
-			t1idx = where_tag(peaks.(i), tag_name='pw100', range=[t100, 100.])
+			fridx = where_tag(peaks.(i), tag_name='fr', range=[from_freq, to_freq], /NOPRINT )
+			t1idx = where_tag(peaks.(i), tag_name='pw100', range=[t100, 100.], /NOPRINT )
 			idx = setintersection(fridx,t1idx)
 			if idx[0] ne -1 then begin
           		tempr = {fr: peaks.(i).fr[idx], frmax: peaks.(i).frmax[idx], frmin: peaks.(i).frmin[idx] $
@@ -354,104 +354,42 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 												peaks2 = create_struct(peaks2, tg1[i], tempr)
 			endif
 		endfor
+		if n_elements(peaks2) eq 0 then message, 'No SPECs with specified ranges were found.'
 	endif else peaks2 = peaks
-
 
 return, peaks2
 end
 
+pro AOtime_series::showpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100, _extra=ex, WIN=WIN
 
-;function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100
-;
-;  IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
-;  if not keyword_set(t100) then t100=0. ; threshold on the minimum power of the returned results
-;
-;  ; if from_freq and/or to_freq keywords are set the function find the peaks between these frequencies
-;  if n_elements(from_freq) eq 0 then from_freq = minfreq else $
-;  				from_freq = minfreq > from_freq < max(self->freq())
-;
-;  if n_elements(to_freq)   eq 0 then to_freq = max(self->freq()) else $
-;  				to_freq = min(self->freq()) > to_freq < max(self->freq())
-;
-;  if from_freq ge to_freq then begin
-;  	message, "from_freq must be less than to_freq", /info
-;  	return, -1
-;  endif
-;
-;  ; if spectrum_idx is not set the function runs for each mode else it runs for the modes selected in spectrum_idx
-;  if n_elements(spectrum_idx) eq 0 then begin
-;    if t100 eq 0 and to_freq eq max(self->freq()) and from_freq eq min(self->freq()) then begin
-;      return, *(self._peaks)
-;    endif else begin
-;      nt = n_tags(*(self._peaks))
-;      for i=0, nt-1 do begin
-;        q=string(i,format='(i04)')
-;        tag_spec = 'spec'+q
-;        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofr = (*(self._peaks)).(i).fr
-;        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofrmax = (*(self._peaks)).(i).frmax
-;        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then ofrmin = (*(self._peaks)).(i).frmin
-;        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then opw = (*(self._peaks)).(i).pw
-;        if tag_exist(*(self._peaks), tag_spec, index=i, /top) then opw100 = (*(self._peaks)).(i).pw100
-;        if t100 gt 0 then begin
-;          idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
-;        endif else begin
-;          idx=where(ofr ge from_freq and ofr le to_freq)
-;        endelse
-;        if i eq 0 then begin
-;          if total(idx) ne -1 then $
-;          res=create_struct('spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
-;          else res=create_struct('spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
-;        endif else begin
-;          if total(idx) ne -1 then $
-;          res=create_struct(res,'spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
-;          else res=create_struct(res,'spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
-;        endelse
-;      endfor
-;      return, res
-;    endelse
-;  endif else begin
-;    if t100 eq 0 and to_freq eq max(self->freq()) and from_freq eq min(self->freq()) then begin
-;      for i=0, n_elements(spectrum_idx)-1 do begin
-;        q=string(spectrum_idx[i],format='(i04)')
-;        tag_spec = 'spec'+q
-;        if tag_exist(*(self._peaks), tag_spec, /top) then tempr = (*(self._peaks)).(spectrum_idx[i])
-;        if i eq 0 then begin
-;          res=create_struct('spec'+q,tempr)
-;        endif else begin
-;          res=create_struct(res,'spec'+q,tempr)
-;        endelse
-;      endfor
-;      return, res
-;    endif else begin
-;      for i=0, n_elements(spectrum_idx)-1 do begin
-;        q=string(spectrum_idx[i],format='(i04)')
-;        tag_spec = 'spec'+q
-;        if tag_exist(*(self._peaks), tag_spec, index=tagidx, /top) then begin
-;        	ofr 	= (*(self._peaks)).(spectrum_idx[i]).fr
-;			ofrmax 	= (*(self._peaks)).(spectrum_idx[i]).frmax
-;        	ofrmin 	= (*(self._peaks)).(spectrum_idx[i]).frmin
-;        	opw 	= (*(self._peaks)).(spectrum_idx[i]).pw
-;        	opw100 	= (*(self._peaks)).(spectrum_idx[i]).pw100
-;        endif
-;        if t100 gt 0 then begin
-;          idx=where(ofr ge from_freq and ofr le to_freq and opw100 ge t100)
-;        endif else begin
-;          idx=where(ofr ge from_freq and ofr le to_freq)
-;        endelse
-;        if i eq 0 then begin
-;          if total(idx) ne -1 then $
-;          res=create_struct('spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
-;          else res=create_struct('spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
-;        endif else begin
-;          if total(idx) ne -1 then $
-;          res=create_struct(res,'spec'+q,{fr: ofr(idx), frmax: ofrmax(idx), frmin: ofrmin(idx), pw: opw(idx), pw100: opw100(idx)}) $
-;          else res=create_struct(res,'spec'+q,{fr: -1, frmax: -1, frmin: -1, pw: -1, pw100: -1})
-;        endelse
-;      endfor
-;      return, res
-;    endelse
-;  endelse
-;end
+	if n_params() ne 1 then begin
+		message, 'Missing parameter. Usage: ...->SpecPlot, elemnum', /info
+		return
+	endif
+
+	if n_elements(spectrum_idx) ne 1 then begin
+		message, 'Only ONE mode can be specified at a time',  /info
+		return
+	endif
+
+	df=1./self._dt/(2*self->nfreqs())
+	freq = self->freq()
+	norm_factor = self->norm_factor()
+	psds = self->psd(spectrum_idx) * df * norm_factor^2.
+	pk = self->findpeaks(spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100)
+	npks = n_elements(pk.(0).fr)
+	dpk = (pk.(0).frmax - pk.(0).frmin)/df + 1. ;number of freq bins taken into account in each vib.
+	pw = pk.(0).pw * norm_factor^2.
+	;show me the peaks!
+	IF n_elements(WIN) eq 0 then win=10
+	window,win,xsize=700, ysize=400
+	plot, freq, psds, psym=-1, ygridstyle=1, xgridstyle=1, xticklen=1, yticklen=1, xtitle='Frequency [Hz]' $
+		, ytitle='Power '+textoidl('nm^2'), title=self._plots_title+', mode '+strtrim(spectrum_idx,2), charsize=1.2, _extra=ex
+	oplot, pk.(0).fr, pw, psym=2, color=255L
+	for ii=0, npks-1 do oplot, [replicate(pk.(0).frmin[ii],2),pk.(0).fr[ii],replicate(pk.(0).frmax[ii],2)], $
+		[0,replicate(pw[ii],3),0], color=255L
+
+end
 
 pro AOtime_series::set_smooth, smooth
   if n_params() ne 1 then begin
@@ -513,8 +451,8 @@ pro AOtime_series::PeaksCompute
     thrs=threshold*tmax ; the threshold is multiplied by the delta power of the measurement
     if smooth ge 2 then spsd=smooth(self->psd(mode),smooth)*df $ ;smooth of the psd
     	else spsd=self->psd(mode)*df
-    idx=where(spsd gt thrs) ; index of the frequencies over the threshold
-    if total(idx) ne -1 then begin ; case of at least one frequency over the threshold
+    idx=where(spsd gt thrs, count1) ; index of the frequencies over the threshold
+    if count1 ne 0 then begin ; case of at least one frequency over the threshold
       ; initialize the variables
       ofr=-1
       ofrmax=-1
@@ -528,7 +466,7 @@ pro AOtime_series::PeaksCompute
           ; are not consecutive or that this frequency and the next frequency are not consecutive,
           ; if it is equal to 2 this frequency is an isolated frequency (over the threshold)
       f1=0
-      for i=1, n_elements(idx)-1 do begin ; for cycle of each frequencies over the threshold
+      for i=1, count1-1 do begin ; for cycle of each frequencies over the threshold
       if j gt 1 and idx[i] lt n_elements(spsd)-2 then begin ; if there are at least two consecutive frequencies and we are not at the end of the psd
         if spsd[idx[i]] lt spsd[idx[i]-1] and spsd[idx[i]] lt spsd[idx[i]+1] then flag=0 else flag=1 ;it checks if it is in a local minimum, if so flag=0
       endif else begin
@@ -537,7 +475,7 @@ pro AOtime_series::PeaksCompute
         if idx[i] eq idx[i-1]+1 and flag then begin ; case of two consecutive frequencies and no local minimum
           if j eq 0 then f1=(self->freq())[idx[i-1]] ; set the starting frequency
           if i eq 1 then j=2 else j+=1
-          if i eq n_elements(idx)-1 then begin ; if it is the last step
+          if i eq count1-1 then begin ; if it is the last step
             f2=(self->freq())[idx[i]] ; set the ending frequency
             temppw=self->power(mode,from=f1,to=f2)
             tempfr=total(self->freq(from=f1,to=f2)*(self->psd(mode))[closest(f1, self->freq()):closest(f2, self->freq())]*df)/temppw
