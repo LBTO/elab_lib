@@ -146,24 +146,36 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
     index = lindgen(self->count())
 	nel = n_elements(objref)
     isvalid = bytarr(nel)
+    error = 0
 
 	for i=0L, nel-1 do begin
-		tmpobj=getaoelab(objref[i])
-        if obj_valid(tmpobj) eq 0 then begin
-            message, objref[i] + ' skipped because it lacks required data', /info
+		catch, error
+		if error eq 0 then tmpobj=getaoelab(objref[i]) else begin
+            catch, /cancel
+            if keyword_set(verbose) then print, format='(%"%s skipped. %d:%s ")', objref[i], error, !error_state.msg
+            continue
+        endelse
+        catch, /cancel
+       	if not obj_valid(tmpobj) then begin
+            if keyword_set(verbose) then print, objref[i] + ' skipped.'
             continue
         endif
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
-      	value = tmpobj->ex(cmd, isvalid=iv)
-      	isvalid[i] = iv
-
-        if isvalid[i] eq 1 then begin
-            if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
-            v[i] = ptr_new(value, /no_copy)
-            if keyword_set(verbose) then print, 'data found'
-        endif else if keyword_set(verbose) then print, 'data NOT found'
-
-       	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+		catch, error
+		if error eq 0 then begin
+			value = tmpobj->ex(cmd, isvalid=iv)
+      		isvalid[i] = iv
+        	if isvalid[i] eq 1 then begin
+            	if n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
+            	v[i] = ptr_new(value, /no_copy)
+            	if keyword_set(verbose) then print, 'data found'
+        	endif else if keyword_set(verbose) then print, 'data NOT found'
+       		if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+       	endif else begin
+       		catch, /cancel
+       		if keyword_set(verbose) then print, 'data NOT found'
+       	endelse
+       	catch, /cancel
 	endfor
 
 	;;;; If data has different characteristics (dimensions, type, etc) return a pointer.
@@ -227,52 +239,66 @@ end
 ; return index of dataset items that matches the condition operand+reference_value
 ;
 ;
-function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata
+function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbose=verbose
 
     objref = self->Get(/all)
     nel = self->Count()
     isvalid = bytarr(nel)
+    error = 0
 
     for i=0L, nel-1 do begin
-        tmpobj = getaoelab(objref[i])
-        if obj_valid(tmpobj) eq 0 then begin
-            message, objref[i] + ' skipped because it lacks required data', /info
+    	catch, error
+		if error eq 0 then tmpobj = getaoelab(objref[i]) else begin
+            catch, /cancel
+            if keyword_set(verbose) then print, format='(%"%s skipped. %d:%s ")', objref[i], error, !error_state.msg
+            continue
+        endelse
+        catch, /cancel
+       	if not obj_valid(tmpobj) then begin
+            if keyword_set(verbose) then print, objref[i] + ' skipped.'
             continue
         endif
 
-      	value = tmpobj->ex(cmd, isvalid=iv)
-      	isvalid[i] = iv
+		catch, error
+		if error eq 0 then begin
+        	value = tmpobj->ex(cmd, isvalid=iv)
+      		isvalid[i] = iv
 
-        ; if it is invalid (maybe method or object not-existing) skip to next record
-        if isvalid[i] eq 0 then continue
+        	; if it is invalid (maybe method or object not-existing) skip to next record
+        	if isvalid[i] eq 0 then continue
 
-        ; check operand and value
-        if n_elements(operand) ne 0 and n_elements(reference_value) ne 0 then begin
-            case operand of
-                'lt': if not (value lt reference_value) then isvalid[i]=0
-                'gt': if not (value gt reference_value) then isvalid[i]=0
-                'eq': if not (value eq reference_value) then isvalid[i]=0
-                'ne': if not (value ne reference_value) then isvalid[i]=0
-                'between': if not ( (value ge reference_value[0]) and (value le reference_value[1]) ) then isvalid[i]=0
-                'outside': if not ( (value lt reference_value[0]) or (value gt reference_value[1]) ) then isvalid[i]=0
-                'contains': begin
-                    if test_type(value, /string) eq 0 then begin
-                        if strpos(value, reference_value) eq -1 then isvalid[i]=0
-                    endif else begin
-                        isvalid[i]=0
-                    endelse
-                    end
-            endcase
-        endif
+        	; check operand and value
+        	if n_elements(operand) ne 0 and n_elements(reference_value) ne 0 then begin
+            	case operand of
+                	'lt': if not (value lt reference_value) then isvalid[i]=0
+                	'gt': if not (value gt reference_value) then isvalid[i]=0
+                	'eq': if not (value eq reference_value) then isvalid[i]=0
+                	'ne': if not (value ne reference_value) then isvalid[i]=0
+                	'between': if not ( (value ge reference_value[0]) and (value le reference_value[1]) ) then isvalid[i]=0
+                	'outside': if not ( (value lt reference_value[0]) or (value gt reference_value[1]) ) then isvalid[i]=0
+                	'contains': begin
+                    		if test_type(value, /string) eq 0 then begin
+                        		if strpos(value, reference_value) eq -1 then isvalid[i]=0
+                    		endif else begin
+                        		isvalid[i]=0
+                    		endelse
+                    	end
+            	endcase
+        	endif
 
-        ; if elements match the condition
-        if arg_present(ptrdata) then $
-         if isvalid[i] eq 1 then begin
-            if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
-            v[i]=ptr_new(value, /no_copy)
-         endif
-        if obj_valid(tmpobj) then $
-        	if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+        	; if elements match the condition
+        	if arg_present(ptrdata) then $
+         	if isvalid[i] eq 1 then begin
+            	if  n_elements(v) eq 0 then v = ptrarr(nel) ; first time value is valid
+            	v[i]=ptr_new(value, /no_copy)
+         	endif
+        	if obj_valid(tmpobj) then $
+        		if obj_hasmethod(tmpobj, 'free') then tmpobj->free
+        endif else begin
+       		catch, /cancel
+       		if keyword_set(verbose) then print, 'data NOT found'
+       	endelse
+       	catch, /cancel
     endfor
 
     valid = where(isvalid eq 1, cntvalid)
