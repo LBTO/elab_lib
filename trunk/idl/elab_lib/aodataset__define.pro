@@ -174,6 +174,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
        	endif else begin
        		catch, /cancel
        		if keyword_set(verbose) then print, 'data NOT found'
+       		if obj_hasmethod(tmpobj, 'free') then tmpobj->free
        	endelse
        	catch, /cancel
 	endfor
@@ -297,6 +298,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbo
         endif else begin
        		catch, /cancel
        		if keyword_set(verbose) then print, 'data NOT found'
+       		if obj_hasmethod(tmpobj, 'free') then tmpobj->free
        	endelse
        	catch, /cancel
     endfor
