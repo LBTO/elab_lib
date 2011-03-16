@@ -195,8 +195,8 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 		if type eq 8 then begin		;;;case of data structures
 
 			for i=0L, cntvalid-1 do $
-			  if i eq 0 then data = create_struct(     'item'+string(i,format='(I5.5)'),*v[valid[i]]) else $
-							 data = create_struct(data,'item'+string(i,format='(I5.5)'),*v[valid[i]])
+			  if i eq 0 then data = create_struct(      'tr'+objref[valid[i]], *v[valid[i]]) else $
+							 data = create_struct(data, 'tr'+objref[valid[i]], *v[valid[i]])
 
 		endif else begin			;;;case of other data types
 
