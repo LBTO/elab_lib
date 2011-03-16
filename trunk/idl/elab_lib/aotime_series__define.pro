@@ -279,25 +279,23 @@ end
 
 ;
 function AOtime_series::power, spectrum_idx, from_freq=from_freq, to_freq=to_freq, cumulative=cumulative, sumspectra=sumspectra
-    IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
-    IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
 
-    if n_elements(from_freq) eq 0 then from_freq = min(self->freq())
-    if n_elements(to_freq)   eq 0 then to_freq = max(self->freq())
-    if from_freq ge to_freq then message, "from_freq must be less than to_freq"
-    if from_freq lt min(self->freq()) then from_freq = min(self->freq())
-    if from_freq gt max(self->freq()) then from_freq = max(self->freq())
-    if to_freq lt min(self->freq()) then to_freq = min(self->freq())
-    if to_freq gt max(self->freq()) then to_freq = max(self->freq())
+	minfreq = min(self->freq())
+	maxfreq = max(self->freq())
+	if n_elements(from_freq) eq 0 then from_freq = minfreq else $
+		from_freq = minfreq > from_freq < maxfreq
+  	if n_elements(to_freq) eq 0 then to_freq = maxfreq else $
+  		to_freq = minfreq > to_freq < maxfreq
+	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
 
     idx_from = closest(from_freq, self->freq())
     idx_to   = closest(to_freq, self->freq())
 
     df=1./self._dt/(2*self->nfreqs()) ; see fft1.pro for total power computation
     if n_elements(spectrum_idx) eq 0 then begin
-        return, total( (*(self._psd))[idx_from:idx_to, *], cumulative=cumulative ) * df
+        return, total( (self->psd())[idx_from:idx_to, *], cumulative=cumulative ) * df
     endif else begin
-        res = total( (*(self._psd))[idx_from:idx_to, spectrum_idx], 1, cumulative=cumulative ) * df ;[nfreqs, n_elements(spectrum_idx)]
+        res = total( (self->psd())[idx_from:idx_to, spectrum_idx], 1, cumulative=cumulative ) * df ;[nfreqs, n_elements(spectrum_idx)]
         if keyword_set(sumspectra) then res = total(res,size(res, /n_dim))
         return, res
         ;return, total( (*(self._psd))[idx_from:idx_to, spectrum_idx],1, cumulative=cumulative ) * df
@@ -308,6 +306,7 @@ end
 function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100
 
 	IF not (PTR_VALID(self._peaks)) THEN self->PeaksCompute
+
   	; threshold on the minimum power of the returned results
   	if not keyword_set(t100) then t100=0.
 
@@ -331,8 +330,8 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
         	tag_spec = 'spec' + string(spectrum_idx[i],format='(i04)')
         	if tag_exist(*self._peaks, tag_spec, index=tidx, /top) then begin
         		tempr = (*self._peaks).(tidx)
-        		if i eq 0 then peaks = create_struct(tag_spec,tempr) else $
-        					   peaks = create_struct(peaks, tag_spec, tempr)
+        		if n_elements(peaks) eq 0 then peaks = create_struct(tag_spec,tempr) else $
+        					   				   peaks = create_struct(peaks, tag_spec, tempr)
         	endif
         endfor
 	if n_elements(peaks) eq 0 then message, 'Requested SPECs not found.'
@@ -355,7 +354,7 @@ function AOtime_series::findpeaks, spectrum_idx, from_freq=from_freq, to_freq=to
 			endif
 		endfor
 		if n_elements(peaks2) eq 0 then message, 'No SPECs with specified ranges were found.'
-	endif else peaks2 = peaks
+	endif else peaks2 = temporary(peaks)
 
 return, peaks2
 end
@@ -376,19 +375,25 @@ pro AOtime_series::showpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
 	freq = self->freq()
 	norm_factor = self->norm_factor()
 	psds = self->psd(spectrum_idx) * df * norm_factor^2.
-	pk = self->findpeaks(spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100)
-	npks = n_elements(pk.(0).fr)
-	dpk = (pk.(0).frmax - pk.(0).frmin)/df + 1. ;number of freq bins taken into account in each vib.
-	pw = pk.(0).pw * norm_factor^2.
-	;show me the peaks!
-	IF n_elements(WIN) eq 0 then win=10
-	window,win,xsize=700, ysize=400
-	plot, freq, psds, psym=-1, ygridstyle=1, xgridstyle=1, xticklen=1, yticklen=1, xtitle='Frequency [Hz]' $
-		, ytitle='Power '+textoidl('nm^2'), title=self._plots_title+', mode '+strtrim(spectrum_idx,2), charsize=1.2, _extra=ex
-	oplot, pk.(0).fr, pw, psym=2, color=255L
-	for ii=0, npks-1 do oplot, [replicate(pk.(0).frmin[ii],2),pk.(0).fr[ii],replicate(pk.(0).frmax[ii],2)], $
-		[0,replicate(pw[ii],3),0], color=255L
-
+	catch, error
+	if error eq 0 then begin
+		pk = self->findpeaks(spectrum_idx, from_freq=from_freq, to_freq=to_freq, t100=t100)
+		npks = n_elements(pk.(0).fr)
+		dpk = (pk.(0).frmax - pk.(0).frmin)/df + 1. ;number of freq bins taken into account in each vib.
+		pw = pk.(0).pw * norm_factor^2.
+		;show me the peaks!
+		IF n_elements(WIN) eq 0 then win=10
+		window,win,xsize=700, ysize=400
+		plot, freq, psds, psym=-1, ygridstyle=1, xgridstyle=1, xticklen=1, yticklen=1, xtitle='Frequency [Hz]' $
+			, ytitle='Power '+textoidl('nm^2'), title=self._plots_title+', mode '+strtrim(spectrum_idx,2), charsize=1.2, _extra=ex
+		oplot, [pk.(0).fr], [pw], psym=2, color=255L
+		for ii=0, npks-1 do oplot, [replicate(pk.(0).frmin[ii],2),pk.(0).fr[ii],replicate(pk.(0).frmax[ii],2)], $
+			[0,replicate(pw[ii],3),0], color=255L
+		catch, /cancel
+	endif else begin
+		print, !ERROR_STATE.MSG
+		catch, /cancel
+	endelse
 end
 
 pro AOtime_series::set_smooth, smooth
