@@ -1,13 +1,6 @@
-FUNCTION AOhistogram, var, _EXTRA = ex, PLOT=PLOT
+FUNCTION AOhistogram, var, _EXTRA = ex, NOPLOT=NOPLOT
 
-	;solving histogram and cghistoplot keyword controversies
-	if n_elements(ex) ne 0 then begin
-		ex2 = struct_selecttags(ex, except=['min','max'])
-		if tag_exist(ex, 'min') then ex2 = create_struct(ex2, 'mininput', ex.min)
-		if tag_exist(ex, 'max') then ex2 = create_struct(ex2, 'maxinput', ex.max)
-	endif
-
-	histo  = histogram(var, locations=loc, reverse_indices=r, _EXTRA = ex)
+	aohistoplot, var, histdata=histo, locations=loc, reverse_indices=r, NOPLOT=NOPLOT, _EXTRA = ex
 	nbins  = n_elements(histo)
 	idxarr = ptrarr(nbins)
 	mybinsize = loc[1]-loc[0]
@@ -28,13 +21,6 @@ FUNCTION AOhistogram, var, _EXTRA = ex, PLOT=PLOT
 		leg		   : leg      $
 	}
 
-	if keyword_set(PLOT) then begin
-		cghistoplot, var, binsize=mybinsize, _EXTRA=ex2, histdata=histo2, locations=loc2, REVERSE_INDICES=r2
-		if n_elements(histo2) ne n_elements(histo) then message, 'Warning, nbins not the same',/info
-		if total(histo2-histo) ne 0 then message, 'Warning: histo not the same...',/info
-		if total(loc2-loc) ne 0 then message, 'Warning: loc not the same...',/info
-		if total(r2-r) ne 0 then message, 'Warning: reverse_indices not the same...',/info
-	endif
 
 	return, struct
 END

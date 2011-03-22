@@ -354,7 +354,7 @@ pro aodb::plot, X_VAR, Y_VAR, subset=subset, HISTO_VAR=HISTO_VAR, GROUP_VAR=GROU
 			message, '[X,Y] and HISTO_VAR not compatible dimensions',/info
 			return
 		endif
-		histo = aohistogram(H, _EXTRA = ex); BINSIZE=BINSIZE, NBINS=NBINS)
+		histo = aohistogram(H, _EXTRA = ex, /NOPLOT); BINSIZE=BINSIZE, NBINS=NBINS)
 		PLOT_TYPE += 'H'
 
 		;legend should appear below the plot. The size of the legend should be computed beforehand.
