@@ -531,11 +531,11 @@ pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
     freq = self->freq(from=from_freq, to=to_freq)
     tip  = self->power(0, from=from_freq, to=to_freq, /cum)
     tilt = self->power(1, from=from_freq, to=to_freq, /cum)
-    plot, freq, sqrt(tip + tilt), $
+    plot, freq, sqrt(tip + tilt), xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1, $
         title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
     oplot, freq, sqrt(tip), col='0000ff'x
     oplot, freq, sqrt(tilt), col='00ff00'x
-    legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
+    legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
     sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
     ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
