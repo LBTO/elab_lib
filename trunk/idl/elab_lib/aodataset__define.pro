@@ -184,12 +184,12 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
     valid = where(isvalid eq 1, cntvalid)
 	if cntvalid ne 0 then begin
 
-    	if arg_present(set_out) then set_out = obj_new('aodataset', self->Get(pos=index[where(isvalid)]))
+    	if arg_present(set_out) then set_out = obj_new('aodataset', self->Get(pos=index[valid]))
 
 		;check type
 		type_all = lonarr(cntvalid)
 		for jj=0L, cntvalid-1 do type_all[jj] = size( *v[valid[jj]], /type)
-		if max(type_all)-min(type_all) ne 0 then return, v
+		if max(type_all)-min(type_all) ne 0 then return, v[valid]
 		type = type_all[0]
 
 		if type eq 8 then begin		;;;case of data structures
@@ -203,7 +203,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 			;check number of dimensions
 			ndim_all = lonarr(cntvalid)
 			for jj=0L, cntvalid-1 do ndim_all[jj] = size( *v[valid[jj]], /n_dim)
-			if max(ndim_all)-min(ndim_all) ne 0 then return, v
+			if max(ndim_all)-min(ndim_all) ne 0 then return, v[valid]
 			n_dim = ndim_all[0]
 
 			;check number of elements in each dimension
@@ -211,7 +211,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 							   dim_all = make_array(cntvalid, /LONG)
 			for jj=0L, cntvalid-1 do dim_all[jj,*] = size( *v[valid[jj]], /dim)
 			if n_dim eq 0 then zero = 0 else zero = lonarr(n_dim)
-			if total( max(dim_all, dim=1)-min(dim_all, dim=1) ne zero ) then return, v
+			if total( max(dim_all, dim=1)-min(dim_all, dim=1) ne zero ) then return, v[valid]
 			dim = reform(dim_all[0,*])
 
 			;create the data array
