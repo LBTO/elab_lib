@@ -5,13 +5,13 @@ FUNCTION AOhistogram, var, _EXTRA = ex, NOPLOT=NOPLOT
 	idxarr = ptrarr(nbins)
 	mybinsize = loc[1]-loc[0]
 	for i=0, nbins-1 do $
-		IF r[i] NE r[i+1] THEN idxarr[i] = ptr_new([r[r[i]:r[i+1]-1]]) ELSE idxarr[i] =ptr_new([-1])
+		IF r[i] NE r[i+1] THEN idxarr[i] = ptr_new([r[r[i]:r[i+1]-1]]); ELSE idxarr[i] =ptr_new([-1])
 
 	if nbins gt 1 then cols = comp_colors(nbins) else cols = [0]
 	leg  = strtrim(string(loc+mybinsize/2.,format='(f8.2)'),2)+replicate(textoidl('\pm')+strtrim(string(mybinsize/2.,format='(f8.2)'),2),nbins)
 
 	struct = {  		      $
-		nelem      : n_elements(var), $
+		var        : var	, $
 		histo      : histo  , $
 		loc		   : loc    , $
 		bz		   : mybinsize, $
