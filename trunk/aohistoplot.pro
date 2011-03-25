@@ -290,7 +290,7 @@ PRO aoHistoplot, $                    ; The program name.
    MININPUT=mininput, $             ; The minimum value to HISTOGRAM.
    NAN=nan, $                       ; Check for NAN.
    NBINS=nbins, $                   ; The number of bins to display.
-
+   HISTO_FACTOR = histo_factor, $	; Multiply histogram by this scalar
    WINDOW=window                    ; Display this in an cgWindow.
 
 
@@ -364,6 +364,7 @@ PRO aoHistoplot, $                    ; The program name.
                MININPUT=mininput, $             ; The minimum value to HISTOGRAM.
                NAN=nan, $                       ; Check for NAN.
                NBINS=nbins, $                   ; The number of bins to display.
+               HISTO_FACTOR = histo_factor, $	; Multiply histogram by this scalar
                ADDCMD=1
             RETURN
         ENDIF
@@ -417,6 +418,7 @@ PRO aoHistoplot, $                    ; The program name.
                MININPUT=mininput, $             ; The minimum value to HISTOGRAM.
                NAN=nan, $                       ; Check for NAN.
                NBINS=nbins, $                   ; The number of bins to display.
+			   HISTO_FACTOR = histo_factor, $	; Multiply histogram by this scalar
                REPLACECMD=replaceCmd
             RETURN
     ENDIF
@@ -502,7 +504,8 @@ PRO aoHistoplot, $                    ; The program name.
       OMAX=omax, $
       OMIN=omin, $
       REVERSE_INDICES=ri)
-   IF frequency THEN histdata = Float(histdata)/N_Elements(_dataToHistogram)
+   IF frequency THEN histdata = Float(histdata)/N_Elements(_dataToHistogram)*100. ELSE $
+   IF keyword_set(histo_factor) THEN histdata = Float(histdata)*histo_factor
 
    ; Need a probability distribution?
    IF Arg_Present(probablity) OR Keyword_Set(oprob) THEN BEGIN
@@ -539,7 +542,6 @@ PRO aoHistoplot, $                    ; The program name.
        ENDIF
    ENDIF
    IF N_Elements(axisColorName) EQ 0 THEN axisColor = !P.Color ELSE axisColor = axisColorName
-
    IF N_Elements(polycolorname) EQ 0 THEN polycolorname = "Rose"
    IF N_Elements(probColorname) EQ 0 THEN probColorname = "Blue"
 
@@ -562,8 +564,9 @@ PRO aoHistoplot, $                    ; The program name.
 
    ; Set up some labels.
    IF frequency THEN BEGIN
-      ytitle = 'Relative Frequency'
-      ytickformat = '(F6.4)'
+      ytitle = 'Relative Frequency (%)'
+;      ytickformat = '(F6.4)'
+	  ytickformat = '(I)'
    ENDIF ELSE BEGIN
       ytitle = 'Histogram Density'
       ytickformat = '(I)'
