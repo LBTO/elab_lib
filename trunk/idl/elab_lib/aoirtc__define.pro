@@ -119,6 +119,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     ; File names
     self._centroid_fname   = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
     self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
+    self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_peaks.sav')
 	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'psf_le.sav')
 	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'psf_elab.sav')
 	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'sr_se.sav')
