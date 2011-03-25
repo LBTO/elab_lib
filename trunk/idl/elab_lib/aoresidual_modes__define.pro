@@ -76,10 +76,10 @@ pro AOresidual_modes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=e
     tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
     if not keyword_set(overplot) then begin
     	plot, freq, sqrt(tip + tilt), xticklen=1, yticklen=1, xgridstyle=1, ygridstyle=1, $
-        	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
+        	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Cumulated PSD [arcsec rms]', _extra=ex
     	oplot, freq, sqrt(tip), col='0000ff'x
     	oplot, freq, sqrt(tilt), col='00ff00'x
-    	legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=[!P.COLOR, '0000ff'x, '00ff00'x], charsize=1.2
+    	legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x], charsize=1.2
 	endif else begin
     	oplot, freq, sqrt(tip + tilt)
     	oplot, freq, sqrt(tip), col='0000ff'x
