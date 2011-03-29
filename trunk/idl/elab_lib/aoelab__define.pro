@@ -58,7 +58,7 @@ function AOelab::Init, tracknum, $
 	if obj_valid(self._tel) then begin
 		;if (self->tel())->el() lt 89. then self._operation_mode = "ONSKY" $
 		;if (self->wfs_status())->lamp_intensity() lt .001 then self._operation_mode = "ONSKY" $
-		if (self->wfs_status())->cube_stage() lt -40. then self._operation_mode = "ONSKY" $
+		if ((self->wfs_status())->cube_stage() lt -40.) and (finite( (self->tel())->rot_angle())) then self._operation_mode = "ONSKY" $
 		else self._operation_mode = "RR"
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
