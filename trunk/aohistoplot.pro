@@ -490,12 +490,13 @@ PRO aoHistoplot, $                    ; The program name.
    ENDELSE
 
    frequency = Keyword_Set(frequency)
-   IF N_Elements(mininput) EQ 0 THEN mininput = Min(_dataToHistogram, NAN=nan)
-   IF N_Elements(maxinput) EQ 0 THEN maxinput = Max(_dataToHistogram, NAN=nan)
+;   IF N_Elements(mininput) EQ 0 THEN mininput = Min(_dataToHistogram, NAN=nan)
+;   IF N_Elements(maxinput) EQ 0 THEN maxinput = Max(_dataToHistogram, NAN=nan)
 
   ; Calculate the histogram.
    histdata = Histogram(_dataToHistogram, $
       BINSIZE=binsize, $
+      NBINS=nbins, $
       L64=l64, $
       MAX=maxinput, $
       MIN=mininput, $
