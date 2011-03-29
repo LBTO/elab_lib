@@ -26,7 +26,7 @@ function generate_dampvib, damp, fvib, fc, nstep, seed=seed
     v[i] = randomn(seed)
     out[i] = v[i] + z1[i]
     z1[i+1] = vibb1*v[i] +z2[i] -viba1*out[i]
-    z2[i+1] = vibb2*v[i] -viba2*out[i]  
+    z2[i+1] = vibb2*v[i] -viba2*out[i]
   endfor
   fft1, out, 1/fc, SPEC=spec, /NOPLOT
   out = real_part(fft(abs(spec),1))
@@ -160,7 +160,7 @@ scr_size_m   = max([scr_size_m_x,scr_size_m_y], ang_idx)		;
 scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 
 ;rname = 'dist_'+disturb_type		;FLAO1
-rname = 'dist_flao2'+disturb_type	;FLAO2
+rname = 'dist_flao2a'+disturb_type	;FLAO2
 
 
 ; Vibration Disturbance Handling
@@ -293,13 +293,13 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	endif
 
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
-	if file_test(disturb_dir+'inv_IFmatrix_flao2.sav') then begin
+	if file_test(disturb_dir+'inv_IFmatrix_flao2a.sav') then begin
 		undefine, IFmatrix
-		restore, disturb_dir+'inv_IFmatrix_flao2.sav'
+		restore, disturb_dir+'inv_IFmatrix_flao2a.sav'
 	endif else begin
 		if n_elements(IFmatrix) eq 0 then IFmatrix = modalif_to_zonalif(mirmodes_file, idx_mask=idx_mask)
 		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE)
-		save, inv_IFmatrix, Dpix, idx_mask, filename=disturb_dir+'inv_IFmatrix_flao2.sav', /compress
+		save, inv_IFmatrix, Dpix, idx_mask, filename=disturb_dir+'inv_IFmatrix_flao2a.sav', /compress
 		undefine, IFmatrix
 	endelse
 
