@@ -1,20 +1,22 @@
 ;>>>>>>>>>> on AOSIMUL -> cd, /home/FLAO_data <<<<<<<<<<<<<<<
-
+;>>>>>>>>>> on CORSICA -> cd, /savedata
 ;disturbance parameters
 ;******************************************************************
 disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
 ;disturb_dir = 'phase_screens/'
-disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
+;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
+disturb_dir = '/savedata/phase_screens_flao2/'
+
 
 ;atmospheric parameters
 ;******************************************************************
-seeing = [1.5]
+seeing = [0.8]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
 seed = 1983L
 n_steps = 4000
-hz = [200.,400.]
+hz = [1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
@@ -24,7 +26,8 @@ Dpix		  = 232			; pupil diameter [pix]			;FLAO2
 
 ;mirror modes file (required to compute zonal IFmatrix)
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'	;FLAO1
-mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sav'	;FLAO2
+;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sav'	;FLAO2 @ aosimul
+mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ corsica
 
 ; Pre-correction parameters:
 ;*************************************************************
