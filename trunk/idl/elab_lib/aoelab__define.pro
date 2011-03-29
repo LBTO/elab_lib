@@ -387,6 +387,9 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el() )
         print, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )
     endif
+    if obj_valid(self->olmodes()) then begin
+    	print, string(format='(%"| %-30s | %f |")','seeing from OL modes', (self->olmodes())->seeing() )
+    endif
     if not keyword_set(PARAMS_ONLY) then begin
     	;print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self->irtc()) then begin
