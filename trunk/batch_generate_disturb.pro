@@ -16,7 +16,7 @@ L0 = 40.
 v_wind = 15.
 seed = 1983L
 n_steps = 4000
-hz = [800.]
+hz = [625.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
