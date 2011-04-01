@@ -23,13 +23,14 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 
 		histo = aohistogram(H, _EXTRA=ex, /NOPLOT)
 		PLOT_TYPE += 'H'
+		nvalidbins = n_elements(histo.leg)
 
 		;legend should appear below the plot. The size of the legend should be computed beforehand.
 		usersym, [-2,-2,2, 2,-2], [-1, 1,1,-1,-1], /fill	;rectangle
 		if n_elements(H_leg_title) eq 0 then begin
-			legend, histo.leg, corners=corners, psym=replicate(8,histo.nbins), linestyle=intarr(histo.nbins), box=0, pspacing=1, CHARSIZE=1.2
+			legend, histo.leg, corners=corners, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins), box=0, pspacing=1, CHARSIZE=1.2
 		endif else begin
-			legend, [[H_leg_title], histo.leg], corners=corners, psym=[[0],replicate(8,histo.nbins)], linestyle=[[-1],intarr(histo.nbins)], box=0, pspacing=1, CHARSIZE=1.2
+			legend, [[H_leg_title], histo.leg], corners=corners, psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)], box=0, pspacing=1, CHARSIZE=1.2
 		endelse
 		h_leg_xydims = [corners[2]-corners[0],corners[3]-corners[1]]
 	endif else h_leg_xydims = [0,0]
@@ -79,19 +80,19 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 
 	''	:	oplot, X, Y, psym=8, symsize=1.0
 
-	'H' :	for i=0, histo.nbins-1 do  begin
-				if ptr_valid(histo.idxarr[i]) then oplot, X[*histo.idxarr[i]], Y[*histo.idxarr[i]], psym=8, color=histo.cols[i], symsize=1.0
+	'H' :	for i=0, nvalidbins-1 do  begin
+				oplot, X[*histo.idxarr[histo.valididx[i]]], Y[*histo.idxarr[histo.valididx[i]]], psym=8, color=histo.cols[i], symsize=1.0
 			endfor
 
 	'G' :	for i=0, ng-1 do begin
 				grpidx = where(G eq g_ele[i])
 				oplot, X[grpidx], Y[grpidx], psym=symcat(sym_type[i]), symsize=1.0
 			endfor
-	'HG':	for i=0, histo.nbins-1 do $
+	'HG':	for i=0, nvalidbins-1 do $
 	 			for j=0, ng-1 do begin
-	 				if not ptr_valid(histo.idxarr[i]) then continue
+;	 				if not ptr_valid(histo.idxarr[i]) then continue
 					grpidx = where(G eq g_ele[j])
-	 				idx = setintersection(*histo.idxarr[i],grpidx)
+	 				idx = setintersection(*histo.idxarr[histo.valididx[i]],grpidx)
 	 				if idx[0] eq -1 then continue
 	 				if sym_type[j] eq 8 then plotsym,0
 	 				oplot, [X[idx]], [Y[idx]], color=histo.cols[i], psym=symcat(sym_type[j]), symsize=1.0
@@ -115,10 +116,10 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 		usersym, [-2,-2,2, 2,-2], [-1, 1,1,-1,-1], /fill	;rectangle
 		if PLOT_TYPE eq 'HG' then h_leg_pos = [!X.WINDOW[1]-h_leg_xydims[0],!P.REGION[1]] else h_leg_pos = [0.5*!X.WINDOW[0], !P.REGION[1]]
 		if n_elements(H_leg_title) eq 0 then begin
-		legend, histo.leg, psym=replicate(8,histo.nbins), linestyle=intarr(histo.nbins) $
+		legend, histo.leg, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins) $
 			  , color=histo.cols, pos=h_leg_pos, /norm, box=0, pspacing=1, charsize=1.2
 		endif else begin
-			legend, [[H_leg_title], histo.leg], psym=[[0],replicate(8,histo.nbins)], linestyle=[[-1],intarr(histo.nbins)] $
+			legend, [[H_leg_title], histo.leg], psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)] $
 			  , color=[[0],histo.cols], pos=h_leg_pos, /norm, box=0, pspacing=1, charsize=1.2
 		endelse
 	endif
