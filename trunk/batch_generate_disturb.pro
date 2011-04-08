@@ -14,9 +14,9 @@ seeing = [0.8]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
-seed = 1983L
+seed = 2891L
 n_steps = 4000
-hz = [625.]
+hz = [625.,800., 1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
