@@ -57,9 +57,14 @@ function AOelab::Init, tracknum, $
 	;				  "ONSKY" : @Telescope on-sky!
 	if obj_valid(self._tel) then begin
 		;if (self->tel())->el() lt 89. then self._operation_mode = "ONSKY" $
-		;if (self->wfs_status())->lamp_intensity() lt .001 then self._operation_mode = "ONSKY" $
-		if ((self->wfs_status())->cube_stage() lt -40.) and (finite( (self->tel())->rot_angle())) then self._operation_mode = "ONSKY" $
-		else self._operation_mode = "RR"
+		if not (finite( (self->tel())->rot_angle())) then self._operation_mode = "RR" else begin
+
+			if ((self->wfs_status())->cube_stage() lt -40.) then self._operation_mode = "ONSKY" else $
+			if (self->wfs_status())->lamp_intensity() gt .001 then self._operation_mode = "RR" else begin
+				self._operation_mode = "ONSKY"
+				message, 'Warning: Cube stage inside with lamp off.... Better move it out!',/info
+			endelse
+		endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
 	;Single or double reflection
