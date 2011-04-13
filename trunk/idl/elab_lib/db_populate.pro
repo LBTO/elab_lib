@@ -164,6 +164,9 @@ PRO db_add_to_ignore_list
 	db->alter, ['20100620_030841', '20100620_033244', '20100620_033345', '20100620_034431', '20100620_040445'], 'ignore', 1
 	db->alter, '20100621_051133', 'ignore', 1
 
+	;Cube inside with lamp on...
+	db->alter, ['20100530_095707', '20100530_095745', '20100530_095823', '20100530_103510', '20100530_103532', '20100530_103715', '20100530_103944', '20100530_104012'], 'ignore', 1
+
 	;unsuccessful open-loop PSF: at the border of IRTC...
 	db->alter, ['20100530_103606'], 'ignore', 1
 
@@ -171,8 +174,8 @@ PRO db_add_to_ignore_list
 	db->alter, ['20100601_090252', '20100601_090403'], 'ignore', 1
 
 	;Problems with telescope:
+	db->alter, ['20100530_055504'], 'ignore', 1	;rotator stopped
 	db->alter, ['20100604_103353', '20100604_103418', '20100604_103608', '20100604_103646'], 'ignore', 1
-
 	db->save
 
 END
