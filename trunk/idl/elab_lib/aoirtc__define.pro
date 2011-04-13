@@ -84,7 +84,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     if (n_elements(dark_fname) eq 0) then begin
     	if valid_exptime and valid_filt_number then begin
     		thisJulday = (root_obj->obj_tracknum())->JulDay()
-    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, filter_number, err_msg=dark_err_msg)
+    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, filter_number, frame_w, frame_h, err_msg=dark_err_msg)
    			if strtrim(dark_err_msg,2) ne '' then self._irtc_err_msg += dark_err_msg
    		endif else begin
 			msg_temp = 'IRTC dark cannot be searched: ('
@@ -139,7 +139,7 @@ end
 
 ;Searches an IRTC dark closest in time to the IRTC image with the same set of parameters
 ;------------------------------------------------------------------------------------------
-function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, err_msg=err_msg
+function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, frame_w, frame_h, err_msg=err_msg
 
 	err_msg = ""
 
@@ -168,7 +168,10 @@ function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, err
 			dark_header = headfits(closest_av_dark_fname)
 			dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))*1e-6	;in seconds
 			dark_filter_number = long(aoget_fits_keyword(dark_header, 'FILTRNR'))
-			if (dark_exptime eq exptime) and (filter_number eq dark_filter_number) then dark_found=1B else dd+=1
+			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
+			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
+			if (dark_exptime eq exptime) and (filter_number eq dark_filter_number) and  $
+			   (dark_frame_w eq frame_w) and (dark_frame_h eq frame_h) then dark_found=1B else dd+=1
 		endwhile
 		if dark_found then begin
 			dark_fname = all_darks_fname[idx_closest[dd]]
