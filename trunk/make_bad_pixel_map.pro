@@ -14,6 +14,9 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
 	if not keyword_set(fr_w) then fr_w = 320L
 	if not keyword_set(fr_h) then fr_h = 256L
 
+
+	;Compute dark cubes statistics (median & rms):
+	;---------------------------------------------------------
     cubo_out_rms = fltarr(fr_w,fr_h,nfile)
     cubo_out_med = fltarr(fr_w,fr_h,nfile)
     tot = fltarr(nfile)
@@ -53,31 +56,38 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
 	cubo_out_med = cubo_out_med[*,*,idx]
 	cubo_out_rms = cubo_out_rms[*,*,idx]
 
-    for j=0, s[0]-1 do begin
-        for k=0, s[1]-1 do begin
-            Rms_im[j,k] = median(cubo_out_rms[j,k,*])
-        endfor
-    endfor
-;here:
-;restore, 'C:\Documents and Settings\carmelo\Documenti\LBT\AGW\sky\darks\all.sav'
-    badpixels = fltarr(s[0],s[1])
+	;Build bad pixel map:
+	;---------------------------------------------------------
+    badpixels = fltarr(fr_w,fr_h)
+
+    rms_im = median(cubo_out_rms, dim=3)
+;    for j=0, s[0]-1 do begin
+;        for k=0, s[1]-1 do begin
+;            Rms_im[j,k] = median(cubo_out_rms[j,k,*])
+;        endfor
+;    endfor
+
+	;Identify pixels that either vary too much or are always fixed....
     index = where(Rms_im gt median(rms_im)+stddev(rms_im)*3.,count)
     if count ge 1 then  badpixels[index] = 1
     index = where(Rms_im eq 0,count)
     if count ge 1 then badpixels[index] = 1
 
-    for j = 0,s[0]-1 do begin
-        for k = 0,s[1]-1 do begin
-            median_im[j,k] = median(cubo_out_med[j,k,*])
-        endfor
-    endfor
+	median_im = median(cubo_out_med, dim=3)
+;    for j = 0,s[0]-1 do begin
+;        for k = 0,s[1]-1 do begin
+;            median_im[j,k] = median(cubo_out_med[j,k,*])
+;        endfor
+;    endfor
 
+	;Identify pixels whose median value is too high (hot pixels) or zero (pixels off).
     index = where(median_im gt median(median_im)+stddev(median_im)*6.,count)
     if count ge 1 then  badpixels[index] = 1
     index = where(median_im eq 0,count)
     if count ge 1 then badpixels[index] = 1
 
-	fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.fits'
+	if (fr_w ne 320L) and (fr_h ne 256L) then fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.fits' $
+		else fname='badpixelmap.fits'
     writefits,filepath(root=path, fname),badpixels
 
 end
