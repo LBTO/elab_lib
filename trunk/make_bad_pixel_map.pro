@@ -33,8 +33,8 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
         tot[i] = total(cubo)
 ;        median_im = fltarr(s[0],s[1])
 ;        rms_im = fltarr(s[0],s[1])
-        rms = median(cubo)
-        cubo = cubo/float(rms)
+        thismedian = median(cubo)
+        cubo = cubo/float(thismedian)
         median_im = median(cubo, dim=3)
         mean_im   = total(cubo,3)/float(s[2])
         for k=0, s[2]-1 do cubo[*,*,k] -= mean_im
@@ -48,8 +48,6 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
         cubo_out_med[*,*,i] = median_im
         cubo_out_rms[*,*,i] = rms_im
     endfor
-
-	stop
 
 	;Remove empty frames:
 	idx = where(tot ne 0.,nfile)
@@ -67,10 +65,10 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
 ;        endfor
 ;    endfor
 
-	;Identify pixels that either vary too much or are always fixed....
-    index = where(Rms_im gt median(rms_im)+stddev(rms_im)*3.,count)
+	;Identify pixels that either vary too much or too little...
+    index = where(Rms_im ge median(rms_im)+stddev(rms_im)*6.,count)
     if count ge 1 then  badpixels[index] = 1
-    index = where(Rms_im eq 0,count)
+    index = where(Rms_im le (median(rms_im)-stddev(rms_im)*6.)>0.,count)
     if count ge 1 then badpixels[index] = 1
 
 	median_im = median(cubo_out_med, dim=3)
@@ -80,10 +78,10 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
 ;        endfor
 ;    endfor
 
-	;Identify pixels whose median value is too high (hot pixels) or zero (pixels off).
-    index = where(median_im gt median(median_im)+stddev(median_im)*6.,count)
+	;Identify pixels whose median value is too high (hot pixels) or close to zero (pixels off).
+    index = where(median_im ge median(median_im)+stddev(median_im)*6.,count)
     if count ge 1 then  badpixels[index] = 1
-    index = where(median_im eq 0,count)
+    index = where(median_im le (median(median_im)-stddev(median_im)*6.)>0.,count)
     if count ge 1 then badpixels[index] = 1
 
 	if (fr_w ne 320L) and (fr_h ne 256L) then fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.fits' $
