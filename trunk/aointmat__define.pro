@@ -5,9 +5,19 @@
 
 function AOintmat::Init, fname
     self._im_file  = fname
-    full_fname = filepath(root=ao_datadir(), self->fname())
+    full_fname = filepath(root=ao_datadir(), fname)
+    if not file_test(full_fname) then begin
+        message, full_fname + ' not found', /info
+        return,0
+    endif
+
     header = headfits(full_fname ,/SILENT, errmsg=errmsg)
     if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
+
+   	if strtrim(aoget_fits_keyword(header, 'FILETYPE'),2) NE 'intmat' then begin
+    	message, fname + ': not valid IM fits header', /info
+    	return,0
+    endif
 
     self._basis = strtrim(aoget_fits_keyword(header, 'M2C'))
     self._nmodes  = -1
