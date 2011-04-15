@@ -103,6 +103,8 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
         endif
 	endelse
 
+	;Badpixelmap filename:
+	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.fits')
 
     ; ROI
     str = aoget_fits_keyword(fitsheader, 'DETSEC')
@@ -127,7 +129,8 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
 
 	; initialize PSF object
-    if not self->AOpsf::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, binning=binning, ROI=roi) then return,0
+    if not self->AOpsf::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
+    	binning=binning, ROI=roi, badpixelmap_fname=badpixelmap_fname) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOIRTC', 'IRTC image') then return, 0

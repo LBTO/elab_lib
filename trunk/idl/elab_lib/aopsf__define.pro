@@ -14,11 +14,12 @@
 ; KEYWORD
 ;   binning              default = 1
 ;   roi                  array [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame
+;	badpixelmap_fname	(string) full path to the bad pixel map frame.
 ;-
 
 ;function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
 function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
-        binning=binning, roi=roi
+        binning=binning, roi=roi, badpixelmap_fname=badpixelmap_fname
 
 	if not file_test(psf_fname) then begin
         message, psf_fname + ' not found', /info
@@ -29,6 +30,8 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
 
     self._dark_fname = dark_fname
    	if not file_test(self->dark_fname()) then message, self->dark_fname() + ' Dark file does not exist', /info
+
+	if keyword_set(badpixelmap_fname) then self._badpixelmap_fname = badpixelmap_fname
 
     naxis = long(aoget_fits_keyword(self->header(), 'NAXIS'))
     self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
@@ -161,7 +164,7 @@ pro AOpsf::compute
         psf = float(readfits(self->fname(), header, /SILENT))
         for i=0L, self->nframes()-1 do begin
             if (i+1) mod 10 eq 0 then print, string(format='(%"%d of %d ")', i+1, self->nframes() )
-            psf[*,*,i] = self->maneggiaFrame(psf[*,*,i], self->dark_image(), self->badPixelMap())
+            psf[*,*,i] = self->maneggiaFrame(psf[*,*,i])
         endfor
         print, 'saving data...'
     	save, psf, filename=self._psf_elab_fname ;, /compress
@@ -170,57 +173,78 @@ pro AOpsf::compute
     self._image = ptr_new(psf, /no_copy)
 end
 
-function AOpsf::maneggiaFrame, psf_in, dark, badpixelmap
-    sz = size(psf_in,/dim)
-    frame_w = sz[0]
-    frame_h = sz[1]
+function AOpsf::maneggiaFrame, psf_in
+;    sz = size(psf_in,/dim)
+;    frame_w = sz[0]
+;    frame_h = sz[1]
+;
     ; subtract dark from frames
-	psf = psf_in-dark
+	psf = psf_in - self->dark_image()
 
     ; AP Removed this because it causes big "holes" in the image that screw up SR calculations
     ; determine mask = points where signal > median(frame)+3*rms(frame)
-	;threshold = median(psf[badpixelmap]) + 1 * rms(psf[badpixelmap])
-    ;;;;self->set_threshold, threshold
-    ; subtract from each column its median computed on points outside the mask
+    ; indvalid = where(~badpixelmap)
+	;;;threshold = median(psf[indvalid]) + 1 * rms(psf[indvalid])
+    ;;;self->set_threshold, threshold
+
+    ;;;subtract from each column its median computed on points outside the mask
     ;for j=0L, frame_w-1 do begin
     ;    mask = where(psf[j,*] lt threshold, cnt) * (~(badpixelmap[j,*]))
     ;    psf[j,*] -= median(psf[j,mask])
     ;endfor
 
 
-    ; This was already commented before...
-    ;
+   ;;This was already commented before...
     ;; subtract from each row its median computed on points outside the mask
-    ;;for j=0L, self->frame_h()-1 do begin
-    ;;	mask = where(psf[*,j,i] lt threshold, cnt)
-    ;;	psf[*,j,i] -= median(psf[mask,j,i])
-    ;;endfor
-    ;; remove bad pixels interpolating with neighbours
-    ;; TODO UNCOMMENT THIS psf = mad_correct_bad_pixel(~badpixelmap, psf)
+    ;for j=0L, self->frame_h()-1 do begin
+   ; 	mask = where(psf[*,j,i] lt threshold, cnt)
+   ; 	psf[*,j,i] -= median(psf[mask,j,i])
+   ; endfor
+
+    ;;; remove bad pixels interpolating with neighbours
+    ;psf = mad_correct_bad_pixel(~badpixelmap, psf)
+    trstr = self->triangulate()
+    if trstr.np lt self->frame_w()*self->frame_h() then $
+    	psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(self->frame_w()), yout=findgen(self->frame_h()))
+
     return, psf
 end
 
 function AOpsf::badPixelMap
     if not PTR_VALID(self._badpixelmap) then begin
+
     	if file_test(self->badpixelmap_fname()) then begin
+
             badmap = readfits(self->badpixelmap_fname(), bpm_header, /SILENT)
             bmp_frame_w = long(aoget_fits_keyword(bpm_header, 'NAXIS1'))
             bmp_frame_h = long(aoget_fits_keyword(bpm_header, 'NAXIS2'))
+
             if (bmp_frame_w ne self->frame_w()) or (bmp_frame_h ne self->frame_h()) then begin
                 message, 'BadPixelMap and PSF images do not have the same dimensions!!', /info
                 self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
             endif else begin
     	        self._badpixelmap = ptr_new(badmap,  /no_copy)
             endelse
+
         endif else begin
         	message, 'BadPixelMap file not existing. Assume all pixel good', /info
             self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
-        	;badmap = fltarr(self->frame_w(), self->frame_h())
         endelse
-		;roi = self->roi()
-    	;self._badpixelmap = ptr_new(badmap[ roi[0]:roi[1], roi[2]:roi[3] ],  /no_copy)
+
+		;for interpolating bad pixels:
+		idxvalid = long(where( *(self._badpixelmap) eq 0., nvalid))
+		x_valid = idxvalid mod long(self->frame_w())
+		y_valid = idxvalid  /  long(self->frame_w())
+		TRIANGULATE, float(x_valid), float(y_valid), tr
+		bpstr = create_struct('x', x_valid, 'y', y_valid, 'idx', idxvalid, 'np', long(nvalid), 'tr', tr)
+		self._triangulate = ptr_new(bpstr, /no_copy)
 	endif
     return, *(self._badpixelmap)
+end
+
+function AOpsf::triangulate
+	if not PTR_VALID(self._triangulate) then badmap = self->badPixelMap()
+	return, *(self._triangulate)
 end
 
 function AOpsf::image
@@ -269,15 +293,16 @@ function AOpsf::longExposure
 	endif else begin
         psf = float(readfits(self->fname(), header, /SILENT))
     	psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
-        psf_le = self->maneggiaFrame(psf_le, self->dark_image(), self->badPixelMap())
+        psf_le = self->maneggiaFrame(psf_le)
 
         ; compute bias
-        self->compute_bias, psf_le
-		psf_le = psf_le - self->bias()
-    	bias_level = self->bias()
+;        self->compute_bias, psf_le
+;		psf_le = psf_le - self->bias()
+;    	bias_level = self->bias()
 
         ; compute threshold
-	    threshold = median(psf_le[self->badpixelmap()]) + 1.5 * rms(psf_le[self->badpixelmap()])
+		idxgood = where(self->badpixelmap() eq 0.)
+	    threshold = median(psf_le[idxgood]) + 1.5 * stddev(psf_le[idxgood])
         self->set_threshold, threshold
 
         ;
@@ -606,7 +631,7 @@ function AOpsf::dark_fname
 end
 
 function AOpsf::badpixelmap_fname
-    return, filepath(root=file_dirname(self->dark_fname()) , 'badpixelmap.fits')
+	return, self._badpixelmap_fname
 end
 
 function AOpsf::header
@@ -666,6 +691,7 @@ pro AOpsf::free
     if ptr_valid(self._image)       then ptr_free, self._image
     if ptr_valid(self._dark_image)  then ptr_free, self._dark_image
     if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
+    if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)    then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then  self._gaussfit->free
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -685,6 +711,7 @@ pro AOpsf::Cleanup
     if ptr_valid(self._image)      then ptr_free, self._image
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
     if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
+    if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)   then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then obj_destroy, self._gaussfit
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -722,7 +749,9 @@ pro AOpsf__define
         _dark_fitsheader:  ptr_new()	, $
         _image          :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
+        _badpixelmap_fname : ""			, $
         _badpixelmap    :  ptr_new()	, $
+        _triangulate	:  ptr_new()	, $
 		_roi            :  [0,0,0,0]    , $
         _bias_level		:  0.			, $
         _lambda_im		:  0.			, $	 ;[meters]
