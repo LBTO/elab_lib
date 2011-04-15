@@ -1,20 +1,24 @@
 ; from Simone's calc_sr1 17 nov 09
 function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg, FIX_BG = FIX_BG
 
-ima_bs(319,255)= 0 ;;; set the bad pixel to zero
-ima_bs[0:9,*] = 0
-ima_bs[310:*,*] = 0
-ima_bs[*,0:9] = 0
-ima_bs[*,246:*] = 0
+npx = n_elements(ima_bs(*,0))
+npy = n_elements(ima_bs(0,*))
+
+;ima_bs[319,255]= 0 ;;; set the bad pixel to zero (DONE before using badpixelmap!!!)
+
+;Remove the borders of the image
+npr = 10	;number of pixels to remove from the edges
+ima_bs[0:npr-1,*] = 0
+ima_bs[npx-npr:*,*] = 0
+ima_bs[*,0:npr] = 0
+ima_bs[*,npy-npr:*] = 0
 max_ima = max(ima_bs,h)
 
-if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/320,h-h/320*320
+if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/npx,h-h/npx*npx
 ima_fit = gauss2dfit(double(ima_bs),coeff)
 xc = round(coeff(4))
 yc = round(coeff(5))
 
-npx = n_elements(ima_bs(*,0))
-npy = n_elements(ima_bs(0,*))
 
 a = 20 ;;; larghezza della cornice usata per il calcolo del background
 ima_dummy = ima_bs
@@ -27,7 +31,7 @@ counter=0
 
 repeat begin
    new_bg += fixbg
-   side = min([xc,320-xc,yc,256-yc],h)
+   side = min([xc,npx-xc,yc,npy-yc],h)
    side10 = fix(side)/10*10
    nside = side10/10 * 2 -1
    flux = fltarr(nside)
@@ -57,7 +61,7 @@ if counter gt 10 then begin
     print, errmsg
     return, 0
 endif
- 
+
 
 ;irtc_sampling = 0.01 ;;;; arcsec
 D = 8.22 ;;; diametro di LBT in m
@@ -100,7 +104,7 @@ if n_elements(flux) gt n_points then begin
 ;   print, test
    ss = (test-shift(test,1))[1:*]
    mm = mean(ss[n_elements(ss)-n_points:*])
-   if abs(mm) gt threshold then errmsg = 'SR may be in error' 
+   if abs(mm) gt threshold then errmsg = 'SR may be in error'
    print,mm
 endif else begin
    errmsg = 'Cannot test SR quality'
