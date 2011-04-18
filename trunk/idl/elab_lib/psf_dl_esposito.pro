@@ -6,7 +6,7 @@
 ;-
 function psf_dl_esposito, lambda, irtc_sampling, oc=oc,  Dpup=Dpup
 	if not keyword_set(oc) then oc=0.
-    if not keyword_set(Dpup) then Dpup = 8.22 ;;; diametro di LBT in m
+    if not keyword_set(Dpup) then Dpup = 8.222 ;;; diametro di LBT in m
     np_psf = 5000  ;;; punti della psf_difflim
     psf_difflim = fltarr(np_psf, np_psf)
     for i=0L,np_psf-1 do begin
