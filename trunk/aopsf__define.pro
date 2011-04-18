@@ -354,13 +354,13 @@ function AOpsf::gaussfit, debug=debug
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio
-function AOpsf::SR_se, plot=plot, ima=ima, FIX_BG = FIX_BG
+function AOpsf::SR_se, plot=plot, ima=ima
 	if (self._sr_se eq -1.) or keyword_set(plot) or keyword_set(ima) then begin
 		if file_test(self._sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._sr_se_fname
 			self._sr_se = sr_se
 			if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
-            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += sresposito_err_msg
+            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
 		endif else begin
             if not keyword_set(ima) then ima = self->longExposure()
     		psf_dl_fname = filepath( root=ao_elabdir(), $
@@ -368,11 +368,12 @@ function AOpsf::SR_se, plot=plot, ima=ima, FIX_BG = FIX_BG
     		if file_test(psf_dl_fname) then begin
         		restore, psf_dl_fname
     		endif else begin
-        		psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale()) ; wl [m] and scala [arcsec/pixel]
+        		psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_lbt_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
         		save, psf_dl_ima, file=psf_dl_fname
     		endelse
-    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, FIX_BG = FIX_BG)
-            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += sresposito_err_msg
+    		sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
+			if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
+            if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
 
     		save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
     		self._sr_se = sr_se
