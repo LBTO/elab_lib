@@ -1,4 +1,4 @@
-pro log_twiki, aodataset, ref_star=ref_star, FIX_BG = FIX_BG
+pro log_twiki, aodataset, ref_star=ref_star
     if not keyword_set(ref_star) then ref_star='???'
 
     objref =  aodataset->Get(/all)
@@ -49,7 +49,7 @@ pro log_twiki, aodataset, ref_star=ref_star, FIX_BG = FIX_BG
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
-            obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se(FIX_BG = FIX_BG)*100 : -1, $
+            obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se()*100 : -1, $
             band , $
             obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
     		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
