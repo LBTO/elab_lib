@@ -17,7 +17,11 @@ function ao_phasemapdir
 end
 
 function ao_pupil_diameter
-    return, 8.22  ; LBT
+    return, 8.222  ; LBT
+end
+
+function ao_lbt_oc
+	return, 0.111	;effective central obscuration of LBT
 end
 
 pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir
