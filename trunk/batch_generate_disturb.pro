@@ -10,13 +10,13 @@ disturb_dir = '/savedata/phase_screens_flao2/'
 
 ;atmospheric parameters
 ;******************************************************************
-seeing = [0.8]
+seeing = [0.4, 0.6, 1.0, 1.2, 1.5]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
 seed = 2891L
 n_steps = 4000
-hz = [500.]
+hz = [500., 625., 800., 1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
