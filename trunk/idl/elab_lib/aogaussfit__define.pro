@@ -3,20 +3,22 @@
 ;
 ;-
 
-function AOgaussfit::Init, frame, pixelscale, debug=debug
+function AOgaussfit::Init, frame, debug=debug
     self._frame = ptr_new(frame)
-    self._pixelscale = pixelscale
+
+;  	self._pixelscale = pixelscale
+
     self->fitta, debug=debug
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOGaussFit', 'Gaussian 2D fit of the PSF') then return, 0
     self->addMethodHelp, "fitted_frame()", "return psf frame cropped to fitted ROI"
     self->addMethodHelp, "psffit()", "return fit of psf cropped to fitted ROI. To be compared with fitted_frame()"
-    self->addMethodHelp, "pixelscale()", "return psf pixelscale (arcsec/px)"
+    ;self->addMethodHelp, "pixelscale()", "return psf pixelscale (arcsec/px)"
     self->addMethodHelp, "roi()", "return psf ROI fitted [xmin,xmax,ymin,ymax] (px)"
     self->addMethodHelp, "fwhm()", "return psf FWHM (arcsec)"
-    self->addMethodHelp, "fwhm_max()", "return psf FWHM along ellipse major axis (arcsec)"
-    self->addMethodHelp, "fwhm_min()", "return psf FWHM along ellipse minor axis (arcsec)"
+    self->addMethodHelp, "fwhm_max()", "return psf FWHM along ellipse major axis (px)"
+    self->addMethodHelp, "fwhm_min()", "return psf FWHM along ellipse minor axis (px)"
     self->addMethodHelp, "center()",   "return psf gaussian center int[2] (px)"
     self->addMethodHelp, "ampl()", "return psf gaussian amplitude (cnts)"
     self->addMethodHelp, "background()", "return psf gaussian background (cnts)"
@@ -77,8 +79,8 @@ pro AOgaussfit::fitta, debug=debug
 
 	; Save all Gaussian-fit parameters:
     self._center     = coeff[4:5]
-    self._fwhm_max   = coeff[2] * 2*SQRT(2*ALOG(2)) * self->pixelscale()
-    self._fwhm_min   = coeff[3] * 2*SQRT(2*ALOG(2)) * self->pixelscale()
+    self._fwhm_max   = coeff[2] * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+    self._fwhm_min   = coeff[3] * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
     self._fwhm   	 = sqrt(self._fwhm_max * self._fwhm_min)
     self._ampl       = coeff[1]
     self._ecc        = sqrt(1d - ( min([coeff[3], coeff[2]]) / max([coeff[3], coeff[2]]) )^2 )
@@ -89,9 +91,9 @@ pro AOgaussfit::fitta, debug=debug
     self._psffit	 = ptr_new(rfrfit, /no_copy)
 end
 
-function AOgaussfit::pixelscale
-    return, self._pixelscale
-end
+;function AOgaussfit::pixelscale
+;    return, self._pixelscale
+;end
 
 function AOgaussfit::center
     return, self._center
@@ -160,7 +162,7 @@ pro AOgaussfit__define
     struct = { AOgaussfit, $
         _frame         : ptr_new(), $
         _psffit        : ptr_new(), $
-        _pixelscale    : 0d, $
+;        _pixelscale    : 0d, $
         _center        : fltarr(2), $
         _fwhm          : 0d, $				;arcsec
         _fwhm_max      : 0d, $				;arcsec
