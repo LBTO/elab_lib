@@ -30,7 +30,8 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
             message, msg_temp, /info
 	        self._irtc_err_msg += ' - ' + msg_temp
 	        valid_pixscale = 0B
-	        pixelscale = 1.
+	        ;pixelscale = 1.
+	        pixelscale = !VALUES.F_NAN
            end
     ENDCASE
 
@@ -39,11 +40,12 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
     valid_filt_number = 1B
     CASE filter_number OF
-    	1: lambda = 1.			;BROADBAND
+    	1: lambda = 1.30e-6	;BROADBAND (central wavelength (?))
     	2: lambda = 1.07e-6	;J
     	3: lambda = 1.60e-6	;H
      else: begin
-     		lambda = 1.
+     		;lambda = 1.
+     		lambda = !VALUES.F_NAN
      		msg_temp = 'Unknown IRTC filter'
             message, msg_temp, /info
 	        self._irtc_err_msg += ' - ' + msg_temp
