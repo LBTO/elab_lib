@@ -72,7 +72,7 @@ endrep until (abs(fixbg) lt 0.001) or (counter gt 10)
 
 if counter gt 10 then begin
    	errmsg = 'Background correction failed'
-   	print, errmsg
+   	message, errmsg, /info
    	return, 0
 endif
 
@@ -115,6 +115,7 @@ if n_elements(flux) gt n_points then begin
 endif else begin
    errmsg = 'Could not test SR quality'
 endelse
+if n_elements(errmsg) ne 0 then message, errmsg, /info
 
 ;stop
 return, sr
