@@ -12,8 +12,8 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
         return,0
     endif
     fitsheader = headfits(psf_fname, /SILENT, errmsg=errmsg)
-    if errmsg ne '' then message, psf_fname+ ': '+ errmsg, /info 
-    
+    if errmsg ne '' then message, psf_fname+ ': '+ errmsg, /info
+
 
     ; Binning
     binning = long(aoget_fits_keyword(fitsheader, 'ccd47.BINNING'))
@@ -24,20 +24,20 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
     ; lambda:
     lambda = !VALUES.F_NAN
     if obj_valid( (root_obj->wfs_status())->filtw2() ) then begin
-        lambda = ((root_obj->wfs_status())->filtw2())->cw() * 1d-9 
-    endif 
+        lambda = ((root_obj->wfs_status())->filtw2())->cw() * 1d-9
+    endif
     if not finite(lambda) then begin
         lambda = 800d-9
         message, 'Empty/Unknown filter on FW2. Setting central wavelength for TV to 800nm', /info
     endif
-    
+
     ;Framerate
-	framerate = float(aoget_fits_keyword(fitsheader, 'ccd47.FRAMERATE')) 
+	framerate = float(aoget_fits_keyword(fitsheader, 'ccd47.FRAMERATE'))
 	if framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
-    
+
     ; Exposure time
-    exptime =   1./framerate 
-    
+    exptime =   1./framerate
+
 
     ; ROI
     ;str = aoget_fits_keyword(self->header(), 'DETSEC')
@@ -53,14 +53,14 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
     if not arg_present(dark_fname) then begin
         dark_basename = string(aoget_fits_keyword(fitsheader, 'ccd47.DARK_FILENAME'))
         dark_subdir   =  ['wfs_calib_'+(root_obj->wfs_status())->wunit(), 'ccd47', 'backgrounds', 'bin'+strtrim(string(binning),2)]
-        dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, dark_basename) 
+        dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, dark_basename)
     endif
 
     self._centroid_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcentroid.sav')
     self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_psd.sav')
     self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_peaks.sav')
 	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'tv_psf_le.sav')
-	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'tv_psf_elab.sav')
+	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcube_elab.sav')
 	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'tv_sr_se.sav')
 	self._profile_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_profile.sav')
 	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_enc_ene.sav')
