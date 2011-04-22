@@ -33,6 +33,8 @@ function aodb::Init, recompute=recompute
         {name:'tracknum',                           type:'string'}, $
         {name:'mag',                                type:'real'}, $
         {name:'operation_mode',                     type:'string'}, $
+        {name:'isok',								type:'integer'}, $
+        {name:'errorDescription',					type:'string'}, $
         {name:'wfs_status.wunit',                   type:'integer'}, $
         {name:'wfs_status.modulation',              type:'real'}, $
         {name:'wfs_status.rerotator',               type:'real'}, $
@@ -97,6 +99,8 @@ function aodb::Init, recompute=recompute
         {name:'tv.binning',                         type:'integer'}, $
         {name:'tv.gaussfit.fwhm',                   type:'real'}, $
         ;{name:'tv.gaussian.center',                 type:'real'}, $
+        {name:'tv.gaussfit.cx',						type:'real'}, $
+        {name:'tv.gaussfit.cy',						type:'real'}, $
         {name:'tv.sr_se',                           type:'real'}, $
         {name:'irtc.nframes',                       type:'real'}, $
         {name:'irtc.frame_w',                       type:'integer'}, $
@@ -108,6 +112,8 @@ function aodb::Init, recompute=recompute
         {name:'irtc.binning',                       type:'integer'}, $
         {name:'irtc.gaussfit.fwhm',                 type:'real'}, $
         ;{name:'irtc.gaussian.center',                 type:'real'}, $
+        {name:'irtc.gaussfit.cx',					type:'real'}, $
+        {name:'irtc.gaussfit.cy',					type:'real'}, $
         {name:'irtc.sr_se',                         type:'real'},  $
         {name:'control.zerogain',                   type:'integer'},  $
         {name:'control.iskalman',                   type:'integer'},  $
