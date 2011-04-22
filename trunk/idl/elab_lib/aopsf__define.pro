@@ -52,63 +52,51 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
 
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
 
-
 	; Time series for psf centroid analysis
-    ; centroid is compute as arcsec from the long-exposure PSF center
+    ; centroid is compute as PIXELS from the long-exposure PSF center
 	if self._framerate eq 0 then dt=1. else dt=1./self._framerate
     if not self->AOtime_series::Init(dt, fftwindow="") then return,0
- 	self._norm_factor   = 1.0   ;self->pixelscale()
-	self._spectra_units = 'arcsec';
+    if finite(self->pixelscale()) then begin
+ 		self._norm_factor   = self->pixelscale()*1e3
+		self._spectra_units = 'mas'
+	endif else begin
+     	self._norm_factor   = 1.0
+		self._spectra_units = 'pix'
+	endelse
 	self._plots_title = root_obj->tracknum()
 
-    self._threshold = -1.
-    ;self._centroid_fname     = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
-    ;self._store_psd_fname = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._centroid_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
+        file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
 	;Long-exposure PSF
-	;self._psf_le_fname = filepath(root=root_obj->elabdir(), 'psf_le.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._psf_le_fname, /allow_nonexistent
     endif
 
 	;PSF cube elaborated (dark-subtracted, badpixel corrected)
-	;self._psf_elab_fname = filepath(root=root_obj->elabdir(), 'psf_elab.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._psf_elab_fname, /allow_nonexistent
     endif
 
     ;SR estimation from the PSF:
 	self._sr_se = -1.
-	;self._sr_se_fname = filepath(root=root_obj->elabdir(), 'sr_se.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._sr_se_fname, /allow_nonexistent
     endif
 
 	;PSF profile evaluation:
 	self._prof_binsize = 0.5
-	;self._profile_fname = filepath(root=root_obj->elabdir(), 'psf_profile.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._profile_fname, /allow_nonexistent
     endif
 
 	;Encircled energy computation:
-	;self._enc_ene_fname = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._enc_ene_fname, /allow_nonexistent
     endif
-
-
-    ;for i=0, self._nfiles-1 do begin
-    ;    t_psf = readfits( psf_fname[i], header)
-    ;    if i eq 0 then totpsf = t_psf * 0
-    ;    totpsf += t_psf
-    ;endfor
-    ;self._image = ptr_new(totpsf, /no_copy)
-    ;self._gaussfit = obj_new('AOgaussfit', *self._image, self._pixelscale)
 
     return, 1
 end
@@ -116,7 +104,8 @@ end
 pro AOpsf::addHelp, obj
     ; initialize help object and add methods and leafs
     obj->addMethodHelp, "fname()",      	"psf file name(s) [string or strarr]"
-    obj->addMethodHelp, "image()",  		"psf frames [frame_w, frame_h, nframes]"
+    obj->addMethodHelp, "imageCube()", 		"psf frames [frame_w, frame_h, nframes]"
+    obj->addMethodHelp, "longExposure()",   "long exposure [frame_w, frame_h]"
     obj->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
     obj->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
     obj->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
@@ -130,12 +119,11 @@ pro AOpsf::addHelp, obj
     obj->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
     obj->addMethodHelp, "exptime()",		"psf exposure time [s]"
     obj->addMethodHelp, "binning()",		"ccd binning"
-    obj->addMethodHelp, "longExposure()",  "long exposure [frame_w, frame_h]"
-    obj->addMethodHelp, "gaussfit()",  	"return reference to psf gaussfit object (AOgaussfit)"
+    obj->addMethodHelp, "gaussfit()",  		"return reference to psf gaussfit object (AOgaussfit)"
     obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
     obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
-    obj->addMethodHelp, "prof_dist()", 	"profile distance vector in arcsec"
+    obj->addMethodHelp, "prof_dist()", 		"profile distance vector in arcsec"
     obj->addMethodHelp, "prof_dist_lD()", 	"profile distance vector in lambda/D units"
     obj->addMethodHelp, "prof_binsize()", 	"radial bin size [in pixels] used in the computation of the PSF profile"
     obj->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
@@ -143,10 +131,8 @@ pro AOpsf::addHelp, obj
     obj->addMethodHelp, "show_profile, [/SHOW_RMS, _EXTRA=EX]", "show PSF profile"
     obj->addMethodHelp, "enc_ene()",		"encircled energy"
     obj->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
-    obj->addMethodHelp, "enc_ene_dist_lD()", "circle radius in arcsec in lambda/D units"
-    obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in arcsec from longExposure PSF center"
-    obj->addMethodHelp, "threshold()",		"returns the threshold applied to images in the computation of the centroid (float)"
-    obj->addMethodHelp, "set_threshold, thr", "Sets the threshold value mentioned above"
+    obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in arcsec in lambda/D units"
+    obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in PIXELS from longExposure PSF center"
     obj->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
     obj->AOtime_series::addHelp, obj
 end
@@ -155,7 +141,7 @@ end
 ; 		P S F   I M A G E   A N D   D A R K   I M A G E   P R O C E S S I N G
 ;===================================================================================
 
-pro AOpsf::compute
+pro AOpsf::process_cube
 	if file_test(self._psf_elab_fname) then begin
 		restore, self._psf_elab_fname
     endif else begin
@@ -168,12 +154,18 @@ pro AOpsf::compute
     	save, psf, filename=self._psf_elab_fname ;, /compress
         print, 'done'
     endelse
-    self._image = ptr_new(psf, /no_copy)
+    self._imagecube = ptr_new(psf, /no_copy)
 end
+
+
+function AOpsf::imagecube
+    if not (PTR_VALID(self._imagecube)) THEN self->process_cube
+    return, *(self._imagecube)
+end
+
 
 function AOpsf::maneggiaFrame, psf_in
 	psf = psf_in - self->dark_image()
-
     ; remove bad pixels interpolating with neighbours
     ;psf = mad_correct_bad_pixel(~badpixelmap, psf)
     trstr = self->triangulate()
@@ -212,7 +204,7 @@ end
 
 function AOpsf::background_mask, xc, yc, nsup=nsup, borderpix=borderpix, mask_ok=mask_ok
 	if n_params() ne 2 then message, 'Syntax: ...->background_mask(xc,yc)'
-	if not keyword_set(nsup) then nsup = 30.	;maximum sampling of FLAO system
+	if not keyword_set(nsup) then nsup = 40.	;maximum radius to ensure all star light is in.
 	dsup = ao_pupil_diameter() / nsup
     if not finite(self->pixelscale()) or not finite(self->lambda()) then begin
     	mask_ok=0B
@@ -225,8 +217,8 @@ function AOpsf::background_mask, xc, yc, nsup=nsup, borderpix=borderpix, mask_ok
 		mask_ok=0B
 		return, -1
 	endif
-	xcr = xc/float(np) - 0.5
-	ycr = yc/float(np) - 0.5
+	xcr = 2*xc/float(np-1) - 1.0
+	ycr = 2*yc/float(np-1) - 1.0
 	mask = make_mask(np, diaratio=diaratio, xc=xcr, yc=ycr, /inverse)
 	mask = mask[0:self->frame_w()-1,0:self->frame_h()-1]
 	if keyword_set(borderpix) then begin
@@ -288,15 +280,12 @@ function AOpsf::badPixelMap
     return, *(self._badpixelmap)
 end
 
+
 function AOpsf::triangulate
 	if not PTR_VALID(self._triangulate) then badmap = self->badPixelMap()
 	return, *(self._triangulate)
 end
 
-function AOpsf::image
-    if not (PTR_VALID(self._image)) THEN self->compute
-    return, *(self._image)
-end
 
 function AOpsf::dark_image
     if not (PTR_VALID(self._dark_image)) then begin
@@ -322,9 +311,6 @@ function AOpsf::dark_image
     return, *(self._dark_image)
 end
 
-;===================================================================================
-;		 		L O N G - E X P O S U R E   P S F   A N A L Y S I S
-;===================================================================================
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Long-exposure PSF
 function AOpsf::longExposure
@@ -370,7 +356,7 @@ end
 ;    sha = fltarr(self->frame_w(), self->frame_h())
 ;    cc = ( self->centroid() ) / self->pixelscale()
 ;    for i=0L, self->nframes()-1 do begin
-;        imas = (self->image())[*,*,i]
+;        imas = (self->imageCube())[*,*,i]
 ;        ; TODO implement subpixel shift
 ;        sha += shift(imas,-cc[i,0], -cc[i,1])
 ;    endfor
@@ -396,7 +382,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
 			if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
             if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
 		endif else begin
-            if not keyword_set(ima) then ima = self->longExposure()
+            if not keyword_set(ima) then ima1 = self->longExposure() else ima1 = ima
             if not finite(self->pixelscale()) or not finite(self->lambda()) then begin
             	message, 'pixelscale() and/or lambda() not known. SR cannot be computed',/info
             	return, 0.
@@ -409,10 +395,10 @@ function AOpsf::SR_se, plot=plot, ima=ima
         			psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_lbt_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
         			save, psf_dl_ima, file=psf_dl_fname
     			endelse
-    			sr_se = sr_esposito(ima, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
+    			sr_se = sr_esposito(ima1, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
 				if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
             	if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
-    			save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
+    			if not keyword_set(ima) then save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
     			self._sr_se = sr_se
     		endelse
     	endelse
@@ -537,90 +523,65 @@ end
 ; 	P S F   C E N T R O I D   C O M P U T A T I O N   A N D   S T A T I S T I C S
 ;===================================================================================
 
-;pro AOpsf::compute_centroid
-;	if file_test(self._centroid_fname) then begin
-;        restore, self._centroid_fname
-;        self._threshold = thr
-;	endif else begin
-;        lc = (self->gaussfit())->center()	;center in pixels
-;        psf_le = self->longexposure()
-;        mask1 = self->background_mask(lc[0], lc[1], borderpix=10, mask_ok=mask_ok)
-;		if ~mask_ok then mask1 = self->striscia_mask(10,0,/inverted)
-;		idxmask = where(mask1)
-;		thr = median(psf_le[idxmask]) + 1.5 * stddev(psf_le[idxmask])
-;        dx = n_elements(psf_le[*,0])
-;        dy = n_elements(psf_le[0,*])
-;        if ((lc[0] lt 0) or (lc[1] lt 0) or (lc[0] ge dx) or (lc[1] ge dy)) then begin
-;            lc[0] = dx/2
-;            lc[1] = dy/2
-;            message, 'Warning: center coordinates out of range! ...assumming center of frame',/info
-;        endif
-;		image = self->image()
-;		centr = fltarr(self->nframes(),2)
-;		; compute centroid in a small (0.6") field centered on the long-exp PSF
-;		square = 0.6	; arcsec
-;		sz = fix(square/2./self->pixelscale())
-;		for ii=0L, self->nframes()-1 do begin
-;			im = image[*,*,ii]
-;			im[where(im lt thr)] = 0.
-;            sz = fix(min([sz, lc[0], lc[1], dx-lc[0], dy-lc[1]]))
-;			im = im[lc[0]-sz:lc[0]+sz-1, lc[1]-sz:lc[1]+sz-1]
-;			;centr[ii,*] = aocalc_centroid(im) * self->pixelscale()
-;			r = gauss2dfit(im, coeff, /tilt)
-;            centr[ii,*] = (coeff[4:5]-[sz,sz]) * self->pixelscale()
-;		endfor
-;		thr = self->threshold()
-;		save, centr, thr, lc, file=self._centroid_fname
-;        self->free
-;	endelse
-;	self._centroid = ptr_new(centr, /no_copy)
-;end
+pro AOpsf::compute_centroid
+	if file_test(self._centroid_fname) then begin
+        restore, self._centroid_fname
+	endif else begin
+        lc = (self->gaussfit())->center()	;center in pixels
+		thr = 0.01 * (self->gaussfit())->ampl()
+        dx = self->frame_w()
+        dy = self->frame_h()
+        if ((lc[0] lt 0) or (lc[1] lt 0) or (lc[0] ge dx) or (lc[1] ge dy)) then begin
+            message, 'Warning: center coordinates out of range!
+        endif
+		image = self->imageCube()
+		fwhm = fltarr(self->nframes())
+		centr = fltarr(self->nframes(),2)
+		; Compute size of square used to fit the 2D gaussian
+		sz = round((self->gaussfit())->fwhm()*10)
+        sz = fix(min([sz, lc[0], lc[1], dx-lc[0], dy-lc[1]]))
+		for ii=0L, self->nframes()-1 do begin
+			im = image[*,*,ii]
+			im[where(im lt thr)] = 0.
+			im = im[lc[0]-sz:lc[0]+sz-1, lc[1]-sz:lc[1]+sz-1]
+			r = gauss2dfit(im, coeff, /tilt)
+			fwhm[ii] = sqrt(coeff[2]*coeff[3]) * 2*SQRT(2*ALOG(2))
+            centr[ii,*] = (coeff[4:5]-[sz,sz]) ;* self->pixelscale()
+		endfor
+		save, centr, fwhm, lc, thr, sz, file=self._centroid_fname
+        self->free
+	endelse
+	self._centroid = ptr_new(centr, /no_copy)
+end
+
+
 ;
-;;
-;; centroid of short-exposures in arcsec wrt to the longexp centroid (gaussfit->center())
-;;
-;function AOpsf::centroid
-;    if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
-;	return, *(self._centroid)
-;end
+; centroid of short-exposures in arcsec wrt to the longexp centroid (gaussfit->center())
 ;
-;function AOpsf::threshold
-;    if self._threshold eq -1 then begin
-;		psf_le = self->longexposure()
-;
-;       self->set_threshold, threshold
-;
-;    endif
-;	return, self._threshold
-;end
-;
-;
-;pro AOpsf::set_threshold, thr
-;	self._threshold = thr
-;    if ptr_valid(self._centroid) then ptr_free, self._centroid
-;    file_delete, self._centroid_fname, /allow_nonexistent
-;    file_delete, self._store_psd_fname, /allow_nonexistent
-;end
-;
-;; to be implemented in AOtime_series subclasses
-;function AOpsf::GetDati
-;    if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
-;  	return, self._centroid
-;end
+function AOpsf::centroid
+    if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
+	return, *(self._centroid)
+end
+
+
+; to be implemented in AOtime_series subclasses
+function AOpsf::GetDati
+  	return, self->centroid()
+end
 
 pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
 
     freq = self->freq(from=from_freq, to=to_freq)
-    tip  = self->power(0, from=from_freq, to=to_freq, /cum)
-    tilt = self->power(1, from=from_freq, to=to_freq, /cum)
+    tip  = self->power(0, from=from_freq, to=to_freq, /cum) * self->norm_factor()^2.
+    tilt = self->power(1, from=from_freq, to=to_freq, /cum) * self->norm_factor()^2.
     plot, freq, sqrt(tip + tilt), xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1, $
-        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
+        title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter ['+self._spectra_units+' rms]', _extra=ex
     oplot, freq, sqrt(tip), col='0000ff'x
     oplot, freq, sqrt(tilt), col='00ff00'x
     legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
-    sigmatot2 = max ( self->power(0, /cum)+self->power(1, /cum) ) / 2
-    ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
+    sigmatot2 = max( self->power(0, /cum)+self->power(1, /cum) ) * self->norm_factor()^2. / 2
+    ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 * 1e3 ; l/D in mas
     print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
 end
 
@@ -630,12 +591,11 @@ end
 
 pro AOpsf::show_psf, wait=wait
 	if n_elements(wait) eq 0 then wait=0.01
-    if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
     loadct,3,/silent
     print, 'Type "s" to stop!'
-    image = self->image()
+    image = self->imageCube()
     maxval = max(image)
-    centroid_fr = self->centroid() / self->pixelscale() + transpose(rebin((self->gaussfit())->center(), 2, self->nframes(), /samp))
+    centroid_fr = self->centroid() + transpose(rebin((self->gaussfit())->center(), 2, self->nframes(), /samp))
 	for ii=0, self->nframes()-1 do begin
 		image_show, (image)[*,*,ii]/maxval > 0.0001, /as, title='frame '+strtrim(ii,2), /log
 		oplot, [centroid_fr[ii,0]], [centroid_fr[ii,1]], psym=1, symsize=2, color=0
@@ -745,7 +705,7 @@ function AOpsf::roi
 end
 
 pro AOpsf::free
-    if ptr_valid(self._image)       then ptr_free, self._image
+    if ptr_valid(self._imagecube)       then ptr_free, self._imagecube
     if ptr_valid(self._dark_image)  then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
     if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
@@ -766,7 +726,7 @@ end
 pro AOpsf::Cleanup
     ptr_free, self._fitsheader
     ptr_free, self._dark_fitsheader
-    if ptr_valid(self._image)      then ptr_free, self._image
+    if ptr_valid(self._imagecube)      then ptr_free, self._imagecube
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
     if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
@@ -806,7 +766,7 @@ pro AOpsf__define
         _dark_fname     :  ""			, $
         _fitsheader     :  ptr_new()	, $
         _dark_fitsheader:  ptr_new()	, $
-        _image          :  ptr_new()	, $
+        _imagecube      :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
         _badpixelmap_fname : ""			, $
         _badpixelmap    :  ptr_new()	, $
@@ -823,7 +783,6 @@ pro AOpsf__define
         _binning 		:  0.			, $
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
-        _threshold      :  0.			, $
         _centroid_fname :  ""			, $
         _psf_le_fname	:  ""			, $
         _longexposure	:  ptr_new()	, $
