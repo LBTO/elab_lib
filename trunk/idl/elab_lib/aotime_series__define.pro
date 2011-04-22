@@ -240,7 +240,7 @@ pro AOtime_series::SpecPlot, elemnum, _extra=ex
 
 	freq = self->freq()
 	if freq[1]-freq[0] eq 1 then xtitle='frequency bin' else xtitle='frequency [Hz]'
-	psd = self->psd() * (self._norm_factor)^2.
+	psd = self->psd() * self->norm_factor()^2.
   	yrange = sqrt(minmax(psd[1:*,elemnum]))
 
 	loadct,39,/silent
@@ -385,7 +385,7 @@ pro AOtime_series::showpeaks, spectrum_idx, from_freq=from_freq, to_freq=to_freq
 		IF n_elements(WIN) eq 0 then win=10
 		window,win,xsize=700, ysize=400
 		plot, freq, psds, psym=-1, ygridstyle=1, xgridstyle=1, xticklen=1, yticklen=1, xtitle='Frequency [Hz]' $
-			, ytitle='Power '+textoidl('(nm^2 wf)'), title=self._plots_title+', mode '+strtrim(spectrum_idx,2), charsize=1.2, _extra=ex
+			, ytitle='Power ['+self._spectra_units+textoidl('^2]'), title=self._plots_title+', mode '+strtrim(spectrum_idx,2), charsize=1.2, _extra=ex
 		oplot, [pk.(0).fr], [pw], psym=2, color=255L
 		for ii=0, npks-1 do oplot, [replicate(pk.(0).frmin[ii],2),pk.(0).fr[ii],replicate(pk.(0).frmax[ii],2)], $
 			[0,replicate(pw[ii],3),0], color=255L
