@@ -63,11 +63,13 @@ pro AOgaussfit::fitta, debug=debug
 	; Get a subarray containing the PSF image
     teeprev = 0.0
     sz = max([w,h])
+    teev = dblarr(sz)
     for i=0L,sz-1 do begin
         xint = [0 > (xmax-i), (xmax+i) < (w-1)]
         yint = [0 > (ymax-i), (ymax+i) < (h-1)]
         tee = total(fr[xint[0]:xint[1], yint[0]:yint[1]])
-        if (tee/teeprev lt 1.02) then break
+        teev[i] = tee
+        if (tee/teeprev lt 1.002) then break
         teeprev = tee
     endfor
     if (ddd) then  print, 'fitting subframe ', xint[0], xint[1], yint[0], yint[1], tee/toten
@@ -97,6 +99,14 @@ end
 
 function AOgaussfit::center
     return, self._center
+end
+
+function AOgaussfit::cx
+	return, (self->center())[0]
+end
+
+function AOgaussfit::cy
+	return, (self->center())[1]
 end
 
 function AOgaussfit::fwhm
