@@ -566,7 +566,8 @@ end
 
 ; to be implemented in AOtime_series subclasses
 function AOpsf::GetDati
-  	return, self->centroid()
+    if not (PTR_VALID(self._centroid)) THEN self->compute_centroid
+	return, self._centroid
 end
 
 pro AOpsf::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
