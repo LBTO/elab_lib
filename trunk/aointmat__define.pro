@@ -44,6 +44,10 @@ function AOintmat::Init, fname
     md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))+'modesAmp'
     self._modalamp_fname = md_dir+path_sep()+md_fn
 
+	;Amplitude envelope
+	md_dir = file_dirname(self->fname())
+	md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))
+	self._amp_envelope_fname = md_dir+'amp_envelope.fits'
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOintmat', 'Represent an interaction matrix (IM)') then return, 0
@@ -66,6 +70,8 @@ function AOintmat::Init, fname
     self->addMethodHelp, "modalamp()", "modal amplitudes (fltarr)"
     self->addMethodHelp, "modal_dist_fname()", "fitsfile name of modal disturbance sequence (fltarr)"
     self->addMethodHelp, "modal_dist()", "modal disturbance sequence (fltarr)"
+    self->addMethodHelp, "amp_envelope_fname()", "fitsfile name of modal amplitude envelope (string)"
+    self->addMethodHelp, "amp_envelope()", "modal amplitude envelope (fltarr)"
     return, 1
 end
 
@@ -169,6 +175,17 @@ end
 function AOintmat::modalamp
 	ma = readfits(ao_datadir()+path_sep()+self->modalamp_fname(), /SILENT)
 	return, ma
+end
+
+; return filename of amp envelope
+function AOintmat::amp_envelope_fname
+	return, self._amp_envelope_fname
+end
+
+; return amp envelope
+function AOintmat::amp_envelope
+	me = readfits(ao_datadir()+path_sep()+self->amp_envelope_fname(), /SILENT)
+	return, me
 end
 
 ; returns Sx in 2D
@@ -288,6 +305,7 @@ pro AOintmat__define
         _s2d_mask						  : ptr_new()	, $
         _modal_dist_fname				  : ''			, $
         _modalamp_fname					  : ''			, $
+        _amp_envelope_fname				  : ''			, $
         INHERITS AOhelp $
     }
 end
