@@ -2,7 +2,7 @@
 ;>>>>>>>>>> on CORSICA -> cd, /savedata
 ;disturbance parameters
 ;******************************************************************
-disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
+disturb_type = 'atm+vib' ;'vib', 'atm', 'atm+vib'
 ;disturb_dir = 'phase_screens/'
 ;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
 disturb_dir = '/savedata/phase_screens_flao2/'
@@ -10,13 +10,15 @@ disturb_dir = '/savedata/phase_screens_flao2/'
 
 ;atmospheric parameters
 ;******************************************************************
-seeing = [0.4, 0.6, 1.0, 1.2, 1.5]
+;seeing = [0.4, 0.6, 1.0, 1.2, 1.5]
+seeing = [0.8]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
 seed = 1983L
 n_steps = 4000
 hz = [500., 625., 800., 1000.]
+;hz = [1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
@@ -42,9 +44,10 @@ mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ cors
 ;******************************************************************
 ;.com generate_disturb
 
-;;vibration parameters
-;;******************************************************************
+;vibration parameters
+;******************************************************************
 ;modes = [1,2]			;modes with vibrations (line # in M2C)
+modes = [3]
 ;dampvibTIP =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
 ;dampvibTILT =  [0]		;1 damped, 0 sinusoidal, -1 no vibration
 ;dTIP =  [0.]
@@ -53,25 +56,30 @@ mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ cors
 ;fTILT =  [20.8]		;[Hz]
 ;stddevTIP = [0.1]/sqrt(2) 	;[arcsec]
 ;stddevTILT = [0.1]/sqrt(2)	;[arcsec]
-;
+
 ;dampvib = [[dampvibTIP],[dampvibTILT]]
 ;d = [[dTIP],[dTILT]]
 ;f = [[fTIP],[fTILT]]
 ;ttsec = [[stddevTIP],[stddevTILT]]
-;
+
+dampvib = [0]
+d = [0.]
+f = [30.]
+s = [40e-9]		;m wf rms (the sin amplitude will be s/4*sqrt(2.)
+
 ;TTm2sec, 8.222, ttsec=ttsec, ttm=s	;determine standard deviation of vibrations on TIP and TILT in m
-;
-;;vibration structure
-;;******************************************************************
-;vib={$
-;      m2c_file	: 'adsec_calib/M2C/KL/m2c.fits', 	$
-;      modes	: modes, 				$
-;      dampvib	: dampvib, 				$
-;      d		: d, 					$
-;      f		: f, 					$
-;      s		: s					$
-;      }
-;
+
+;vibration structure
+;******************************************************************
+vib={$
+      m2c_file	: 'adsec_calib/M2C/KL_20110311/m2c.fits', 	$
+      modes	: modes, 				$
+      dampvib	: dampvib, 				$
+      d		: d, 					$
+      f		: f, 					$
+      s		: s					$
+      }
+
 ;undefine, s 				;ttm must not be definite at the next TTm2sec call
 
 ;;analyse data from IRTC
