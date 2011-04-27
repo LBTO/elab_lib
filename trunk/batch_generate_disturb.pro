@@ -7,6 +7,7 @@ disturb_type = 'atm+vib' ;'vib', 'atm', 'atm+vib'
 ;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
 disturb_dir = '/savedata/phase_screens_flao2/'
 
+ao_init, root='~'
 
 ;atmospheric parameters
 ;******************************************************************
