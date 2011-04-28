@@ -709,6 +709,7 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
     obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative, /sumspectra)", "return power of idx-th spectrum between frequencies from_freq and to_freq, eventually cumulating on freqs and/or summing on spectra"
     obj->addMethodHelp, "findPeaks(idx, from_freq=from, to_freq=to, t100=t100)", "return the peaks of idx-th spectrum between frequencies from_freq and to_freq, t100 = % threshold of the returned results"
+    obj->addMethodHelp, "showPeaks, idx, from_freq=from, to_freq=to, t100=t100", "show the peaks of idx-th spectrum between frequencies from_freq and to_freq, t100 = % threshold of the returned results"
     obj->addMethodHelp, "set_smooth,smooth", "sets the smooth to be used in the computation of the PEAKS."
     obj->addMethodHelp, "set_threshold,threshold", "ATTENTION: You are advise not to modify this value! sets the threshold to be used in the computation of the PEAKS."
     ;    obj->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
@@ -746,6 +747,7 @@ end
 
 pro AOtime_series::forceCompute
     file_delete, self._store_psd_fname, /allow_nonexistent
+    file_delete, self._store_peaks_fname, /allow_nonexistent
     self->AOtime_series::free
 end
 
