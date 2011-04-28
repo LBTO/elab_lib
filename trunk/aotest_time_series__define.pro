@@ -4,7 +4,8 @@
 ;-
 function AOtest_time_series::Init, time_series, dt, _extra=e
     self._time_series = ptr_new(time_series)
-    self._store_psd_fname = getenv('IDL_TMPDIR')+'idl_merda.sav'
+    self._store_psd_fname = getenv('IDL_TMPDIR')+'merda_psd.sav'
+    self._store_peaks_fname = getenv('IDL_TMPDIR')+'merda_peaks.sav'
     if not self->AOtime_series::Init(dt, _extra=e) then return,0
    	self->forceCompute
     return,1
