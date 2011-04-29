@@ -71,6 +71,7 @@ repeat begin
     dssize = ssize-shift(ssize,1)
     aaa = dflux / dssize
     aaa_len = n_elements(aaa)
+    if aaa_len-4 lt 0 then break
     fixbg = mean(aaa[aaa_len-4:aaa_len-1])
     if keyword_set(plot) then print,'Background modified by ',fixbg,' counts'
 	counter += 1
