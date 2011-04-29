@@ -43,12 +43,18 @@ new_bg = total(ima_bs[ind1])/ npbg
 fixbg=0
 counter=0
 
+;side = min([xc,npx-xc,yc,npy-yc],h)
+side = min([xc,npx-xc,yc,npy-yc]-npr)	;do not take into account image corner set to zero!!
+if side lt 0 then begin
+	errmsg = 'Center of PSF estimation failed'
+	message, errmsg, /info
+	return, 0
+endif
+side10 = fix(side)/10*10
+nside = side10/10 * 2 -1
+
 repeat begin
 	new_bg += fixbg
-   	;side = min([xc,npx-xc,yc,npy-yc],h)
-   	side = min([xc,npx-xc,yc,npy-yc]-npr)	;do not take into account image corner set to zero!!
-   	side10 = fix(side)/10*10
-   	nside = side10/10 * 2 -1
    	flux = fltarr(nside)
    	side_size= fltarr(nside)
    	for i= 1, nside do begin
