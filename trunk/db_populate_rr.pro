@@ -23,7 +23,7 @@ pro db_populate_rr, recompute=recompute
     obj_destroy, rrMay3
 
 	rrJune1 = obj_new('aodataset', from='20100606_190504', to='20100606_225208', rec=rec)
-;	rrJune1->removeTracknum, (obj_new('aodataset', from='20100606_200930', to='20100606_214113'))->tracknums() ;with IRTC subframe not supported.
+	rrJune1->removeTracknum, (obj_new('aodataset', from='20100606_200930', to='20100606_214113'))->tracknums() ;with IRTC subframe not supported.
 	db->insert, rrJune1->tracknums()
     db->save
     !aomultiton_elab->release
@@ -36,21 +36,21 @@ pro db_populate_rr, recompute=recompute
     obj_destroy, rrJune2
 
 	rrJune3 = obj_new('aodataset', from='20100608_195744', to='20100608_235720', rec=rec)
-;	rrJune3->removeTracknum, (obj_new('aodataset', from='20100608_235101', to='20100608_235720'))->tracknums() ;with IRTC subframe not supported.
+	rrJune3->removeTracknum, (obj_new('aodataset', from='20100608_235101', to='20100608_235720'))->tracknums() ;with IRTC subframe not supported.
 	db->insert, rrJune3->tracknums()
     db->save
     !aomultiton_elab->release
     obj_destroy, rrJune3
 
 	rrJune4 = obj_new('aodataset', from='20100610_231802', to='20100610_234129', rec=rec)
-;	rrJune4->removeTracknum, ['20100610_233252', '20100610_234002','20100610_234129']  ;with IRTC subframe not supported.
+	rrJune4->removeTracknum, ['20100610_233252', '20100610_234002','20100610_234129']  ;with IRTC subframe not supported.
 	db->insert, rrJune4->tracknums()
     db->save
     !aomultiton_elab->release
     obj_destroy, rrJune4
 
 	rrJune5 = obj_new('aodataset', from='20100611_000146', to='20100611_011930', rec=rec)
-;	rrJune5->removeTracknum, (obj_new('aodataset', from='20100611_000146', to='20100611_002525'))->tracknums() ;with IRTC subframe not supported.
+	rrJune5->removeTracknum, (obj_new('aodataset', from='20100611_000146', to='20100611_002525'))->tracknums() ;with IRTC subframe not supported.
 	db->insert, rrJune5->tracknums()
     db->save
     !aomultiton_elab->release
