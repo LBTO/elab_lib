@@ -188,7 +188,7 @@ function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, fra
 		 		err_msg += ' - ' + msg_temp
 		 	endif
 		endif else begin
-			msg_temp = 'No compatible (i.e. same exposure time or filter) IRTC dark found'
+			msg_temp = 'No compatible IRTC dark found (i.e. same exposure time or filter or dimensions)'
 			message, msg_temp, /info
 			err_msg += ' - ' + msg_temp
 			return, ""
