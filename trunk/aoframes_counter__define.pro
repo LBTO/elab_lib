@@ -8,17 +8,24 @@ function AOframes_counter::Init, frames_counter_file, wfs_status_obj
         message, 'Cannot find frames_counter file: '+frames_counter_file, /inform
         return, 0
     endif
+
     self._framerate=(wfs_status_obj->ccd39())->framerate()
-    self->compute
-;    self._fc = ptr_new( readfits(frames_counter_file, header, /SILENT), /no_copy)
-;    self._header = ptr_new(header, /no_copy)
-;    self._nframes = n_elements(*self._fc)
+;    self->compute
+	frames_counter = readfits(frames_counter_file, header, /SILENT)
+    self._nframes = n_elements(frames_counter)
+	if self._nframes le 2 then return,0
+
+    self._fc = ptr_new(frames_counter, /no_copy)
+    self._header = ptr_new(header, /no_copy)
 ;    dfc = (*self._fc-shift(*self._fc,1) ) [1:*]
 ;    self._decimation = min(dfc)-1
 ;    self._deltat = 1. / ( (wfs_status_obj->ccd39())->framerate() ) * (self._decimation+1)
 ;    self._lost_frames_idx =  ptr_new( where(dfc gt self._decimation+1, cnt), /no_copy)
 ;    self._n_jumps = cnt
 ;    if self._n_jumps gt 0 then self._lost_frames  =  ptr_new( dfc[*self._lost_frames_idx]/(self._decimation+1) - 1, /no_copy)
+	self._decimation = -1
+	self._deltat = -1
+	self._n_jumps = -1
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOframescounter', 'Frames counter: decimation and lost frames') then return, 0
@@ -36,9 +43,9 @@ function AOframes_counter::Init, frames_counter_file, wfs_status_obj
 end
 
 pro AOframes_counter::compute
-    self._fc = ptr_new( readfits(self._frames_counter_file, header, /SILENT), /no_copy)
-    self._header = ptr_new(header, /no_copy)
-    self._nframes = n_elements(*self._fc)
+;    self._fc = ptr_new( readfits(self._frames_counter_file, header, /SILENT), /no_copy)
+;    self._header = ptr_new(header, /no_copy)
+;    self._nframes = n_elements(*self._fc)
     dfc = (*self._fc-shift(*self._fc,1) ) [1:*]
     self._decimation = min(dfc)-1
     self._deltat = 1. / self._framerate  * (self._decimation+1)
@@ -92,6 +99,7 @@ end
 ; interval between diagnostic frames (seconds): (decimation+1)/ccdrate
 ;
 function AOframes_counter::deltat
+	if self._deltat eq -1 then self->compute
     return, self._deltat
 end
 
@@ -99,10 +107,12 @@ end
 ; number of jumps detected in the frames counter array
 ;
 function AOframes_counter::n_jumps
+	if self._n_jumps eq -1 then self->compute
     return, self._n_jumps
 end
 
 function AOframes_counter::decimation
+	if self._decimation eq -1 then self->compute
     return, self._decimation
 end
 
