@@ -101,6 +101,7 @@ function AOelab::Init, tracknum, $
     ; create frames counter leaf
     frames_counter_file = filepath(root=self._datadir,  'FramesCounter_'+tracknum+'.fits')
     self._frames_counter = obj_new('AOframes_counter', frames_counter_file, self._wfs_status)
+	if not obj_valid(self._frames_counter) then return,0
 
     ; modal_rec
     if keyword_set(modal_reconstructor_file) then begin
