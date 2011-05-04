@@ -105,20 +105,22 @@ function AOolmodes::nmodes
   return, self->AOtime_series::nseries()
 end
 
-pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
+pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, overplot=overplot
   coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6
   freq = self->freq(from=from_freq, to=to_freq)
   tip  = self->power(0, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
   tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
-  plot, freq, sqrt(tip + tilt), $
-    title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
-  oplot, freq, sqrt(tip), col='0000ff'x
-  oplot, freq, sqrt(tilt), col='00ff00'x
-  legend, ['Tilt+Tip', 'Tip', 'Tilt'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
-
-  sigmatot2 = max ( tip + tilt)  / 2
-  ldmas = 1.6d-6 / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
-  print, 'SR attenuation in H band due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
+  if not keyword_set(overplot) then begin
+  	plot, freq, sqrt(tip + tilt), xticklen=1, yticklen=1, xgridstyle=1, ygridstyle=1, $
+    	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Cumulated PSD [arcsec rms]', _extra=ex
+  	oplot, freq, sqrt(tip), col='0000ff'x
+  	oplot, freq, sqrt(tilt), col='00ff00'x
+  	legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x]
+  endif else begin
+   	oplot, freq, sqrt(tip + tilt)
+   	oplot, freq, sqrt(tip), col='0000ff'x
+   	oplot, freq, sqrt(tilt), col='00ff00'x
+  endelse
 end
 
 ; to be implemented in AOtime_series subclasses
