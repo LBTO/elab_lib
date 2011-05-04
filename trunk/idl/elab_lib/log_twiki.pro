@@ -5,6 +5,8 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
 
+    idlstring = "["
+
     for i=0, aodataset->Count()-1 do begin
         ee = getaoelab(objref[i])
         if obj_valid(ee) eq 0 then begin
@@ -56,7 +58,13 @@ pro log_twiki, aodataset, ref_star=ref_star
 			disturb,  $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
+
+        if i ne 0 then idlstring += "," 
+        idlstring += "'"+ee->tracknum()+"'"
         ee->free
     endfor
     aodataset->free
+
+    idlstring +="]"
+    print, 'IDL string:  ' +idlstring
 end
