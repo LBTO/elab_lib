@@ -335,6 +335,25 @@ function AOelab::mag
     return, !values.f_nan
 end
 
+;function AOelab::mag_v2
+;    if obj_valid(self->frames()) then $
+;        if obj_valid(self->wfs_status()) then $
+;            if obj_valid( (self->wfs_status())->ccd39() ) then $
+;				if obj_valid( (self->wfs_status())->filtw1() ) then begin
+;					nphpup = (self->frames())->nph_per_int_av()
+;					framerate = ((self->wfs_status())->ccd39())->framerate()
+;					fw1_trans = ((self->wfs_status())->filtw1())->transmissivity()
+;					fw1_lower_bound = ((self->wfs_status())->filtw1())->cw() - $
+;									  ((self->wfs_status())->filtw1())->bw()/2.
+;					fw1_upper_bound = ((self->wfs_status())->filtw1())->cw() + $
+;									  ((self->wfs_status())->filtw1())->bw()/2.
+;
+;	            	return, tell_me_the_mag_v2(nphpup, framerate, fw1_trans, fw1_lower_bound, fw1_upper_bound)
+;				endif
+;    message, 'impossible to compute the magnitude', /info
+;    return, !values.f_nan
+;end
+
 function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
 	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
