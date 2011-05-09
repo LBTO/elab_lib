@@ -38,6 +38,7 @@ otherlibs:
 	$(Q)$(MAKE) $(MAKEOPTS) -C IntfLib
 	$(Q)$(MAKE) $(MAKEOPTS) -C arblib
 	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib
+	$(Q)$(MAKE) $(MAKEOPTS) -C env
 
 
 
