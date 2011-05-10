@@ -14,6 +14,7 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self._nph_per_int_rms   = -1.0
     self._nph_per_sec_av    = -1.0
     self._nphsub_per_int_av = -1.0
+	self._ron				= -1.0
 
 	; number of photons per ADU
 	self._photons_per_ADU = 0.5
@@ -39,6 +40,12 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
         file_delete, self._fluxdata_fname, /allow_nonexistent
     endif
 
+	self._rondata_fname = filepath(root=root_obj->elabdir(), 'ron_data.sav')
+    if root_obj->recompute() eq 1B then begin
+        file_delete, self._rondata_fname, /allow_nonexistent
+    endif
+
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOframes', 'Represent WFS frames') then return, 0
     self->addMethodHelp, "frames_fname()", "frames file name (string)"
@@ -56,6 +63,7 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self->addMethodHelp, "antidrift_fname()", "AntiDrift correction file name (string)"
     self->addMethodHelp, "antidrift_values()", "AntiDrift correction history (float)"
     self->addMethodHelp, "antidrift_status()", "Returns 1 if AntiDrift is activated, 0 otherwise (integer)"
+    self->addMethodHelp, "ron()", "Estimate of Read-Out Noise"
     return, 1
 end
 
@@ -205,6 +213,50 @@ pro AOframes::calc_number_photons
 	self._nphsub_per_int_av = self._nph_per_int_av / nsub
 end
 
+;+
+; ESTIMATES THE READ-OUT NOISE (RON)
+;-
+pro AOframes::calc_ron
+	if file_test(self._rondata_fname) then begin
+		restore, self._rondata_fname
+	endif else begin
+		fr  = self->frames(/DARK_SUB)
+		roi = self->ron_roi()
+		np = n_elements(roi)
+		ronmes = fltarr(np,self->nframes())
+		for i=0, self->nframes()-1 do ronmes[*,i] = (fr[*,*,i])[roi]
+		ron_vals = fltarr(np)
+		for j=0, np-1 do ron_vals[j] = stddev(ronmes[j,*]) * self._photons_per_ADU
+		save, ron_vals, roi, filename=self._rondata_fname
+	endelse
+	self._ron = mean(ron_vals)
+end
+
+function AOframes::ron_roi
+	frw = self->frame_w()
+	frh = self->frame_h()
+	roi = lonarr(frw,frh)
+	bin = (*self._wfs_status->ccd39())->binning()
+	px = 1 ;pixels from border
+	if bin eq 1 then begin
+		roi[px:px+1,px:px+1] = 1
+		roi[frw-px-2:frw-px-1,px:px+1] = 1
+		roi[frw-px-2:frw-px-1,frh-px-2:frh-px-1] = 1
+		roi[px:px+1,frh-px-2:frh-px-1] = 1
+	endif else begin
+		roi[px,px] = 1
+		roi[frw-px-1,px] = 1
+		roi[frw-px-1,frh-px-1] = 1
+		roi[px,frh-px-1] = 1
+	endelse
+	return, where(roi)
+end
+
+function AOframes::ron
+	if self._ron eq -1.0 then self->calc_ron
+	return, self._ron
+end
+
 pro AOframes::free
     if ptr_valid(self._header) then ptr_free, self._header
     ;if ptr_valid(self._wfs_status) then ptr_free, self._wfs_status
@@ -238,6 +290,8 @@ pro AOframes__define
         _fluxdata_fname	   : ""			, $
         _antidrift_fname   : ""			, $
         _antidrift_status  : 0			, $
+        _rondata_fname	   : ""			, $
+        _ron			   : 0.0		, $
         INHERITS AOhelp 				  $
     }
 end
