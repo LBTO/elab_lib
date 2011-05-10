@@ -118,8 +118,8 @@ function aodb::Init, recompute=recompute
         {name:'control.zerogain',                   type:'integer'},  $
         {name:'control.iskalman',                   type:'integer'},  $
         {name:'control.maxgain',                    type:'real'},  $
-        {name:'control.mingain',                    type:'real'}  $
-
+        {name:'control.mingain',                    type:'real'},  $
+		{name:'frames.ron',							type:'real'}  $
 ; {name:'control.maxgain',                   type:'real'}  $
 ; {name:'control.mingain',                   type:'real'}  $
 
