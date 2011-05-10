@@ -176,6 +176,7 @@ PRO db_add_to_ignore_list
 	;Problems with telescope:
 	db->alter, ['20100530_055504'], 'ignore', 1	;rotator stopped
 	db->alter, ['20100604_103353', '20100604_103418', '20100604_103608', '20100604_103646'], 'ignore', 1
+	db->alter, ['20101127_042641'], 'ignore', 1
 	db->save
 
 END
