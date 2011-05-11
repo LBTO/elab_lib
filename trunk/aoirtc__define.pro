@@ -13,10 +13,16 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     fitsheader = headfits(psf_fname, /SILENT, errmsg=errmsg)
     if errmsg ne ''  then message, psf_fname+ ': '+ errmsg, /info
 
+	;Camera Temperature (K)
+	self._irtc_temp = float(aoget_fits_keyword(fitsheader, 'CAMTEM'))
+    if self._irtc_temp gt 260. then begin
+    	msg_temp = 'Warning: IRTC temperature > 260K'
+        message, msg_temp, /info
+	    self._irtc_err_msg += ' - ' + msg_temp
+	endif
 
     ; Binning:
     binning = 1			;always bin1?
-
 
     ; Pixelscale:
     apertnr = long(aoget_fits_keyword(fitsheader, 'APERTNR'))
@@ -136,6 +142,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOIRTC', 'IRTC image') then return, 0
+    self->addMethodHelp, "temp()", "IRTC temperature (K)"
     self->AOpsf::addHelp, self
 
     return, 1
@@ -218,6 +225,10 @@ function AOIRTC::dark_image
 	return, *(self._dark_image)
 end
 
+; IRTC temperature (K)
+function AOIRTC::temp
+	return, self._irtc_temp
+end
 
 
 ;Returns the error messages
@@ -237,6 +248,7 @@ end
 pro AOIRTC__define
     struct = { AOIRTC					, $
     	_irtc_err_msg		: ""		, $
+    	_irtc_temp			: 0.0		, $
         INHERITS    AOpsf,  $
         INHERITS    AOhelp  $
     }
