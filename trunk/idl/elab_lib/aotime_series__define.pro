@@ -225,7 +225,7 @@ function AOtime_series::norm_factor
 	return, self._norm_factor
 end
 
-pro AOtime_series::SpecPlot, elemnum, _extra=ex
+pro AOtime_series::SpecPlot, elemnum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 
 	if n_params() ne 1 then begin
 		message, 'Missing parameter. Usage: ...->SpecPlot, elemnum', /info
@@ -243,12 +243,16 @@ pro AOtime_series::SpecPlot, elemnum, _extra=ex
 	psd = self->psd() * self->norm_factor()^2.
   	yrange = sqrt(minmax(psd[1:*,elemnum]))
 
-	loadct,39,/silent
-	!X.MARGIN = [12, 3]
-	title =self._plots_title+', element '+strtrim(elemnum,2)
-	plot_oo, freq[1:*], sqrt(psd[1:*,elemnum]), charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'  Hz^{-1/2}]') $
-		, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
-
+    if not keyword_set(OVERPLOT) then  begin
+    	PREV_MARGIN = !X.MARGIN
+		!X.MARGIN = [12, 3]
+		title =self._plots_title+', element '+strtrim(elemnum,2)
+		plot_oo, freq[1:*], sqrt(psd[1:*,elemnum]), charsize=1.2, xtitle=xtitle, ytitle=textoidl('['+self._spectra_units+'  Hz^{-1/2}]') $
+			, title=title, yrange=yrange, ytickformat='(e9.1)', _extra=ex
+		!X.MARGIN = PREV_MARGIN
+	endif else begin
+		oplot, freq[1:*], sqrt(psd[1:*,elemnum]), COLOR=COLOR
+	endelse
 end
 
 ;pro AOtime_series::PowerPlot, elemnum, _extra=ex
