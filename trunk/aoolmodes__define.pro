@@ -46,7 +46,7 @@ function AOolmodes::Init, root_obj
 
   if not self->AOtime_series::Init( (root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
   self._norm_factor   = 1e9 * root_obj->reflcoef()	;nm wf
-  self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
+  self._spectra_units = textoidl('nm-wf')
   self._plots_title   = root_obj->tracknum()
 
   ;Keep root_obj to easily retrieve residual_modes(), modes() and modalpositions()
