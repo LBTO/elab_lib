@@ -52,7 +52,7 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir
         root           : rootdir, $
         datadir        : rootdir+path_sep()+'towerdata', $
         elabdir        : elabdir+path_sep()+'elab', $
-        phasemapdir    : phasemapdir+path_sep()+'phase_map' $
+        phasemapdir    : phasemapdir+path_sep()+'phase_maps' $
     }
 
 defsysv, "!ao_env", EXISTS=exists
