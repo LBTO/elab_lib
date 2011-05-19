@@ -22,10 +22,10 @@ end
 
 pro AOmodeShapes::restore_sav
 	restore, self->fname()
-	self._modemat  = ptr_new(KLmatrix, /no_copy)
+	self._modemat  = ptr_new(float(KLmatrix), /no_copy)
 	self._idx_mask = ptr_new(idx_mask, /no_copy)
-	self._xx   = ptr_new(XX, /no_copy)
-	self._yy   = ptr_new(YY, /no_copy)
+	self._xx   = ptr_new(float(XX), /no_copy)
+	self._yy   = ptr_new(float(YY), /no_copy)
 	self._Dpix = Dpix
 	self._nmodes = (size(*self._modemat,/dim))[0]
 end
