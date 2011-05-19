@@ -1,5 +1,8 @@
-
-
+#clean:
+#	rm -rf  $(ADOPT_SOURCE)/idl/errordb.pro
+#	rm -rf  $(ADOPT_SOURCE)/idl/msgcodes.pro
+#	rm -rf  $(ADOPT_SOURCE)/idl/vartypes.pro
+#
 all: errordb.pro msgcodes.pro vartypes.pro
 
 errordb.pro: ../lib/base/errordb.txt
