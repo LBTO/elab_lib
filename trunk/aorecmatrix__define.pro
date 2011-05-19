@@ -96,9 +96,9 @@ pro AOrecmatrix::free
 end
 
 pro AOrecmatrix::Cleanup
-    ptr_free, self._modes_idx
-    ptr_free, self._slopes_idx
-    ptr_free, self._rec_file_fitsheader
+    if ptr_valid(self._modes_idx) then ptr_free, self._modes_idx
+    if ptr_valid(self._slopes_idx) then ptr_free, self._slopes_idx
+    if ptr_valid(self._rec_file_fitsheader) then ptr_free, self._rec_file_fitsheader
     self->AOhelp::Cleanup
 end
 
