@@ -28,11 +28,8 @@ function AOresidual_modes::Init, root_obj
 	self._spectra_units = textoidl('[nm-wf]')
 	self._plots_title = root_obj->tracknum()
 
-    ; create residual_modes and analyze
-    ;self->datiProducer
-
-    ;self->AOtime_series::Compute
-
+	;Initialize WF
+	self._wf = obj_new('AOwf', self._root_obj, root_obj->modeShapes(), self)
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
@@ -98,6 +95,10 @@ function AOresidual_modes::GetDati
     return, self._modes
 end
 
+function AOresidual_modes::wf
+	return, self._wf
+end
+
 pro AOresidual_modes::free
     if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOtime_series::free
@@ -116,6 +117,7 @@ pro AOresidual_modes__define
         _modes         : ptr_new(), $
         _store_fname   : "" ,       $
         _root_obj      : obj_new(), $
+        _wf			   : obj_new(), $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }
