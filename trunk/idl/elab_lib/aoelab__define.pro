@@ -124,6 +124,13 @@ function AOelab::Init, tracknum, $
     intmat_fname = (self->control())->intmat_fname()
 	self._intmat = getintmat( intmat_fname )
 
+	; Modes Shapes
+	if obj_valid(self->intmat()) then begin
+		basis = (self->intmat())->basis()
+		modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
+		self._modeShapes = get_modes_shapes(modeShapes_fname)
+	endif else message, 'Unknown modal basis: mode shapes not initialized...'
+
     ; disturb & modaldisturb
     disturb_sync = long(aoget_fits_keyword((self->wfs_status())->header(), "sc.DISTURBANCE"))
     if disturb_sync gt 0 then begin
@@ -217,6 +224,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._slopes) then self->addleaf, self._slopes, 'slopes'
     if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
     if obj_valid(self._intmat) then self->addleaf, self._intmat, 'intmat'
+    if obj_valid(self._modeShapes) then self->addleaf, self._modeShapes, 'modeShapes'
     if obj_valid(self._residual_modes) then self->addleaf, self._residual_modes, 'residual_modes'
     if obj_valid(self._modes) then self->addleaf, self._modes, 'modes'
     if obj_valid(self._olmodes) then self->addleaf, self._olmodes, 'olmodes'
@@ -249,6 +257,8 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "irtc()", "reference to IRTC object (AOpsf)"
     self->addMethodHelp, "tv()", "reference to TV ccd47 object (AOpsf)"
     self->addMethodHelp, "modal_rec()", "reference to modal reconstructor object (AOrecmatrix)"
+    self->addMethodHelp, "intmat()", "reference to interaction matrix object (AOintmat)"
+    self->addMethodHelp, "modeShapes()", "reference to modal shapes object (AOmodeShapes)"
     self->addMethodHelp, "frames()", "reference to WFS frame object (AOframes)"
     self->addMethodHelp, "disturb()", "reference to disturb object (AOdisturb)"
     self->addMethodHelp, "modaldisturb()", "reference to modal disturb object (AOmodaldisturb)"
@@ -587,6 +597,10 @@ function AOelab::intmat
     IF (OBJ_VALID(self._intmat)) THEN return, self._intmat else return, obj_new()
 end
 
+function AOelab::modeShapes
+    IF (OBJ_VALID(self._modeShapes)) THEN return, self._modeShapes else return, obj_new()
+end
+
 function AOelab::disturb
     IF (OBJ_VALID(self._disturb)) THEN return, self._disturb else return, obj_new()
 end
@@ -683,6 +697,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
     IF (OBJ_VALID(self._intmat)) THEN  self._intmat->free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
+    IF (OBJ_VALID(self._modeShapes)) THEN  self._modeShapes->free
     IF (OBJ_VALID(self._frames)) THEN  self._frames->free
     IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
@@ -709,6 +724,7 @@ pro AOelab::Cleanup
     obj_destroy, self._irtc
 ;    obj_destroy, self._modal_rec
 ;    obj_destroy, self._intmat
+;	 obj_destroy, self._modeShapes
     obj_destroy, self._frames
     obj_destroy, self._disturb
     obj_destroy, self._modaldisturb
@@ -743,6 +759,7 @@ pro AOelab__define
         _irtc              : obj_new(), $
         _modal_rec         : obj_new(), $
         _intmat			   : obj_new(), $
+        _modeShapes		   : obj_new(), $
         _frames            : obj_new(), $
         _disturb           : obj_new(), $
         _modaldisturb      : obj_new(), $
