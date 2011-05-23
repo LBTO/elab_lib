@@ -28,6 +28,8 @@ function AOmodaldisturb::Init, root_obj
 	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
 	self._plots_title = root_obj->tracknum()
 
+	;Initialize WF
+	self._wf = obj_new('AOwf', root_obj, root_obj->modeShapes(), self)
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodaldisturb', 'Represent disturb projected on modal basis') then return, 0
@@ -56,6 +58,10 @@ function AOmodaldisturb::nmodes
     return, self->AOtime_series::nseries()
 end
 
+function AOmodaldisturb::wf
+	return, self._wf
+end
+
 ; to be implemented in AOtime_series subclasses
 function AOmodaldisturb::GetDati
     if not ptr_valid(self._modaldisturb) then self->datiProducer
@@ -80,6 +86,7 @@ pro AOmodaldisturb__define
         _m2c_obj           :  obj_new(), $
         _disturb_obj       :  obj_new(), $
         _store_fname       : "", $
+        _wf			   	  :  obj_new(), $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }

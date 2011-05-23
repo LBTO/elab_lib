@@ -27,6 +27,9 @@ function AOmodalpositions::Init, root_obj
 	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
 	self._plots_title = root_obj->tracknum()
 
+	;Initialize WF
+	self._wf = obj_new('AOwf', root_obj, root_obj->modeShapes(), self)
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodalpositions', 'Represent mirror positions projected on modal basis') then return, 0
     self->addMethodHelp, "modalpositions()",  "mirror position modes matrix [nmodes,niter]"
@@ -52,6 +55,10 @@ end
 
 function AOmodalpositions::nmodes
     return, self->AOtime_series::nseries()
+end
+
+function AOmodalpositions::wf
+	return, self._wf
 end
 
 ; to be implemented in AOtime_series subclasses
@@ -99,6 +106,7 @@ pro AOmodalpositions__define
         _pos_obj           :  obj_new(), $
         _fc_obj            :  obj_new(), $
         _store_fname      : "", $
+        _wf			   	  :  obj_new(), $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }

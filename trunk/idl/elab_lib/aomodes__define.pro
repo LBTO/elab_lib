@@ -30,6 +30,9 @@ function AOmodes::Init, root_obj, modes_file, fc_obj
     ;self->datiProducer
     ;self->AOtime_series::Compute
 
+	;Initialize WF
+	self._wf = obj_new('AOwf', root_obj, root_obj->modeShapes(), self)
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodes', 'Represent integrated modes') then return, 0
     self->addMethodHelp, "fname()", "modesfile name (string)"
@@ -70,6 +73,10 @@ function AOmodes::nmodes
     return, self->AOtime_series::nseries()
 end
 
+function AOmodes::wf
+	return, self._wf
+end
+
 ; to be implemented in AOtime_series subclasses
 function AOmodes::GetDati
     if not ptr_valid(self._modes) then self->datiProducer
@@ -95,7 +102,8 @@ pro AOmodes__define
         _fitsheader       :  ptr_new(), $
         _modes            :  ptr_new(), $
         _fc_obj           :  obj_new(), $
-        _store_fname      : "", $
+        _store_fname      :  ""		  , $
+        _wf			   	  :  obj_new(), $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }
