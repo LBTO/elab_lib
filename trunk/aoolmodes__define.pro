@@ -52,6 +52,9 @@ function AOolmodes::Init, root_obj
   ;Keep root_obj to easily retrieve residual_modes(), modes() and modalpositions()
   self._root_obj = root_obj
 
+  ;Initialize WF
+  self._wf = obj_new('AOwf', self._root_obj, root_obj->modeShapes(), self)
+
   ; initialize help object and add methods and leafs
   if not self->AOhelp::Init('AOolmodes', 'Represent reconstructed open loop modes') then return, 0
   self->addMethodHelp, "modes()", "reconstructed open loop modes matrix [niter,nmodes]"
@@ -121,6 +124,10 @@ pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, over
    	oplot, freq, sqrt(tip), col='0000ff'x
    	oplot, freq, sqrt(tilt), col='00ff00'x
   endelse
+end
+
+function AOolmodes::wf
+	return, self._wf
 end
 
 ; to be implemented in AOtime_series subclasses
@@ -516,6 +523,7 @@ pro AOolmodes__define
     _nnMin			  : 0L			, $		;minimum radial order used in r0 estimation.
     _r0_store_fname   : ""			, $
     _r0				  : 0.			, $
+    _wf			   	  : obj_new()   , $
     INHERITS    AOtime_series		, $
     INHERITS    AOhelp 			$
     }
