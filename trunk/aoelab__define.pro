@@ -129,7 +129,7 @@ function AOelab::Init, tracknum, $
 		basis = (self->intmat())->basis()
 		modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
 		self._modeShapes = get_modes_shapes(modeShapes_fname)
-	endif else message, 'Unknown modal basis: mode shapes not initialized...'
+	endif else message, 'Unknown modal basis: mode shapes not initialized...', /info
 
     ; disturb & modaldisturb
     disturb_sync = long(aoget_fits_keyword((self->wfs_status())->header(), "sc.DISTURBANCE"))
