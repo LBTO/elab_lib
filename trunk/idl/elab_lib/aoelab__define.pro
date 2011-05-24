@@ -39,16 +39,18 @@ function AOelab::Init, tracknum, $
     tmp = filepath(root=self._datadir, 'adsec.sav')
     if file_test(tmp) eq 0 then begin
     	message, 'Cannot find adsec_status file: '+tmp, /info
-    	return,0
-    endif
-    restore, tmp ; restore status
-    self._adsec_status = obj_new('AOadsec_status', self, status)
-    if not obj_valid(self._adsec_status) then return, 0
+	message, 'Warning: adsec_status object not available!', /info 
+    	;return,0
+    endif else begin
+	restore, tmp ; restore status
+	self._adsec_status = obj_new('AOadsec_status', self, status)
+	if not obj_valid(self._adsec_status) then message, 'Warning: adsec_status object not available!', /info ;return, 0
+    endelse
 
     ; create wfs_status leaf
     wfs_status_file = filepath(root=self._datadir, 'wfs.fits')
     self._wfs_status = obj_new('AOwfs_status', self, wfs_status_file)
-    if not obj_valid(self._wfs_status) then return, 0
+    if not obj_valid(self._wfs_status) then message, 'Warning: wfs object not available!', /info ;return, 0
 
 	; create telescope leaf
 	self._tel = obj_new('AOtel', self, wfs_status_file)
@@ -90,54 +92,63 @@ function AOelab::Init, tracknum, $
 
 
     ; create control filter leaf
-    self._control = obj_new('AOcontrol', self, $
-        self._adsec_status->b0_a_file(), $
-        self._adsec_status->a_delay_file(), $
-        self._adsec_status->b_delay_a_file(), $
-        self._adsec_status->c_file(), $
-        self._adsec_status->g_gain_a_file() $
+    if not obj_valid(self._adsec_status) then begin
+	message, 'Warning: control object not available!' , /info
+    endif else begin
+	self._control = obj_new('AOcontrol', self, $
+	    self._adsec_status->b0_a_file(), $
+	    self._adsec_status->a_delay_file(), $
+	    self._adsec_status->b_delay_a_file(), $
+	    self._adsec_status->c_file(), $
+	    self._adsec_status->g_gain_a_file() $
         )
+    endelse
 
     ; create frames counter leaf
     frames_counter_file = filepath(root=self._datadir,  'FramesCounter_'+tracknum+'.fits')
     self._frames_counter = obj_new('AOframes_counter', frames_counter_file, self._wfs_status)
-	if not obj_valid(self._frames_counter) then return,0
+	if not obj_valid(self._frames_counter) then message, 'Warning: FramesCounter object not initialized!', /info ;return,0
 
     ; modal_rec
     if keyword_set(modal_reconstructor_file) then begin
-        ;self._modal_rec= obj_new('AOrecmatrix', modal_reconstructor_file)
         self._modal_rec = getrecmatrix( modal_reconstructor_file )
     endif else begin
-        ;self._modal_rec= obj_new('AOrecmatrix', (self->control())->b0_a_file())
-        if (self->control())->isKalman() then begin
-            intmat_fname = (self->control())->intmat_fname()
-            pos = strpos(intmat_fname, 'Intmat_', /REVERSE_SEARCH)
-            if pos eq -1 then message, 'Missing info on interaction matrix', BLOCK='elab', name='ao_oaa_elab'
-            rec_fname = strmid(intmat_fname, 0, pos) +'Rec_'+strmid(intmat_fname, pos+7)
-        endif else begin
-            rec_fname = (self->control())->b0_a_fname()
-        endelse
-        self._modal_rec = getrecmatrix( rec_fname )
+        if obj_valid(self._control) then begin
+	    if (self->control())->isKalman() then begin
+		intmat_fname = (self->control())->intmat_fname()
+		pos = strpos(intmat_fname, 'Intmat_', /REVERSE_SEARCH)
+		if pos eq -1 then message, 'Missing info on interaction matrix', BLOCK='elab', name='ao_oaa_elab'
+		rec_fname = strmid(intmat_fname, 0, pos) +'Rec_'+strmid(intmat_fname, pos+7)
+	    endif else begin
+		rec_fname = (self->control())->b0_a_fname()
+	    endelse
+	    self._modal_rec = getrecmatrix( rec_fname )
+	endif else message, 'Control info not available: Reconstructor object not initialized!', /info
     endelse
 
-	; (modal) interaction matrix
-    intmat_fname = (self->control())->intmat_fname()
+    ; (modal) interaction matrix
+    if obj_valid(self._control) then begin
+	intmat_fname = (self->control())->intmat_fname()
 	self._intmat = getintmat( intmat_fname )
+    endif else message, 'Control info not available: Interaction Matrix object not initialized!', /info
+    
 
-	; Modes Shapes
-	if obj_valid(self->intmat()) then begin
-		basis = (self->intmat())->basis()
-		modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
-		self._modeShapes = get_modes_shapes(modeShapes_fname)
-	endif else message, 'Unknown modal basis: mode shapes not initialized...', /info
+    ; Modes Shapes
+    if obj_valid(self->intmat()) then begin
+	basis = (self->intmat())->basis()
+	modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
+	self._modeShapes = get_modes_shapes(modeShapes_fname)
+    endif else message, 'Unknown modal basis: mode shapes not initialized!', /info
 
     ; disturb & modaldisturb
+    if obj_valid(self->wfs_status()) then begin
     disturb_sync = long(aoget_fits_keyword((self->wfs_status())->header(), "sc.DISTURBANCE"))
     if disturb_sync gt 0 then begin
         ;self._disturb = getdisturb( (self->adsec_status())->disturb_file(), recompute=self._recompute )
         self._disturb = obj_new('AOdisturb', self, (self->adsec_status())->disturb_file(), recompute=self._recompute )
         self._modaldisturb = obj_new('AOmodaldisturb', self)
     endif
+    endif else message, 'Wfs object not available: disturb object not initialized!', /info
 
 	; effective number of independent realizations in the real-time data acquired.
 	if obj_valid(self._disturb) then $
@@ -308,8 +319,8 @@ end
 function AOelab::isOK, cause=cause
     imok=1B
     cause = ""
-    imok *= (self->sanitycheck())->isOK(cause=cause)
-    imok *= (self->frames_counter())->isok(cause=cause)
+    if obj_valid(self->sanitycheck()) then imok *= (self->sanitycheck())->isOK(cause=cause)
+    if obj_valid(self->frames_counter()) then imok *= (self->frames_counter())->isok(cause=cause)
     if OBJ_VALID(self->disturb()) then imok *= (self->disturb())->isok(cause=cause)
     if OBJ_VALID(self->intmat()) then $
         if OBJ_VALID(self->wfs_status()) and OBJ_VALID( (self->intmat())->wfs_status() )  then begin
@@ -404,7 +415,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
         print, string(format='(%"| %-30s | %d |")','# Modes', (self->modal_rec())->nmodes())
         print, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )
     endif
-    if obj_valid(self->wfs_status()) and obj_valid((self->wfs_status())->ccd39())  then begin
+    if obj_valid(self->wfs_status()) then if obj_valid((self->wfs_status())->ccd39())  then begin
         print, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->ccd39())->binning())
         print, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())
         print, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )
