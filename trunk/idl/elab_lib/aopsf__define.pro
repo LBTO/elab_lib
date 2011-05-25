@@ -532,7 +532,7 @@ pro AOpsf::compute_centroid
         dx = self->frame_w()
         dy = self->frame_h()
         if ((lc[0] lt 0) or (lc[1] lt 0) or (lc[0] ge dx) or (lc[1] ge dy)) then begin
-            message, 'Warning: center coordinates out of range!
+            message, 'Warning: center coordinates out of range!'
         endif
 		image = self->imageCube()
 		fwhm = fltarr(self->nframes())
@@ -611,7 +611,7 @@ pro AOpsf::show_profile, _extra=ex, show_rms=show_rms
 
 	;airy disk:
 	airysep_lD = findgen(1000)/(1000.-1.)*100.
-	oc = 0.111
+	oc = 0.111 ; TODO questo è LBT-specific!!!!
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
