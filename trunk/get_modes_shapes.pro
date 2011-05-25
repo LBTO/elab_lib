@@ -18,7 +18,10 @@ function aomultiton_modeshapes::getobj, fname
     endif
 
     oo = obj_new('AOmodeShapes', fname)
-    if not obj_valid(oo) then message, 'Could not initialize AOmodeShapes '+fname
+    if not obj_valid(oo) then begin
+        message, 'Could not initialize AOmodeShapes '+fname, /info
+        return, obj_new()
+    endif
 
     ptr_free, self._tag_list
     self._tag_list = ptr_new([fname, tags])
