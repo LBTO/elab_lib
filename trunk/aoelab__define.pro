@@ -39,7 +39,7 @@ function AOelab::Init, tracknum, $
     tmp = filepath(root=self._datadir, 'adsec.sav')
     if file_test(tmp) eq 0 then begin
     	message, 'Cannot find adsec_status file: '+tmp, /info
-	message, 'Warning: adsec_status object not available!', /info 
+	message, 'Warning: adsec_status object not available!', /info
     	;return,0
     endif else begin
 	restore, tmp ; restore status
@@ -131,14 +131,16 @@ function AOelab::Init, tracknum, $
 	intmat_fname = (self->control())->intmat_fname()
 	self._intmat = getintmat( intmat_fname )
     endif else message, 'Control info not available: Interaction Matrix object not initialized!', /info
-    
 
-    ; Modes Shapes
-    if obj_valid(self->intmat()) then begin
-	basis = (self->intmat())->basis()
-	modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
-	self._modeShapes = get_modes_shapes(modeShapes_fname)
-    endif else message, 'Unknown modal basis: mode shapes not initialized!', /info
+
+	; Modes Shapes
+	if obj_valid(self->intmat()) then begin
+		basis = (self->intmat())->basis()
+		modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
+		if file_test(modeshapes_fname) then self._modeShapes = get_modes_shapes(modeShapes_fname) else $
+			message, 'Mode Shapes file not found',/info
+	endif else message, 'Unknown modal basis: mode shapes not initialized...', /info
+
 
     ; disturb & modaldisturb
     if obj_valid(self->wfs_status()) then begin
