@@ -65,6 +65,7 @@ function AOolmodes::Init, root_obj
   self->addMethodHelp, "ide(mode_idx, visu=visu)", "Identifies turbulence, vibrations and noise model for mode_idx mode"
   self->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
                         "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
+  if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
   self->AOtime_series::addHelp, self
 
   return, 1

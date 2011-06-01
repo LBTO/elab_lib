@@ -34,6 +34,7 @@ function AOmodaldisturb::Init, root_obj
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodaldisturb', 'Represent disturb projected on modal basis') then return, 0
     self->addMethodHelp, "modaldisturb()",  "disturb modes matrix [nmodes,niter]"
+    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
     self->AOtime_series::addHelp, self
     return, 1
 end

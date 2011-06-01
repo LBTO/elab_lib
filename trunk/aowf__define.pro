@@ -12,6 +12,13 @@ function AOwf::Init, root_obj, modeShapes, modeCoeffs
 	;sav file
 	savfile = strmid(strlowcase(obj_class(self._modeCoeffs)),2)+'_wf.sav'
     self._store_fname = filepath(root=root_obj->elabdir(), savfile)
+    if root_obj->recompute() eq 1B then begin
+        file_delete, self._store_fname, /allow_nonexistent
+    endif
+
+    ; initialize help object and add methods and leafs
+    if not self->AOhelp::Init('AOwf', 'Represent a WF') then return, 0
+    self->addMethodHelp, "wfmat(lambda=lambda)", "Matrix containing WFs [npix x niter]. Default: 750nm (float)"
 
 	return,1
 end
