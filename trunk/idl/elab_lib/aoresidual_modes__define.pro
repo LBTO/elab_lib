@@ -35,6 +35,7 @@ function AOresidual_modes::Init, root_obj
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
     self->addMethodHelp, "modes()", "modal residue (m rms, surface) [niter, nmodes]"
     self->addMethodHelp, "nmodes()", "number of residual modes"
+    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
     self->AOtime_series::addHelp, self
     return, 1
 end

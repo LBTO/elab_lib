@@ -39,6 +39,7 @@ function AOmodes::Init, root_obj, modes_file, fc_obj
     self->addMethodHelp, "header()", "header of modesfile (strarr)"
     self->addMethodHelp, "modes()", "integrated modes matrix [nmodes,niter]"
     self->addMethodHelp, "nmodes()", "number of modes"
+    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
     self->AOtime_series::addHelp, self
     return, 1
 end
