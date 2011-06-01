@@ -707,7 +707,7 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "ensemble_average(iter_idx)", "ensemble-average of iteration iter_idx"
     obj->addMethodHelp, "nfreqs()", "number of elements in the frequency vector"
     obj->addMethodHelp, "freq()",   "frequency vector [nfreqs] (Hz)"
-    obj->addMethodHelp, "nspectra()",   "number of residual modes spectra"
+    obj->addMethodHelp, "nspectra()",   "number of spectra"
     obj->addMethodHelp, "psd(spectrum_idx)",   "return psd of spectra identified by the index vector idx. All spectra if index is not present"
     obj->addMethodHelp, "fftwindow()", "returns the type of apodization window applied in the computation of the PSD."
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
