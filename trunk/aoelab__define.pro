@@ -7,7 +7,7 @@
 function AOelab::Init, tracknum, $
             recompute = recompute, $
             modal_reconstructor_file = modal_reconstructor_file, $	; this is used in case of kalman filter
-            dark_fname = dark_fname								    ; override IRTC dark filename
+            dark_fname = dark_fname								    ; override IRTC/PISCES dark filename
 
     self._recompute = keyword_set(recompute)
 
@@ -196,6 +196,10 @@ function AOelab::Init, tracknum, $
     irtc_fname = file_search(filepath(root=self._datadir, 'irtc.fits'))
     self._irtc = obj_new('AOIRTC', self, irtc_fname, dark_fname)
 
+    ; PISCES
+    pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
+    self._pisces = obj_new('aopisces', self, pisces_fname, dark_fname)
+
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
     self._offloadmodes = obj_new('AOoffloadmodes', self, pos2mod_fname)
@@ -249,6 +253,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._disturb) then self->addleaf, self._disturb, 'disturb'
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
     if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
+    if obj_valid(self._pisces) then self->addleaf, self._pisces, 'pisces'
     if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes, 'offloadmodes'
     if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'
 
@@ -267,6 +272,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "commands()", "reference to commands object (AOcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
+    self->addMethodHelp, "pisces()", "reference to PISCES object (AOpsf)"
     self->addMethodHelp, "irtc()", "reference to IRTC object (AOpsf)"
     self->addMethodHelp, "tv()", "reference to TV ccd47 object (AOpsf)"
     self->addMethodHelp, "modal_rec()", "reference to modal reconstructor object (AOrecmatrix)"
@@ -336,6 +342,7 @@ function AOelab::isOK, cause=cause
 			endif
     	endif
     if OBJ_VALID(self->irtc()) then imok *= (self->irtc())->isok(cause=cause)
+    if OBJ_VALID(self->pisces()) then imok *= (self->pisces())->isok(cause=cause)
     return, imok
 end
 
@@ -384,7 +391,7 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 end
 
 pro AOelab::psf, WINDOW = WINDOW
-    psf = (self->irtc())->longexposure()
+    psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure() 
     loadct,3
     if keyword_set(WINDOW) then www=WINDOW else www=0
     window, www, title=self->tracknum()
@@ -448,6 +455,14 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     		print, string(format='(%"| %-30s | %d |")','no. frames',(self->irtc())->nframes())
     		print, string(format='(%"| %-30s | %f |")','SR SE' ,(self->irtc())->sr_se())
     		print, string(format='(%"| %-30s | %s |")','IRTC dark', file_basename( (self->irtc())->dark_fname()))
+    	endif
+    	if obj_valid(self->pisces()) then begin
+    		print, string(format='(%"| %-30s | %f |")','lambda [um]',(self->pisces())->lambda()*1e6)
+    		print, string(format='(%"| %-30s | %f |")','exptime [s]',(self->pisces())->exptime())
+    		print, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->pisces())->framerate())
+    		print, string(format='(%"| %-30s | %d |")','no. frames',(self->pisces())->nframes())
+    		print, string(format='(%"| %-30s | %f |")','SR SE' ,(self->pisces())->sr_se())
+    		print, string(format='(%"| %-30s | %s |")','pisces dark', file_basename( (self->pisces())->dark_fname()))
     	endif
     endif
 end
@@ -527,10 +542,10 @@ pro AOelab::modalSpecPlot, modenum
 
 end
 
-
-pro AOelab::showIRTC
-    image_show, /as,/sh, /log, ((self->irtc())->longexposure())>1
-end
+; TODO this is redundant with AOelab::psf
+;pro AOelab::showIRTC 
+;    image_show, /as,/sh, /log, ((self->irtc())->longexposure())>1
+;end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; access to leafs ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 
@@ -600,6 +615,10 @@ end
 
 function AOelab::irtc
     IF (OBJ_VALID(self._irtc)) THEN return, self._irtc else return, obj_new()
+end
+
+function AOelab::pisces
+    IF (OBJ_VALID(self._pisces)) THEN return, self._pisces else return, obj_new()
 end
 
 function AOelab::modal_rec
@@ -707,6 +726,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
     IF (OBJ_VALID(self._tv)) THEN  self._tv->free
     IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
+    IF (OBJ_VALID(self._pisces)) THEN  self._pisces->free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
     IF (OBJ_VALID(self._intmat)) THEN  self._intmat->free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
@@ -735,6 +755,7 @@ pro AOelab::Cleanup
     obj_destroy, self._modalpositions
     obj_destroy, self._tv
     obj_destroy, self._irtc
+    obj_destroy, self._pisces
 ;    obj_destroy, self._modal_rec
 ;    obj_destroy, self._intmat
 ;	 obj_destroy, self._modeShapes
@@ -770,6 +791,7 @@ pro AOelab__define
         _modalpositions    : obj_new(), $
         _tv                : obj_new(), $
         _irtc              : obj_new(), $
+        _pisces            : obj_new(), $
         _modal_rec         : obj_new(), $
         _intmat			   : obj_new(), $
         _modeShapes		   : obj_new(), $
