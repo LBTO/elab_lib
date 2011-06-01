@@ -67,7 +67,7 @@ pro AOhelp::help, keyword, indent=indent
     
     if n_params() eq 1 and (test_type(keyword, /string) eq 0 ) then begin
         lista = self->cmdlist()
-        matched = where(stregex(lista, keyword, /bool) eq 1, cnt)
+        matched = where(stregex(strlowcase(lista), strlowcase(keyword), /bool) eq 1, cnt)
         if cnt gt 0 then print, lista[matched]
         return
     endif
