@@ -14,20 +14,22 @@ pro log_twiki, aodataset, ref_star=ref_star
             continue
         endif
 
+        instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
+        
         gaintemp = [-1, -1]
         if obj_valid(ee->control()) then begin
         	gaintemp = minmax( (ee->control())->gain() )
             if gaintemp[0] eq -1 then gaintemp=[-1, -1]
         endif
-        if obj_valid(ee->irtc()) then begin
-            case round( (ee->irtc())->lambda()*1e9) of
-                1070: band = 'J'
-                1600: band = 'H'
-                else: band = '?'
-            endcase
-        endif else begin
-            band = '?'
-        endelse
+        ;if obj_valid(instr) then begin
+        ;   case round( instr->lambda()*1e9) of
+        ;        1070: band = 'J'
+        ;        1600: band = 'H'
+        ;        else: band = '?'
+        ;    endcase
+        ;endif else begin
+        ;    band = '?'
+        ;endelse
         if ee->operation_mode() eq 'RR' then begin
         	if obj_valid(ee->disturb()) then disturb='ON' else disturb='OFF'
             if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
@@ -51,10 +53,10 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
-            obj_valid(ee->irtc()) ?  (ee->irtc())->sr_se()*100 : -1, $
-            band , $
-            obj_valid(ee->irtc()) ? round( (ee->irtc())->exptime()*1e3) : -1 , $
-    		obj_valid(ee->irtc()) ? (ee->irtc())->nframes() : -1 , $
+            obj_valid(instr) ?  instr->sr_se()*100 : -1, $
+            obj_valid(instr) ? instr->filter_name() : '?' , $
+            obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
+    		obj_valid(instr) ? instr->nframes() : -1 , $
 			disturb,  $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
