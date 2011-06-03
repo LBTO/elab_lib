@@ -1,18 +1,20 @@
 ;+
 ; INPUTS:
 ;	wunit	(string) either 'W1' or 'W2'
+;   camera  (string) either 'irtc' or 'pisces'
 ;-
 
-pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
-	if n_params() ne 1 then message, "Usage: make_bad_pixel_map, wunit"
+pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
+	if n_params() ne 2 then message, "Usage: make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h"
 
-    path = filepath(root=ao_datadir(), sub=['wfs_calib_'+wunit, 'irtc', 'backgrounds', 'bin1'], '')
+    path = filepath(root=ao_datadir(), sub=['wfs_calib_'+wunit, camera, 'backgrounds', 'bin1'], '')
     files = file_search(path, '*.fits_cube.fits')
     nfile = n_elements(files)
+    print, 'Found '+ string(nfile) + ' dark files'
 
 	;Take by default only full-frame data
-	if not keyword_set(fr_w) then fr_w = 320L
-	if not keyword_set(fr_h) then fr_h = 256L
+	if not keyword_set(fr_w) then fr_w = camera eq 'irtc' ? 320L : 1024L
+	if not keyword_set(fr_h) then fr_h = camera eq 'irtc' ? 256L : 1024L
 
 
 	;Compute dark cubes statistics (median & rms):
@@ -22,6 +24,8 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
     tot = fltarr(nfile)
 
     for i=0, nfile-1 do begin
+        if (i+1) mod 10 eq 0 then print, 'Analyzing  dark file '+string(i+1)+' of ' +string(nfile)
+
 		hdr = headfits(files[i],/SILENT)
 		naxis = long(aoget_fits_keyword(hdr,'NAXIS1'))
 		if naxis ne fr_w then continue
@@ -84,8 +88,24 @@ pro make_bad_pixel_map, wunit, fr_w=fr_w, fr_h=fr_h
     index = where(median_im le (median(median_im)-stddev(median_im)*6.)>0.,count)
     if count ge 1 then badpixels[index] = 1
 
-	if (fr_w ne 320L) and (fr_h ne 256L) then fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.fits' $
-		else fname='badpixelmap.fits'
-    writefits,filepath(root=path, fname),badpixels
+    ; create triangulation for trigrid for interpolating bad pixels:
+	idxvalid = long(where( badpixels eq 0., nvalid))
+	x_valid = idxvalid mod long(fr_w)
+	y_valid = idxvalid  /  long(fr_w)
+	TRIANGULATE, float(x_valid), float(y_valid), tr
+	bpstr = create_struct('x', x_valid, 'y', y_valid, 'idx', idxvalid, 'np', long(nvalid), 'tr', tr)
+    
+    ; save badpixelmap and triangulate structure
+	if camera eq 'irtc' then begin
+        if (fr_w ne 320L) and (fr_h ne 256L) then fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.sav' $
+        else fname='badpixelmap.sav'
+    endif
+	if camera eq 'pisces' then begin
+        if (fr_w ne 1024L) and (fr_h ne 1024L) then fname = 'badpixelmap_w'+strtrim(fr_w,2)+'_h'+strtrim(fr_h,2)+'.sav' $
+        else fname='badpixelmap.sav'
+    endif
+
+    save, badpixels, bpstr, files, file=filepath(root=path, fname)
+    print, 'Written '+filepath(root=path, fname)
 
 end

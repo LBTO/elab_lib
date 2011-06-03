@@ -13,11 +13,10 @@
 ;
 ; KEYWORD
 ;   binning              default = 1
-;   roi                  array [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame
+;   roi                  Use a subarray [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame
 ;	badpixelmap_fname	(string) full path to the bad pixel map frame.
 ;-
 
-;function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale=pixelscale
 function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
         binning=binning, roi=roi, badpixelmap_fname=badpixelmap_fname
 
@@ -34,8 +33,8 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
 	if keyword_set(badpixelmap_fname) then self._badpixelmap_fname = badpixelmap_fname
 
     naxis = long(aoget_fits_keyword(self->header(), 'NAXIS'))
-    self._frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
-    self._frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
+    self._big_frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
+    self._big_frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
     self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
     self._pixelscale = pixelscale
     self._lambda_im = lambda
@@ -47,7 +46,7 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
     self._binning = binning
 
     ; ROI
-    if not keyword_set(roi) then roi = [0, self->frame_w()-1, 0, self->frame_h()-1]
+    if not keyword_set(roi) then roi = [0, self._big_frame_w-1, 0, self._big_frame_h-1]
     self._roi = roi
 
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
@@ -109,7 +108,7 @@ pro AOpsf::addHelp, obj
     obj->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
     obj->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
     obj->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
-    obj->addMethodHelp, "dark_image()", 	"psf dark image (float)"
+    obj->addMethodHelp, "dark_image()", 	"psf dark image (float) [big_frame_w, big_frame_h]"
     obj->addMethodHelp, "badpixelmap_fname()", 	"psf bad pixel map file name [string]"
     obj->addMethodHelp, "badpixelmap()", 	"bad pixel mask image [frame_w, frame_h]"
     obj->addMethodHelp, "nframes()", 		"number of frames saved (long)"
@@ -148,13 +147,15 @@ pro AOpsf::process_cube
         psf = float(readfits(self->fname(), header, /SILENT))
         for i=0L, self->nframes()-1 do begin
             if (i+1) mod 10 eq 0 then print, string(format='(%"%d of %d ")', i+1, self->nframes() )
-            psf[*,*,i] = self->maneggiaFrame(psf[*,*,i])
+            psf[*,*,i] = self->maneggiaFrame(psf[*,*,i]) 
+            ; TODO qui non c'e' il ripulisciFrame?
         endfor
         print, 'saving data...'
     	save, psf, filename=self._psf_elab_fname ;, /compress
         print, 'done'
     endelse
-    self._imagecube = ptr_new(psf, /no_copy)
+    roi=self->roi()
+    self._imagecube = ptr_new(psf[roi[0]:roi[1], roi[2]:roi[3], *], /no_copy)
 end
 
 
@@ -167,19 +168,23 @@ end
 function AOpsf::maneggiaFrame, psf_in
 	psf = psf_in - self->dark_image()
     ; remove bad pixels interpolating with neighbours
-    ;psf = mad_correct_bad_pixel(~badpixelmap, psf)
-    trstr = self->triangulate()
-    if trstr.np lt self->frame_w()*self->frame_h() then $
-    	psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(self->frame_w()), yout=findgen(self->frame_h()))
+    trstr = (getbadpixelmap(self->badpixelmap_fname()))->triangulation()
+    if trstr.np gt 0 then begin  
+        sz=size(psf, /dim)
+    	psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
+    endif
     return, psf
 end
 
 
 function AOpsf::pulisceFrame, psf_in
 	;Mask out the PSF
-	ima_fit = gauss2dfit(double(psf_in),coeff)
-	xc = coeff[4]
-	yc = coeff[5]
+	;ima_fit = gauss2dfit(double(psf_in),coeff) ; LB this seems too much, you already subtracted the background
+	;xc = coeff[4]
+	;yc = coeff[5]
+    res=max(psf_in, idxmax)
+    xc = idxmax mod n_elements(psf_in[*,0])
+    yc = idxmax / n_elements(psf_in[*,0])
 	mask = self->background_mask(xc,yc,mask_ok=mask_ok)
 	if ~mask_ok then begin
 		message, 'Warning: not possible to clean the PSF',/info
@@ -188,13 +193,13 @@ function AOpsf::pulisceFrame, psf_in
 	psf = psf_in
 	; Clean image column by column
 	;-----------------------------
-    for j=0L, self->frame_w()-1 do begin
+    for j=0L, self._big_frame_w-1 do begin
     	colidx = where(mask[j,*],count)
 		if count ne 0 then psf[j,*] -= median((psf[j,*])[colidx])
 	endfor
 	; Clean image row by row
 	;-----------------------------
-    for j=0L, self->frame_h()-1 do begin
+    for j=0L, self._big_frame_h-1 do begin
     	rowidx = where(mask[*,j],count)
 		if count ne 0 then psf[*,j] -= median((psf[*,j])[rowidx])
 	endfor
@@ -211,7 +216,7 @@ function AOpsf::background_mask, xc, yc, nsup=nsup, borderpix=borderpix, mask_ok
     	return, -1
     endif
 	control_diam_pix = self->lambda() / dsup / 4.85e-6 / self->pixelscale()
-	np = max([self->frame_w(), self->frame_h()])
+	np = max([self._big_frame_w, self._big_frame_h])
 	diaratio = control_diam_pix/float(np)
 	if diaratio gt 1 then begin
 		mask_ok=0B
@@ -220,7 +225,7 @@ function AOpsf::background_mask, xc, yc, nsup=nsup, borderpix=borderpix, mask_ok
 	xcr = 2*xc/float(np-1) - 1.0
 	ycr = 2*yc/float(np-1) - 1.0
 	mask = make_mask(np, diaratio=diaratio, xc=xcr, yc=ycr, /inverse)
-	mask = mask[0:self->frame_w()-1,0:self->frame_h()-1]
+	mask = mask[0:self._big_frame_w-1,0:self._big_frame_h-1]
 	if keyword_set(borderpix) then begin
 		mask1 = self->striscia_mask(borderpix,0,/inverted)
 		mask *= mask1
@@ -236,8 +241,8 @@ end
 ;-
 function AOpsf::striscia_mask, len, npr, inverted=inverted
 	if n_params() ne 2 then message, 'Syntax: ...->striscia_mask(len,npr)'
-	npx = self->frame_w()
-	npy = self->frame_h()
+	npx = self._big_frame_w
+	npy = self._big_frame_h
 	mask1 = fltarr(npx,npy)
 	mask1[npr:npx-npr-1,npr:npr+len] = 1.
 	mask1[npr:npx-npr-1,npy-npr-len:npy-npr-1] = 1.
@@ -249,43 +254,9 @@ end
 
 
 function AOpsf::badPixelMap
-    if not PTR_VALID(self._badpixelmap) then begin
-
-    	if file_test(self->badpixelmap_fname()) then begin
-
-            badmap = readfits(self->badpixelmap_fname(), bpm_header, /SILENT)
-            bmp_frame_w = long(aoget_fits_keyword(bpm_header, 'NAXIS1'))
-            bmp_frame_h = long(aoget_fits_keyword(bpm_header, 'NAXIS2'))
-
-            if (bmp_frame_w ne self->frame_w()) or (bmp_frame_h ne self->frame_h()) then begin
-                message, 'BadPixelMap and PSF images do not have the same dimensions!!', /info
-                self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
-            endif else begin
-    	        self._badpixelmap = ptr_new(badmap,  /no_copy)
-            endelse
-
-        endif else begin
-        	message, 'BadPixelMap file not existing. Assume all pixel good', /info
-            self._badpixelmap = ptr_new(fltarr(self->frame_w(), self->frame_h()), /no_copy)
-        endelse
-
-		;for interpolating bad pixels:
-		idxvalid = long(where( *(self._badpixelmap) eq 0., nvalid))
-		x_valid = idxvalid mod long(self->frame_w())
-		y_valid = idxvalid  /  long(self->frame_w())
-		TRIANGULATE, float(x_valid), float(y_valid), tr
-		bpstr = create_struct('x', x_valid, 'y', y_valid, 'idx', idxvalid, 'np', long(nvalid), 'tr', tr)
-		self._triangulate = ptr_new(bpstr, /no_copy)
-	endif
-    return, *(self._badpixelmap)
+    roi=self->roi()
+    return, ((getbadpixelmap(self->badpixelmap_fname()))->badpixelmap())[roi[0]:roi[1], roi[2]:roi[3]]
 end
-
-
-function AOpsf::triangulate
-	if not PTR_VALID(self._triangulate) then badmap = self->badPixelMap()
-	return, *(self._triangulate)
-end
-
 
 function AOpsf::dark_image
     if not (PTR_VALID(self._dark_image)) then begin
@@ -293,19 +264,19 @@ function AOpsf::dark_image
    		if file_test(cube_fname) then begin
        		dark = float(readfits(cube_fname, dark_header, /SILENT))
     		naxis = long(aoget_fits_keyword(dark_header, 'NAXIS'))
-   			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
-   			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-   			if (dark_frame_w ne self._frame_w) or (dark_frame_h ne self._frame_h) then begin
-   				message, 'Dark and PSF images do not have the same dimensions!!', /info
-   				self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
-   			endif else begin
-   				dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
-       			if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
+   			;dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
+   			;dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
+   			;if (dark_frame_w ne self->frame_w()) or (dark_frame_h ne self->frame_h()) then begin
+   			;	message, 'Dark and PSF images do not have the same dimensions!!', /info
+   			;	self._dark_image = ptr_new(fltarr(self->frame_w(), self->frame_h()))
+   			;endif else begin
+   			dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
+       		if dark_nframes gt 1 then self._dark_image = ptr_new( median(dark, dim=3) ) else $
        								  self._dark_image = ptr_new(dark)
-       		endelse
+       		;endelse
        	endif else begin
        		message, 'Dark file not existing. Assuming it zero', /info
-       		self._dark_image = ptr_new(fltarr(self._frame_w, self._frame_h))
+       		self._dark_image = ptr_new(fltarr(self._big_frame_w, self._big_frame_h))
        	endelse
     endif
     return, *(self._dark_image)
@@ -329,7 +300,8 @@ function AOpsf::longExposure
         	used_dark_fname = current_dark_fname
     		save, psf_le, used_dark_fname, filename=self._psf_le_fname, /compress
     	endelse
-		self._longexposure = ptr_new(psf_le,/no_copy)
+        roi=self->roi()
+		self._longexposure = ptr_new(psf_le[roi[0]:roi[1], roi[2]:roi[3]] ,/no_copy)
 	endif
     return, *(self._longexposure)
 end
@@ -340,9 +312,9 @@ end
 ;	; The bias level will be estimated in these ROIs.
 ;	box_size = 10	;size in pixels
 ;	pix_away = 2	;pixels away from corners
-;	boxes = lonarr(self._frame_w,self._frame_h)
-;	lowleft = [[pix_away,pix_away], [pix_away,self._frame_h-1-box_size-pix_away], $
-;		[self._frame_w-1-box_size-pix_away,pix_away], [self._frame_w-1-box_size-pix_away,self._frame_h-1-box_size-pix_away] ]
+;	boxes = lonarr(self->frame_w(),self->frame_h())
+;	lowleft = [[pix_away,pix_away], [pix_away,self->frame_h()-1-box_size-pix_away], $
+;		[self->frame_w()-1-box_size-pix_away,pix_away], [self->frame_w()-1-box_size-pix_away,self->frame_h()-1-box_size-pix_away] ]
 ;	for ii=0, 3 do boxes[ lowleft[0,ii]:lowleft[0,ii]+box_size-1, lowleft[1,ii]:lowleft[1,ii]+box_size-1] = 1
 ;	idx_boxes = where(boxes)
 ;
@@ -416,7 +388,7 @@ pro AOpsf::compute_profile
 		gauss_center = (self->gaussfit())->center()
 
 		; Discard frame border
-		peak = max( psf1[2:self._frame_w-3, 2:self._frame_h-3] )
+		peak = max( psf1[2:self->frame_w()-3, 2:self->frame_h()-3] )
 
 		; Compute PSF profile
 		binsize = self._prof_binsize
@@ -489,7 +461,7 @@ pro AOpsf::compute_encircled_energy
 		gauss_center = (self->gaussfit())->center()
 
 		; Discard frame border
-		total_ene = total( psf1[2:self._frame_w-3, 2:self._frame_h-3] )
+		total_ene = total( psf1[2:self->frame_w()-3, 2:self->frame_h()-3] )
 
 		; Compute encircled energy
 		binsize = 1
@@ -670,11 +642,11 @@ function AOpsf::nframes
 end
 
 function AOpsf::frame_w
-	return, self._frame_w
+	return, (self->roi())[1]-(self->roi())[0]+1
 end
 
 function AOpsf::frame_h
-	return, self._frame_h
+	return, (self->roi())[3]-(self->roi())[2]+1
 end
 
 function AOpsf::lambda
@@ -705,12 +677,16 @@ function AOpsf::roi
 	return, self._roi
 end
 
+function AOpsf::filter_name
+	return, self._filter_name
+end
+
 pro AOpsf::free
     if ptr_valid(self._imagecube)       then ptr_free, self._imagecube
     if ptr_valid(self._dark_image)  then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
-    if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
-    if ptr_valid(self._triangulate) then ptr_free, self._triangulate
+    ;if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
+    ;if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)    then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then  self._gaussfit->free
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -730,8 +706,8 @@ pro AOpsf::Cleanup
     if ptr_valid(self._imagecube)      then ptr_free, self._imagecube
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
-    if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
-    if ptr_valid(self._triangulate) then ptr_free, self._triangulate
+    ;if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
+    ;if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)   then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then obj_destroy, self._gaussfit
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -770,15 +746,16 @@ pro AOpsf__define
         _imagecube      :  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
         _badpixelmap_fname : ""			, $
-        _badpixelmap    :  ptr_new()	, $
-        _triangulate	:  ptr_new()	, $
+        ;_badpixelmap    :  ptr_new()	, $
+        ;_triangulate	:  ptr_new()	, $
 		_roi            :  [0,0,0,0]    , $
+        _filter_name    :  ""           , $
         _lambda_im		:  0.			, $	 ;[meters]
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
         _pixelscale_lD  :  0d			, $  ;[in lambda/D per pixel]
         _nframes        :  0L			, $
-        _frame_w        :  0L			, $
-        _frame_h        :  0L			, $
+        _big_frame_w    :  0L			, $
+        _big_frame_h    :  0L			, $
         _exptime	    :  0.			, $
         _framerate		:  0.			, $	  ;Hz
         _binning 		:  0.			, $

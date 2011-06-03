@@ -25,30 +25,18 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     binning = 1			;always bin1?
 
     ; Pixelscale:
-    apertnr = long(aoget_fits_keyword(fitsheader, 'APERTNR'))
     valid_pixscale = 1B
-	CASE apertnr of
-    	1: pixelscale = 0.010
-        2: pixelscale = 0.020
-        3: pixelscale = 0.100
-     else: begin
-     		msg_temp = 'Unknown pisces pixelscale'
-            message, msg_temp, /info
-	        self._pisces_err_msg += ' - ' + msg_temp
-	        valid_pixscale = 0B
-	        ;pixelscale = 1.
-	        pixelscale = !VALUES.F_NAN
-           end
-    ENDCASE
+    pixelscale = 0.0182
 
 
     ; Detect filter:
-    filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
+    self._filter_name = aoget_fits_keyword(fitsheader, 'FILTER')
     valid_filt_number = 1B
-    CASE filter_number OF
-    	1: lambda = 1.30e-6	;BROADBAND (central wavelength (?))
-    	2: lambda = 1.07e-6	;J
-    	3: lambda = 1.60e-6	;H
+    CASE strtrim(self._filter_name,2) OF
+        'open': lambda=1e-6                 ;2:OPEN
+    	'J': lambda = 1.25e-6	            ;4:J
+    	'H': lambda = 1.65e-6	            ;6:H
+    	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII 
      else: begin
      		;lambda = 1.
      		lambda = !VALUES.F_NAN
@@ -61,7 +49,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 
 
     ; Exposure time:
-	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6	;in seconds
+	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))	;in seconds
 	valid_exptime = 1B
 	if exptime eq 0 then begin
 		msg_temp = 'Unknown pisces exposure time'
@@ -72,27 +60,18 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 
 
     ;Framerate:
-	framerate = float(aoget_fits_keyword(fitsheader, 'FR-RATE'))
+	framerate =  1./(exptime + 7.)  ; TODO at fullframe roughly 7s of overhead for each exposure !!!!
+
+    ; Frame size
     frame_w  = long(aoget_fits_keyword(fitsheader, 'NAXIS1'))
     frame_h  = long(aoget_fits_keyword(fitsheader, 'NAXIS2'))
-    ; We know that full frame cannot be faster then 66Hz
-    ;if frame_w eq 320 and frame_h eq 256 then begin
-	;    framerate = framerate < 66.
-    ;endif
-	if framerate eq 0 then begin
-		msg_temp = 'pisces frame rate unknown'
-		message, msg_temp, /info
-        self._pisces_err_msg += ' - ' + msg_temp
-    endif
-	framerate =  framerate < 1./exptime		    ; rate cannot be faster than 1/exptime !!!!
-
-
+   
 	;Dark Frame:
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'pisces','backgrounds','bin'+strtrim(binning,2)]
     if (n_elements(dark_fname) eq 0) then begin
     	if valid_exptime and valid_filt_number then begin
     		thisJulday = (root_obj->obj_tracknum())->JulDay()
-    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, filter_number, frame_w, frame_h, err_msg=dark_err_msg)
+    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, self._filter_name, frame_w, frame_h, err_msg=dark_err_msg)
    			if strtrim(dark_err_msg,2) ne '' then self._pisces_err_msg += dark_err_msg
    		endif else begin
 			msg_temp = 'pisces dark cannot be searched: ('
@@ -112,18 +91,22 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 	endelse
 
 	;Badpixelmap filename:
-	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'piscesbadpixelmap.fits')
+	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
 
     ; ROI
-    str = aoget_fits_keyword(fitsheader, 'DETSEC')
-    temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
-    xra = strsplit( temp[0], ":", /ext)
-    yra = strsplit( temp[1], ":", /ext)
+    ;str = aoget_fits_keyword(fitsheader, 'DETSEC')
+    ;temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
+    ;xra = strsplit( temp[0], ":", /ext)
+    ;yra = strsplit( temp[1], ":", /ext)
     roi = fltarr(4)
-	roi[0] = xra[0]-1 ; xmin
-	roi[1] = xra[1]-1 ; xmax
-	roi[2] = yra[0]-1 ; ymin
-	roi[3] = yra[1]-1 ; ymax
+    roi[0] = 0 ; xmin
+	roi[1] = 1023 ; xmax
+	roi[2] = 0 ; ymin
+	roi[3] = 1023 ; ymax
+    roi[0] = 400 ; xmin
+	roi[1] = 599 ; xmax
+	roi[2] = 300 ; ymin
+	roi[3] = 499 ; ymax
 
 
     ; File names
@@ -151,7 +134,7 @@ end
 
 ;Searches a pisces dark closest in time to the pisces image with the same set of parameters
 ;------------------------------------------------------------------------------------------
-function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_number, frame_w, frame_h, err_msg=err_msg
+function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, err_msg=err_msg
 
 	err_msg = ""
 
@@ -178,11 +161,11 @@ function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_number, f
 			;Retrieve header info of averaged dark frame because the file with the cube didn't have any info saved in the header...
 			closest_av_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, file_basename(all_darks_fname[idx_closest[dd]], '_cube.fits'))
 			dark_header = headfits(closest_av_dark_fname)
-			dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))*1e-6	;in seconds
-			dark_filter_number = long(aoget_fits_keyword(dark_header, 'FILTRNR'))
+			dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))	;in seconds
+			dark_filter_tag = aoget_fits_keyword(dark_header, 'FILTER')
 			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
 			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-			if (dark_exptime eq exptime) and (filter_number eq dark_filter_number) and  $
+			if (dark_exptime eq exptime) and (filter_tag eq dark_filter_tag) and  $
 			   (dark_frame_w eq frame_w) and (dark_frame_h eq frame_h) then dark_found=1B else dd+=1
 		endwhile
 		if dark_found then begin

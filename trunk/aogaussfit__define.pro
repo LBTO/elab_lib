@@ -6,7 +6,6 @@
 function AOgaussfit::Init, frame, debug=debug
     self._frame = ptr_new(frame)
 
-;  	self._pixelscale = pixelscale
 
     self->fitta, debug=debug
 
@@ -14,9 +13,8 @@ function AOgaussfit::Init, frame, debug=debug
     if not self->AOhelp::Init('AOGaussFit', 'Gaussian 2D fit of the PSF') then return, 0
     self->addMethodHelp, "fitted_frame()", "return psf frame cropped to fitted ROI"
     self->addMethodHelp, "psffit()", "return fit of psf cropped to fitted ROI. To be compared with fitted_frame()"
-    ;self->addMethodHelp, "pixelscale()", "return psf pixelscale (arcsec/px)"
-    self->addMethodHelp, "roi()", "return psf ROI fitted [xmin,xmax,ymin,ymax] (px)"
-    self->addMethodHelp, "fwhm()", "return psf FWHM (arcsec)"
+    self->addMethodHelp, "roi()", "return the ROI of the psf used for fitting [xmin,xmax,ymin,ymax] (px)"
+    self->addMethodHelp, "fwhm()", "return psf FWHM (px)"
     self->addMethodHelp, "fwhm_max()", "return psf FWHM along ellipse major axis (px)"
     self->addMethodHelp, "fwhm_min()", "return psf FWHM along ellipse minor axis (px)"
     self->addMethodHelp, "center()",   "return psf gaussian center int[2] (px)"
@@ -93,10 +91,6 @@ pro AOgaussfit::fitta, debug=debug
     self._psffit	 = ptr_new(rfrfit, /no_copy)
 end
 
-;function AOgaussfit::pixelscale
-;    return, self._pixelscale
-;end
-
 function AOgaussfit::center
     return, self._center
 end
@@ -172,7 +166,6 @@ pro AOgaussfit__define
     struct = { AOgaussfit, $
         _frame         : ptr_new(), $
         _psffit        : ptr_new(), $
-;        _pixelscale    : 0d, $
         _center        : fltarr(2), $
         _fwhm          : 0d, $				;arcsec
         _fwhm_max      : 0d, $				;arcsec

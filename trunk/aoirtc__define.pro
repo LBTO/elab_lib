@@ -46,9 +46,18 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
     valid_filt_number = 1B
     CASE filter_number OF
-    	1: lambda = 1.30e-6	;BROADBAND (central wavelength (?))
-    	2: lambda = 1.07e-6	;J
-    	3: lambda = 1.60e-6	;H
+    	1: begin 
+            lambda = 1.30e-6	;BROADBAND (central wavelength (?))
+            self._filter_name = 'EMPTY' 
+           end
+    	2: begin 
+    	    lambda = 1.07e-6	;J
+            self._filter_name = 'J' 
+           end
+    	3: begin 
+    	    lambda = 1.60e-6	;H
+            self._filter_name = 'H' 
+           end
      else: begin
      		;lambda = 1.
      		lambda = !VALUES.F_NAN
@@ -112,18 +121,17 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 	endelse
 
 	;Badpixelmap filename:
-	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.fits')
+	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
 
-    ; ROI
+    ; subframe
     str = aoget_fits_keyword(fitsheader, 'DETSEC')
     temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
     xra = strsplit( temp[0], ":", /ext)
     yra = strsplit( temp[1], ":", /ext)
-    roi = fltarr(4)
-	roi[0] = xra[0]-1 ; xmin
-	roi[1] = xra[1]-1 ; xmax
-	roi[2] = yra[0]-1 ; ymin
-	roi[3] = yra[1]-1 ; ymax
+	self._subframe[0] = xra[0]-1 ; xmin
+	self._subframe[1] = xra[1]-1 ; xmax
+	self._subframe[2] = yra[0]-1 ; ymin
+	self._subframe[3] = yra[1]-1 ; ymax
 
 
     ; File names
@@ -138,11 +146,12 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
 	; initialize PSF object
     if not self->AOpsf::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    	binning=binning, ROI=roi, badpixelmap_fname=badpixelmap_fname) then return,0
+    	binning=binning, badpixelmap_fname=badpixelmap_fname) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOIRTC', 'IRTC image') then return, 0
     self->addMethodHelp, "temp()", "IRTC temperature (K)"
+    self->addMethodHelp, "subframe()", "subframe of IRTC detector read [xmin, xmax, ymin, ymax]"
     self->AOpsf::addHelp, self
 
     return, 1
@@ -230,6 +239,10 @@ function AOIRTC::temp
 	return, self._irtc_temp
 end
 
+function AOIRTC::subframe
+	return, self._subframe
+end
+
 
 ;Returns the error messages
 ;-----------------------------------------------------
@@ -249,6 +262,7 @@ pro AOIRTC__define
     struct = { AOIRTC					, $
     	_irtc_err_msg		: ""		, $
     	_irtc_temp			: 0.0		, $
+		_subframe           : [0,0,0,0]    , $
         INHERITS    AOpsf,  $
         INHERITS    AOhelp  $
     }
