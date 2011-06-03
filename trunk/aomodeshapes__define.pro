@@ -10,7 +10,7 @@ function AOmodeShapes::Init, fname
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodeShapes', 'Represent the shapes of a set of modes') then return, 0
-    self->addMethodHelp, "fname()",   "sav file name (string)"
+    self->addMethodHelp, "fname()",   "mode shape matrix file name (string)"
     self->addMethodHelp, "nmodes()", "number of modal shapes"
     self->addMethodHelp, "modemat()", "matrix of modal shapes [npix x nmodes]"
     self->addMethodHelp, "idx_mask()", "index vector of pupil mask points  [npix]"
