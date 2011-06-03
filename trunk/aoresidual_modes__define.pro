@@ -23,19 +23,22 @@ function AOresidual_modes::Init, root_obj
 
     self._root_obj = root_obj
 
+    ; initialize time series
     if not self->AOtime_series::Init((root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
 	self._norm_factor   = 1e9 * self._root_obj->reflcoef()	;nm wf
 	self._spectra_units = textoidl('[nm-wf]')
 	self._plots_title = root_obj->tracknum()
 
 	;Initialize WF
-	self._wf = obj_new('AOwf', self._root_obj, root_obj->modeShapes(), self)
+	;self._wf = obj_new('AOwf', self._root_obj, root_obj->modeShapes(), self)
+    if not self->AOwf::Init(self._root_obj, self._root_obj->modeShapes()) then message, 'WF object not available', /info
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
     self->addMethodHelp, "modes()", "modal residue (m rms, surface) [niter, nmodes]"
     self->addMethodHelp, "nmodes()", "number of residual modes"
-    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
+    ;if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
+    self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
     return, 1
 end
@@ -96,12 +99,13 @@ function AOresidual_modes::GetDati
     return, self._modes
 end
 
-function AOresidual_modes::wf
-	return, self._wf
-end
+;function AOresidual_modes::wf
+;	return, self._wf
+;end
 
 pro AOresidual_modes::free
     if ptr_valid(self._modes) then ptr_free, self._modes
+    self->AOwf::free
     self->AOtime_series::free
 end
 
@@ -109,6 +113,7 @@ end
 pro AOresidual_modes::Cleanup
     ;obj_destroy, self._obj_psd
     if ptr_valid(self._modes) then ptr_free, self._modes
+    self->AOwf::Cleanup
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
@@ -118,7 +123,8 @@ pro AOresidual_modes__define
         _modes         : ptr_new(), $
         _store_fname   : "" ,       $
         _root_obj      : obj_new(), $
-        _wf			   : obj_new(), $
+        ;_wf			   : obj_new(), $
+        INHERITS    AOwf, $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }

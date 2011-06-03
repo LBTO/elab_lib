@@ -27,11 +27,8 @@ function AOmodes::Init, root_obj, modes_file, fc_obj
 	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
 	self._plots_title = root_obj->tracknum()
 
-    ;self->datiProducer
-    ;self->AOtime_series::Compute
-
 	;Initialize WF
-	self._wf = obj_new('AOwf', root_obj, root_obj->modeShapes(), self)
+    if not self->AOwf::Init(root_obj, root_obj->modeShapes()) then message, 'WF object not available', /info
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodes', 'Represent integrated modes') then return, 0
@@ -39,7 +36,7 @@ function AOmodes::Init, root_obj, modes_file, fc_obj
     self->addMethodHelp, "header()", "header of modesfile (strarr)"
     self->addMethodHelp, "modes()", "integrated modes matrix [nmodes,niter]"
     self->addMethodHelp, "nmodes()", "number of modes"
-    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
+    self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
     return, 1
 end
@@ -74,10 +71,6 @@ function AOmodes::nmodes
     return, self->AOtime_series::nseries()
 end
 
-function AOmodes::wf
-	return, self._wf
-end
-
 ; to be implemented in AOtime_series subclasses
 function AOmodes::GetDati
     if not ptr_valid(self._modes) then self->datiProducer
@@ -87,12 +80,14 @@ end
 pro AOmodes::free
     if ptr_valid(self._modes) then ptr_free, self._modes
     if ptr_valid(self._fitsheader) then ptr_free, self._fitsheader
+    self->AOwf::free
     self->AOtime_series::free
 end
 
 
 pro AOmodes::Cleanup
     if ptr_valid(self._modes) then ptr_free, self._modes
+    self->AOwf::Cleanup
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
@@ -104,7 +99,7 @@ pro AOmodes__define
         _modes            :  ptr_new(), $
         _fc_obj           :  obj_new(), $
         _store_fname      :  ""		  , $
-        _wf			   	  :  obj_new(), $
+        INHERITS    AOwf, $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }

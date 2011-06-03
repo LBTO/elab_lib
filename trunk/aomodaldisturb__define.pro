@@ -29,12 +29,12 @@ function AOmodaldisturb::Init, root_obj
 	self._plots_title = root_obj->tracknum()
 
 	;Initialize WF
-	self._wf = obj_new('AOwf', root_obj, root_obj->modeShapes(), self)
+    if not self->AOwf::Init(self._root_obj, self._root_obj->modeShapes()) then message, 'WF object not available', /info
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodaldisturb', 'Represent disturb projected on modal basis') then return, 0
     self->addMethodHelp, "modaldisturb()",  "disturb modes matrix [nmodes,niter]"
-    if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
+    self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
     return, 1
 end
@@ -59,10 +59,6 @@ function AOmodaldisturb::nmodes
     return, self->AOtime_series::nseries()
 end
 
-function AOmodaldisturb::wf
-	return, self._wf
-end
-
 ; to be implemented in AOtime_series subclasses
 function AOmodaldisturb::GetDati
     if not ptr_valid(self._modaldisturb) then self->datiProducer
@@ -71,12 +67,14 @@ end
 
 pro AOmodaldisturb::free
     if ptr_valid(self._modaldisturb) then ptr_free, self._modaldisturb
+    self->AOwf::free
     self->AOtime_series::free
 end
 
 
 pro AOmodaldisturb::Cleanup
     if ptr_valid(self._modaldisturb) then ptr_free, self._modaldisturb
+    self->AOwf::Cleanup
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
@@ -87,7 +85,7 @@ pro AOmodaldisturb__define
         _m2c_obj           :  obj_new(), $
         _disturb_obj       :  obj_new(), $
         _store_fname       : "", $
-        _wf			   	  :  obj_new(), $
+        INHERITS    AOwf, $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
     }
