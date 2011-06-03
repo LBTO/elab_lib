@@ -53,7 +53,7 @@ function AOolmodes::Init, root_obj
   self._root_obj = root_obj
 
   ;Initialize WF
-  self._wf = obj_new('AOwf', self._root_obj, root_obj->modeShapes(), self)
+  if not self->AOwf::Init(self._root_obj, self._root_obj->modeShapes()) then message, 'WF object not available', /info
 
   ; initialize help object and add methods and leafs
   if not self->AOhelp::Init('AOolmodes', 'Represent reconstructed open loop modes') then return, 0
@@ -65,7 +65,7 @@ function AOolmodes::Init, root_obj
   self->addMethodHelp, "ide(mode_idx, visu=visu)", "Identifies turbulence, vibrations and noise model for mode_idx mode"
   self->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
                         "return the direction of vibrations (width[Hz]=2*fstep, tip=0°, tilt=90°) between frequencies from_freq and to_freq"
-  if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
+  self->AOwf::addHelp, self
   self->AOtime_series::addHelp, self
 
   return, 1
@@ -125,10 +125,6 @@ pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, over
    	oplot, freq, sqrt(tip), col='0000ff'x
    	oplot, freq, sqrt(tilt), col='00ff00'x
   endelse
-end
-
-function AOolmodes::wf
-	return, self._wf
 end
 
 ; to be implemented in AOtime_series subclasses
@@ -503,12 +499,14 @@ end
 
 pro AOolmodes::free
   if ptr_valid(self._modes) then ptr_free, self._modes
+  self->AOwf::free
   self->AOtime_series::free
 end
 
 
 pro AOolmodes::Cleanup
   if ptr_valid(self._modes) then ptr_free, self._modes
+  self->AOwf::Cleanup
   self->AOtime_series::Cleanup
   self->AOhelp::Cleanup
 end
@@ -525,8 +523,9 @@ pro AOolmodes__define
     _r0_store_fname   : ""			, $
     _r0				  : 0.			, $
     _wf			   	  : obj_new()   , $
-    INHERITS    AOtime_series		, $
-    INHERITS    AOhelp 			$
+    INHERITS    AOwf                , $
+    INHERITS    AOtime_series       , $
+    INHERITS    AOhelp 		          $
     }
 
 end
