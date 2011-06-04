@@ -1,9 +1,18 @@
 
 ;+
 ; AOpsf object initialization
+; 
+; An AOpsf represent a ROI of an image containing 1 and only 1 PSF in the field
+; You can compute PSF quality parameters (SR, EE, FWHM)
+; You can measure spectra of PSF vibrations (provided the image is a cube of images)
+; 
+; The image has a lambda, a pixelscale and a exposure time
+; In case of a cube of images it has also a framerate 
+; 
+; 
+;
 ;
 ; INPUT
-;   root_obj
 ;   psf_fname            images cube fits file name (absolute path)
 ;   dark_fname           dark fits file name (absolute path)
 ;   pixelscale           [arcsec/px]
@@ -14,11 +23,13 @@
 ; KEYWORD
 ;   binning              default = 1
 ;   roi                  Use a subarray [xmin, xmax, ymin, ymax] starting from 0, boundaries included, default=entire frame
-;	badpixelmap_fname	(string) full path to the bad pixel map frame.
+;	badpixelmap_fname	 (string) full path to the bad pixel map frame.
+;   label                (string) label for plots
+;   recompute            set to force recomputing of stored data
 ;-
 
-function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
-        binning=binning, roi=roi, badpixelmap_fname=badpixelmap_fname
+function AOpsf::Init, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
+        binning=binning, roi=roi, badpixelmap_fname=badpixelmap_fname, label=label, recompute=recompute
 
 	if not file_test(psf_fname) then begin
         message, psf_fname + ' not found', /info
@@ -62,38 +73,38 @@ function AOpsf::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, expti
      	self._norm_factor   = 1.0
 		self._spectra_units = 'pix'
 	endelse
-	self._plots_title = root_obj->tracknum()
+	self._plots_title = keyword_set(label) ? label : ''
 
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._centroid_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
         file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
 	;Long-exposure PSF
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._psf_le_fname, /allow_nonexistent
     endif
 
 	;PSF cube elaborated (dark-subtracted, badpixel corrected)
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._psf_elab_fname, /allow_nonexistent
     endif
 
     ;SR estimation from the PSF:
 	self._sr_se = -1.
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._sr_se_fname, /allow_nonexistent
     endif
 
 	;PSF profile evaluation:
 	self._prof_binsize = 0.5
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._profile_fname, /allow_nonexistent
     endif
 
 	;Encircled energy computation:
-    if root_obj->recompute() eq 1B then begin
+    if keyword_set(recompute) eq 1B then begin
         file_delete, self._enc_ene_fname, /allow_nonexistent
     endif
 
@@ -168,10 +179,12 @@ end
 function AOpsf::maneggiaFrame, psf_in
 	psf = psf_in - self->dark_image()
     ; remove bad pixels interpolating with neighbours
-    trstr = (getbadpixelmap(self->badpixelmap_fname()))->triangulation()
-    if trstr.np gt 0 then begin  
-        sz=size(psf, /dim)
-    	psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
+    if obj_valid(getbadpixelmap(self->badpixelmap_fname())) then begin  ; TODO use catch!!!
+        trstr = (getbadpixelmap(self->badpixelmap_fname()))->triangulation()
+        if trstr.np gt 0 then begin  
+            sz=size(psf, /dim)
+    	    psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
+        endif
     endif
     return, psf
 end
@@ -254,6 +267,7 @@ end
 
 
 function AOpsf::badPixelMap
+    if not obj_valid(getbadpixelmap(self->badpixelmap_fname())) then message, 'badPixelMap not available'
     roi=self->roi()
     return, ((getbadpixelmap(self->badpixelmap_fname()))->badpixelmap())[roi[0]:roi[1], roi[2]:roi[3]]
 end
@@ -306,6 +320,12 @@ function AOpsf::longExposure
     return, *(self._longexposure)
 end
 
+function AOpsf::rawImage, dark_correct=dark_correct
+    psf = float(readfits(self->fname(), header, /SILENT))
+    psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
+    if keyword_set(dark_correct) then psf_le -= self->dark_image()
+    return, psf_le
+end
 
 ;pro AOpsf::compute_bias, image
 ;	; Create four boxes close to the corners of the frame
@@ -367,7 +387,7 @@ function AOpsf::SR_se, plot=plot, ima=ima
         			psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_lbt_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
         			save, psf_dl_ima, file=psf_dl_fname
     			endelse
-    			sr_se = sr_esposito(ima1, psf_dl_ima, self->lambda(), self->pixelscale(), plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
+    			sr_se = sr_esposito(ima1, psf_dl_ima, plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
 				if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
             	if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
     			if not keyword_set(ima) then save, sr_se, sresposito_err_msg, filename=self._sr_se_fname
@@ -378,7 +398,9 @@ function AOpsf::SR_se, plot=plot, ima=ima
     return, self._sr_se
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; PSF averaged profile
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;                  PSF averaged profile
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 pro AOpsf::compute_profile
 	if file_test(self._profile_fname) then begin
 		restore, self._profile_fname
@@ -452,7 +474,9 @@ pro AOpsf::set_prof_binsize, binsize
     file_delete, self._profile_fname, /allow_nonexistent
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Encircled Energy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;                    Encircled Energy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 pro AOpsf::compute_encircled_energy
 	if file_test(self._enc_ene_fname) then begin
 		restore, self._enc_ene_fname
@@ -685,8 +709,6 @@ pro AOpsf::free
     if ptr_valid(self._imagecube)       then ptr_free, self._imagecube
     if ptr_valid(self._dark_image)  then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
-    ;if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
-    ;if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)    then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then  self._gaussfit->free
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -706,8 +728,6 @@ pro AOpsf::Cleanup
     if ptr_valid(self._imagecube)      then ptr_free, self._imagecube
     if ptr_valid(self._dark_image) then ptr_free, self._dark_image
     if ptr_valid(self._longexposure) then ptr_free, self._longexposure
-    ;if ptr_valid(self._badpixelmap) then ptr_free, self._badpixelmap
-    ;if ptr_valid(self._triangulate) then ptr_free, self._triangulate
     if ptr_valid(self._centroid)   then ptr_free, self._centroid
     IF OBJ_VALID(self._gaussfit)   then obj_destroy, self._gaussfit
     if ptr_valid(self._psfprofile) then ptr_free, self._psfprofile
@@ -719,7 +739,6 @@ pro AOpsf::Cleanup
     if ptr_valid(self._enc_ene_dist)    then ptr_free, self._enc_ene_dist
     if ptr_valid(self._enc_ene_dist_lD) then ptr_free, self._enc_ene_dist_lD
     self->AOtime_series::Cleanup
-    self->AOhelp::Cleanup
 end
 
 ;Returns the error messages
