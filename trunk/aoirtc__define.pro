@@ -145,8 +145,8 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
 
 	; initialize PSF object
-    if not self->AOpsf::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    	binning=binning, badpixelmap_fname=badpixelmap_fname) then return,0
+    if not self->AOpsf::Init(psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
+    	binning=binning, badpixelmap_fname=badpixelmap_fname, label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOIRTC', 'IRTC image') then return, 0

@@ -33,14 +33,16 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     self._filter_name = aoget_fits_keyword(fitsheader, 'FILTER')
     valid_filt_number = 1B
     CASE strtrim(self._filter_name,2) OF
-        'open': lambda=1e-6                 ;2:OPEN
-    	'J': lambda = 1.25e-6	            ;4:J
-    	'H': lambda = 1.65e-6	            ;6:H
+        'H2 2.122 um':  lambda = 2.122e-6   ;1:H2 2.122 um   
+        'open':         lambda = 1e-6       ;2:OPEN
+    	'J':            lambda = 1.25e-6	;4:J
+        'Ks':           lambda = 2.1e-6     ;5:ks
+    	'H':            lambda = 1.65e-6	;6:H
     	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII 
      else: begin
      		;lambda = 1.
      		lambda = !VALUES.F_NAN
-     		msg_temp = 'Unknown pisces filter'
+     		msg_temp = 'Unknown pisces filter <'+self._filter_name+'>'  
             message, msg_temp, /info
 	        self._pisces_err_msg += ' - ' + msg_temp
     		valid_filt_number = 0B
@@ -120,8 +122,8 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'piscespsf_enc_ene.sav')
 
 	; initialize PSF object
-    if not self->AOpsf::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    	binning=binning, ROI=roi, badpixelmap_fname=badpixelmap_fname) then return,0
+    if not self->AOpsf::Init(psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
+    	binning=binning, ROI=roi, badpixelmap_fname=badpixelmap_fname, label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('aopisces', 'pisces image') then return, 0

@@ -65,7 +65,8 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
 	self._profile_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_profile.sav')
 	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_enc_ene.sav')
 
-    if not self->AOpsf::Init(root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, binning=binning) then return,0
+    if not self->AOpsf::Init(psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, binning=binning, $
+            label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOTV', 'TV CCD47 image') then return, 0
