@@ -2,7 +2,8 @@
 ;
 ;-
 ; from Simone's calc_sr1 17 nov 09
-function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg, FIX_BG = FIX_BG
+;function sr_esposito, ima_bs, psf_difflim, lambda, irtc_sampling, plot=plot, errmsg = errmsg, FIX_BG = FIX_BG
+function sr_esposito, ima_bs, psf_difflim, plot=plot, errmsg = errmsg, FIX_BG = FIX_BG
 
 npx = n_elements(ima_bs(*,0))
 npy = n_elements(ima_bs(0,*))
@@ -61,7 +62,7 @@ repeat begin
     	side_size(i-1) = 10*i
       	ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
 		;flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i)) ;ma non c'e bisogno di fare replicate!!
-	  	flux[i-1] = total(ima_side-new_bg)
+	  	flux[i-1] = total(ima_side-new_bg) ; flux in squares of 10,20,30..10*nside pixels. Background dynamically corrected. 
    	endfor
 
 	if not keyword_set(FIX_BG) then break
@@ -69,9 +70,9 @@ repeat begin
 	dflux = flux-shift(flux,1)
     ssize = side_size^2
     dssize = ssize-shift(ssize,1)
-    aaa = dflux / dssize
-    aaa_len = n_elements(aaa)
-    if aaa_len-4 lt 0 then break
+    aaa = dflux / dssize  ; flux derivative counts/px^2. aaa[0] is not good
+    aaa_len = n_elements(aaa)  ; TODO aaa_len === nside
+    if aaa_len lt 5 then break  ; do not correct bg if nside lt 5 (aaa[0] is not good) 
     fixbg = mean(aaa[aaa_len-4:aaa_len-1])
     if keyword_set(plot) then print,'Background modified by ',fixbg,' counts'
 	counter += 1
@@ -80,7 +81,7 @@ endrep until (abs(fixbg) lt 0.001) or (counter gt 10)
 if counter gt 10 then begin
    	errmsg = 'Background correction failed'
    	message, errmsg, /info
-   	return, 0
+   	;return, 0
 endif
 
 ;Resampling of diff-limited PSF.
