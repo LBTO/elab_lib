@@ -7,21 +7,25 @@
 ;
 ;-
 
-function AOresidual_modes::Init, root_obj
+function AOresidual_modes::Init, root_obj, slopes_obj, modal_rec_obj, store_label=store_label
 
-	if not obj_valid(root_obj->modal_rec()) then return,0
-	if not obj_valid(root_obj->slopes()) then return,0
+	if not obj_valid(modal_rec_obj) then return,0
+	if not obj_valid(slopes_obj) then return,0
 
-    self._store_fname     = filepath(root=root_obj->elabdir(), 'residual_modes.sav')
-    self._store_psd_fname = filepath(root=root_obj->elabdir(), 'residual_modes_psd.sav')
-    self._store_peaks_fname = filepath(root=root_obj->elabdir(), 'residual_modes_peaks.sav')
+    if not keyword_set(store_label) then store_label=''
+
+    self._store_fname     = filepath(root=root_obj->elabdir(), store_label+'.sav')
+    self._store_psd_fname = filepath(root=root_obj->elabdir(), store_label+'_psd.sav')
+    self._store_peaks_fname = filepath(root=root_obj->elabdir(), store_label+'_peaks.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
         file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
-    self._root_obj = root_obj
+    self._root_obj      = root_obj
+    self._slopes_obj    = slopes_obj
+    self._modal_rec_obj = modal_rec_obj
 
     ; initialize time series
     if not self->AOtime_series::Init((root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
@@ -49,8 +53,8 @@ pro AOresidual_modes::datiProducer
         restore, self._store_fname
     endif else begin
         ; compute residual modes from slopes and modal rec
-        t_rec = ((self._root_obj->modal_rec())->rec())[*, 0:(self._root_obj->modal_rec())->lastmode()]
-        modes =  t_rec ##  (self._root_obj->slopes())->slopes()
+        t_rec = (self._modal_rec_obj->rec())[*, 0:self._modal_rec_obj->lastmode()]
+        modes =  t_rec ##  self._slopes_obj->slopes()
         save, modes, file=self._store_fname
     endelse
     self._modes = ptr_new(modes, /no_copy)
@@ -99,10 +103,6 @@ function AOresidual_modes::GetDati
     return, self._modes
 end
 
-;function AOresidual_modes::wf
-;	return, self._wf
-;end
-
 pro AOresidual_modes::free
     if ptr_valid(self._modes) then ptr_free, self._modes
     self->AOwf::free
@@ -123,7 +123,8 @@ pro AOresidual_modes__define
         _modes         : ptr_new(), $
         _store_fname   : "" ,       $
         _root_obj      : obj_new(), $
-        ;_wf			   : obj_new(), $
+        _modal_rec_obj : obj_new(), $
+        _slopes_obj    : obj_new(), $
         INHERITS    AOwf, $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $

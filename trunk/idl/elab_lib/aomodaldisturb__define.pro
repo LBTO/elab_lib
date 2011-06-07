@@ -29,7 +29,7 @@ function AOmodaldisturb::Init, root_obj
 	self._plots_title = root_obj->tracknum()
 
 	;Initialize WF
-    if not self->AOwf::Init(self._root_obj, self._root_obj->modeShapes()) then message, 'WF object not available', /info
+    if not self->AOwf::Init(root_obj, root_obj->modeShapes()) then message, 'WF object not available', /info
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodaldisturb', 'Represent disturb projected on modal basis') then return, 0

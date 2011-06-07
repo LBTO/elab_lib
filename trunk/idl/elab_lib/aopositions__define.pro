@@ -23,6 +23,7 @@ function AOpositions::Init, root_obj, positions_file, fc_obj
         file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
+    if not obj_valid(fc_obj) then return,0
     if not self->AOtime_series::Init(fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
 	self._norm_factor   = 1e9 * root_obj->reflcoef()	;nm wf
 	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')

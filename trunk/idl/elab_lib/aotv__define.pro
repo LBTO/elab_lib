@@ -36,7 +36,7 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
 	if framerate eq 0 then message, 'PSF acquisition frame rate not known', /info
 
     ; Exposure time
-    exptime =   1./framerate
+    self._exptime =   1./framerate
 
 
     ; ROI
@@ -56,29 +56,37 @@ function AOTV::Init, root_obj, psf_fname, dark_fname
         dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, dark_basename)
     endif
 
-    self._centroid_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcentroid.sav')
-    self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_psd.sav')
-    self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_peaks.sav')
-	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'tv_psf_le.sav')
-	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcube_elab.sav')
-	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'tv_sr_se.sav')
-	self._profile_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_profile.sav')
-	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_enc_ene.sav')
+    ;self._centroid_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcentroid.sav')
+    ;self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_psd.sav')
+    ;self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'tv_psfcentroid_peaks.sav')
+	;self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'tv_psf_le.sav')
+	;self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'tv_psfcube_elab.sav')
+	;self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'tv_sr_se.sav')
+	;self._profile_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_profile.sav')
+	;self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'tv_psf_enc_ene.sav')
 
-    if not self->AOpsf::Init(psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, binning=binning, $
-            label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
+    if not self->AOpsfAbstract::Init(psf_fname, dark_fname, pixelscale, lambda, framerate, $
+            label=root_obj->tracknum(), store_radix= filepath(root=root_obj->elabdir(), 'tv'), $
+            recompute=root_obj->recompute()) then return,0
+
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOTV', 'TV CCD47 image') then return, 0
-    self->AOpsf::addHelp, self
+    self->addMethodHelp, "exptime()", "exposure time (s)"
+    self->AOpsfAbstract::addHelp, self
 
     return, 1
+end
+
+function AOTV::exptime
+	return, self._exptime
 end
 
 
 pro AOTV__define
     struct = { AOTV					, $
-        INHERITS    AOpsf,  $
+    	_exptime 			: 0.0		, $
+        INHERITS    AOpsfAbstract,  $
         INHERITS    AOhelp  $
     }
 end

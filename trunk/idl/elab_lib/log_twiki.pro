@@ -3,7 +3,10 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     objref =  aodataset->Get(/all)
 
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* | *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *band* | *exp* | *#frames* | *disturb* | *notes* |"
+    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
+           "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
+           "| *notes* "+$
+           "| "
 
     idlstring = "["
 
@@ -13,6 +16,11 @@ pro log_twiki, aodataset, ref_star=ref_star
             message, objref[i] + ' skipped because it lacks required data', /info
             continue
         endif
+
+        if ee->meas_type() ne 'LOOP' then begin
+            ;message, objref[i] + ' skipped because meas type is '+ee->meas_type(), /info
+            continue
+        endif 
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
         
@@ -37,7 +45,13 @@ pro log_twiki, aodataset, ref_star=ref_star
 
 		if obj_valid(ee->frames()) then ad_status = (ee->frames())->antidrift_status() ? 'ON':'OFF'
 
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s |")', $
+        sn_fname = 'NO'
+        if obj_valid(ee->slopes_null()) then begin
+            bname = file_basename((ee->slopes_null())->fname())
+            if stregex( bname, '[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 6 )
+        endif
+
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -58,6 +72,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
     		obj_valid(instr) ? instr->nframes() : -1 , $
 			disturb,  $
+            sn_fname, $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
 
