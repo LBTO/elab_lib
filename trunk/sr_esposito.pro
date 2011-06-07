@@ -20,6 +20,7 @@ max_ima = max(ima_bs,h)
 
 if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/npx,h-h/npx*npx
 ima_fit = gauss2dfit(double(ima_bs),coeff)
+;print,'Gaussian fit:',coeff
 xc = round(coeff(4))
 yc = round(coeff(5))
 
@@ -62,9 +63,9 @@ repeat begin
     	side_size(i-1) = 10*i
       	ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
 		;flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i)) ;ma non c'e bisogno di fare replicate!!
-	  	flux[i-1] = total(ima_side-new_bg) ; flux in squares of 10,20,30..10*nside pixels. Background dynamically corrected. 
+	  	flux[i-1] = total(ima_side-new_bg) ; flux in squares of 10,20,30..10*nside pixels. Background dynamically corrected.
+        ;print, 'side '+strtrim(side_size(i-1),2)+'  average_flux:',flux[i-1]/ n_elements(ima_side) 
    	endfor
-
 	if not keyword_set(FIX_BG) then break
 
 	dflux = flux-shift(flux,1)
@@ -107,7 +108,10 @@ if n_elements(plot) ne 0 then begin
     oplot, ima_fit[xc-side10/2:xc+side10/2-1,yc]-new_bg + 40, color=200L
     plot_io, side_size, sr_side, charsize=2, /xstyle, yrange=[0.1,1.2], /ystyle
     oplot, side_size, flux/max(flux), color=200
+    ;print, side_size, sr_side
     !p.multi=0
+    window, 1
+    plot, side_size, flux/max(flux), /yst, psym=-4
 endif
 
 ; Test per problemi sul background
@@ -125,6 +129,7 @@ endif else begin
 endelse
 if n_elements(errmsg) ne 0 then message, errmsg, /info
 
+;print, ' bg ' , new_bg
 ;stop
 return, sr
 end

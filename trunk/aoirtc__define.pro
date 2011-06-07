@@ -21,9 +21,6 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 	    self._irtc_err_msg += ' - ' + msg_temp
 	endif
 
-    ; Binning:
-    binning = 1			;always bin1?
-
     ; Pixelscale:
     apertnr = long(aoget_fits_keyword(fitsheader, 'APERTNR'))
     valid_pixscale = 1B
@@ -70,9 +67,9 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
 
     ; Exposure time:
-	exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6	;in seconds
+	self._exptime = float(aoget_fits_keyword(fitsheader, 'EXPTIME'))*1e-6	;in seconds
 	valid_exptime = 1B
-	if exptime eq 0 then begin
+	if self._exptime eq 0 then begin
 		msg_temp = 'Unknown IRTC exposure time'
 		message, msg_temp, /info
         self._irtc_err_msg += ' - ' + msg_temp
@@ -93,15 +90,15 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 		message, msg_temp, /info
         self._irtc_err_msg += ' - ' + msg_temp
     endif
-	framerate =  framerate < 1./exptime		    ; rate cannot be faster than 1/exptime !!!!
+	framerate =  framerate < 1./self._exptime		    ; rate cannot be faster than 1/exptime !!!!
 
 
 	;Dark Frame:
-    dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'irtc','backgrounds','bin'+strtrim(binning,2)]
+    dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'irtc','backgrounds','bin1']
     if (n_elements(dark_fname) eq 0) then begin
     	if valid_exptime and valid_filt_number then begin
     		thisJulday = (root_obj->obj_tracknum())->JulDay()
-    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, exptime, filter_number, frame_w, frame_h, err_msg=dark_err_msg)
+    		full_dark_fname = self->find_dark(thisJulday, dark_subdir, self._exptime, filter_number, frame_w, frame_h, err_msg=dark_err_msg)
    			if strtrim(dark_err_msg,2) ne '' then self._irtc_err_msg += dark_err_msg
    		endif else begin
 			msg_temp = 'IRTC dark cannot be searched: ('
@@ -122,6 +119,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
 	;Badpixelmap filename:
 	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
+	badpixelmap_obj = keyword_set(badpixelmap_fname) ? getbadpixelmap(badpixelmap_fname) : 0
 
     ; subframe
     str = aoget_fits_keyword(fitsheader, 'DETSEC')
@@ -135,24 +133,27 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
 
     ; File names
-    self._centroid_fname   = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
-    self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
-    self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_peaks.sav')
-	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'psf_le.sav')
-	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'psfcube_elab.sav')
-	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'sr_se.sav')
-	self._profile_fname    = filepath(root=root_obj->elabdir(), 'psf_profile.sav')
-	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
+    ;self._centroid_fname   = filepath(root=root_obj->elabdir(), 'psfcentroid.sav')
+    ;self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_psd.sav')
+    ;self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'psfcentroid_peaks.sav')
+	;self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'psf_le.sav')
+	;self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'psfcube_elab.sav')
+	;self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'sr_se.sav')
+	;self._profile_fname    = filepath(root=root_obj->elabdir(), 'psf_profile.sav')
+	;self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'psf_enc_ene.sav')
 
 	; initialize PSF object
-    if not self->AOpsf::Init(psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    	binning=binning, badpixelmap_fname=badpixelmap_fname, label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
+    if not self->AOpsfAbstract::Init(psf_fname, full_dark_fname, pixelscale, lambda, framerate, $
+    	badpixelmap_obj=badpixelmap_obj, label=root_obj->tracknum(),$
+        store_radix= filepath(root=root_obj->elabdir(), 'irtc'), $
+        recompute=root_obj->recompute()) then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOIRTC', 'IRTC image') then return, 0
     self->addMethodHelp, "temp()", "IRTC temperature (K)"
     self->addMethodHelp, "subframe()", "subframe of IRTC detector read [xmin, xmax, ymin, ymax]"
-    self->AOpsf::addHelp, self
+    self->addMethodHelp, "exptime()", "exposure time (s)"
+    self->AOpsfAbstract::addHelp, self
 
     return, 1
 end
@@ -219,14 +220,14 @@ function AOIRTC::find_dark, thisJulday, dark_subdir, exptime, filter_number, fra
 	return, dark_fname
 end
 
-;This function overrides the dark_image() method in AOPSF.
+;This function overrides the dark_image() method in AOpsfAbstract.
 function AOIRTC::dark_image
     if not (PTR_VALID(self._dark_image)) then begin
     	cube_fname = self->dark_fname()
     	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='irtc_darks', $
     		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
 		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname,/SILENT)) else begin
-			dark = self->AOPSF::dark_image()
+			dark = self->AOpsfAbstract::dark_image()
 			if not file_test(file_dirname(saved_dark_fname), /dir) then file_mkdir, file_dirname(saved_dark_fname)
        		writefits, saved_dark_fname, dark
 		endelse
@@ -243,12 +244,20 @@ function AOIRTC::subframe
 	return, self._subframe
 end
 
+function AOIRTC::filter_name
+	return, self._filter_name
+end
+
+function AOIRTC::exptime
+	return, self._exptime
+end
+
 
 ;Returns the error messages
 ;-----------------------------------------------------
 function AOIRTC::isok, cause=cause
 	isok=1B
-    isok *= self->AOpsf::isok(cause=cause)
+    isok *= self->AOpsfAbstract::isok(cause=cause)
 	if strtrim(self._irtc_err_msg,2) ne '' then begin
 		isok*=0B
 		cause += self._irtc_err_msg
@@ -260,10 +269,12 @@ end
 
 pro AOIRTC__define
     struct = { AOIRTC					, $
+        _filter_name        : ""           , $
     	_irtc_err_msg		: ""		, $
     	_irtc_temp			: 0.0		, $
+    	_exptime 			: 0.0		, $
 		_subframe           : [0,0,0,0]    , $
-        INHERITS    AOpsf,  $
+        INHERITS    AOpsfAbstract,  $
         INHERITS    AOhelp  $
     }
 end

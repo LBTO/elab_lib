@@ -21,16 +21,12 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 	    self._pisces_err_msg += ' - ' + msg_temp
 	endif
 
-    ; Binning:
-    binning = 1			;always bin1?
 
     ; Pixelscale:
-    valid_pixscale = 1B
     pixelscale = 0.0182
 
-
     ; Detect filter:
-    self._filter_name = aoget_fits_keyword(fitsheader, 'FILTER')
+    self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTER'),2)
     valid_filt_number = 1B
     CASE strtrim(self._filter_name,2) OF
         'H2 2.122 um':  lambda = 2.122e-6   ;1:H2 2.122 um   
@@ -69,7 +65,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     frame_h  = long(aoget_fits_keyword(fitsheader, 'NAXIS2'))
    
 	;Dark Frame:
-    dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'pisces','backgrounds','bin'+strtrim(binning,2)]
+    dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'pisces','backgrounds','bin1']
     if (n_elements(dark_fname) eq 0) then begin
     	if valid_exptime and valid_filt_number then begin
     		thisJulday = (root_obj->obj_tracknum())->JulDay()
@@ -95,42 +91,25 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 	;Badpixelmap filename:
 	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
 
-    ; ROI
-    ;str = aoget_fits_keyword(fitsheader, 'DETSEC')
-    ;temp = strsplit( strmid(str,1,strlen(str)-2), ",", /ext)
-    ;xra = strsplit( temp[0], ":", /ext)
-    ;yra = strsplit( temp[1], ":", /ext)
-    roi = fltarr(4)
-    roi[0] = 0 ; xmin
-	roi[1] = 1023 ; xmax
-	roi[2] = 0 ; ymin
-	roi[3] = 1023 ; ymax
-    roi[0] = 400 ; xmin
-	roi[1] = 599 ; xmax
-	roi[2] = 300 ; ymin
-	roi[3] = 499 ; ymax
-
-
-    ; File names
-    self._centroid_fname   = filepath(root=root_obj->elabdir(), 'piscespsfcentroid.sav')
-    self._store_psd_fname  = filepath(root=root_obj->elabdir(), 'piscespsfcentroid_psd.sav')
-    self._store_peaks_fname  = filepath(root=root_obj->elabdir(), 'piscespsfcentroid_peaks.sav')
-	self._psf_le_fname     = filepath(root=root_obj->elabdir(), 'piscespsf_le.sav')
-	self._psf_elab_fname   = filepath(root=root_obj->elabdir(), 'piscespsfcube_elab.sav')
-	self._sr_se_fname      = filepath(root=root_obj->elabdir(), 'piscessr_se.sav')
-	self._profile_fname    = filepath(root=root_obj->elabdir(), 'piscespsf_profile.sav')
-	self._enc_ene_fname    = filepath(root=root_obj->elabdir(), 'piscespsf_enc_ene.sav')
+    store_radix = filepath(root=root_obj->elabdir(), 'pisces')
 
 	; initialize PSF object
-    if not self->AOpsf::Init(psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    	binning=binning, ROI=roi, badpixelmap_fname=badpixelmap_fname, label=root_obj->tracknum(), recompute=root_obj->recompute()) then return,0
-
+    if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
+    	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
+ 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('aopisces', 'pisces image') then return, 0
     self->addMethodHelp, "temp()", "pisces temperature (K)"
-    self->AOpsf::addHelp, self
+    self->addMethodHelp, "filter_name()", "filter name ['J', 'H', 'FeII 1.64um', 'Ks', 'H2 2.122 um']"
+    self->AOscientificimage::addHelp, self
 
     return, 1
+end
+
+pro aopisces::summary
+    self->AOscientificimage::summary
+    print, string(format='(%"%-30s %s")','Filter name', self->filter_name() )
+    print, string(format='(%"%-30s %f")','Temperature (K)', self->temp() )
 end
 
 
@@ -195,32 +174,19 @@ function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_tag, fram
 	return, dark_fname
 end
 
-;This function overrides the dark_image() method in AOPSF.
-function aopisces::dark_image
-    if not (PTR_VALID(self._dark_image)) then begin
-    	cube_fname = self->dark_fname()
-    	saved_dark_fname = (filepath(root=ao_elabdir(), subdir='pisces_darks', $
-    		strsplit(file_basename(cube_fname), '_cube.fits', /extract, /regex)))[0]
-		if file_test(saved_dark_fname) then self._dark_image = ptr_new(readfits(saved_dark_fname,/SILENT)) else begin
-			dark = self->AOPSF::dark_image()
-			if not file_test(file_dirname(saved_dark_fname), /dir) then file_mkdir, file_dirname(saved_dark_fname)
-       		writefits, saved_dark_fname, dark
-		endelse
-	endif
-	return, *(self._dark_image)
+function aopisces::filter_name
+	return, self._filter_name
 end
 
-; pisces temperature (K)
 function aopisces::temp
 	return, self._pisces_temp
 end
-
 
 ;Returns the error messages
 ;-----------------------------------------------------
 function aopisces::isok, cause=cause
 	isok=1B
-    isok *= self->AOpsf::isok(cause=cause)
+    isok *= self->AOscientificimage::isok(cause=cause)
 	if strtrim(self._pisces_err_msg,2) ne '' then begin
 		isok*=0B
 		cause += self._pisces_err_msg
@@ -228,13 +194,12 @@ function aopisces::isok, cause=cause
 	return, isok
 end
 
-
-
 pro aopisces__define
-    struct = { aopisces					, $
-    	_pisces_err_msg		: ""		, $
-    	_pisces_temp			: 0.0		, $
-        INHERITS    AOpsf,  $
-        INHERITS    AOhelp  $
+    struct = { aopisces				, $
+    	_pisces_temp        : 0.0      , $
+        _filter_name         : ""       , $
+        _pisces_err_msg     : ""       , $
+        INHERITS  AOscientificimage     , $
+        INHERITS  AOhelp                  $
     }
 end

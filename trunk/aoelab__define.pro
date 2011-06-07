@@ -69,6 +69,7 @@ function AOelab::Init, tracknum, $
 		endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
+   
 	;Single or double reflection
 	if self->operation_mode() eq "RR" then self._reflcoef=4. else self._reflcoef=2.
 
@@ -160,10 +161,11 @@ function AOelab::Init, tracknum, $
 
     ; slopes
     slopes_file = filepath(root=self._datadir,  'Slopes_'+tracknum+'.fits')
-    self._slopes = obj_new('AOslopes', self, slopes_file, self._frames_counter)
+    self._slopes = obj_new('AOslopes', self, slopes_file, self._frames_counter, store_label='slopes')
 
     ; residual modes
-    self._residual_modes = obj_new('AOresidual_modes', self)
+    if obj_valid(self._slopes) and obj_valid(self._modal_rec) then $
+        self._residual_modes = obj_new('AOresidual_modes', self, self._slopes, self._modal_rec, store_label='residual_modes')
 
     ; modes
     modes_fname = filepath(root=self._datadir,  'Modes_'+tracknum+'.fits')
@@ -198,7 +200,11 @@ function AOelab::Init, tracknum, $
 
     ; PISCES
     pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
-    self._pisces = obj_new('aopisces', self, pisces_fname, dark_fname)
+    self._piscesold = obj_new('aopiscesold', self, pisces_fname, dark_fname)
+
+    ; PISCES
+    pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
+    self._pisces = obj_new('aopisces', self, pisces_fname)
 
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
@@ -229,6 +235,31 @@ function AOelab::Init, tracknum, $
       endif
     endelse
 
+    ; slopes null
+    if obj_valid(self->wfs_status()) then begin
+	    slopes_null_basename 	= (self->wfs_status())->slopes_null_fname()
+        if slopes_null_basename ne "" then begin
+            wunit  = (self->wfs_status())->wunit()
+            binning = ((self->wfs_status())->ccd39())->binning()
+	        slopes_null_subdir 		= ['wfs_calib_'+wunit,'slopenulls','bin'+strtrim(binning,2)]
+	        slopes_null_fname = filepath(root=ao_datadir(), sub=slopes_null_subdir,  slopes_null_basename)
+            self._slopes_null = obj_new('AOslopes', self, slopes_null_fname, self._frames_counter, store_label='slopes_null')
+            if obj_valid(self._slopes_null) and obj_valid(self._modal_rec) then $
+                self._modes_null = obj_new('AOresidual_modes', self, self._slopes_null, self._modal_rec, store_label='modes_null')
+        endif
+    endif else message, 'Wfs object not available: slopesnull object not initialized!', /info
+ 
+
+    ;
+    ; measurement type 
+    ; if slope null file ==nc.fits then 'SlopeNullMeas'
+    ; if file exists 'gains_step1.fits' then 'GainMeas'
+    ; else 'LoopMeas' 
+    self._meas_type = 'LOOP'
+    if  obj_valid(self->wfs_status()) then $
+        if strtrim(file_basename( (self->wfs_status())->slopes_null_fname()),2) eq 'nc.fits' then self._meas_type = 'NCPA'
+    if file_test(filepath(root=self._datadir, 'gains_step1.fits')) then self._meas_type = 'AG'
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOElab', 'Represents an AO measure') then return, 0
     if obj_valid(self._obj_tracknum) then self->addleaf, self._obj_tracknum, 'obj_tracknum'
@@ -254,8 +285,11 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
     if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
     if obj_valid(self._pisces) then self->addleaf, self._pisces, 'pisces'
+    if obj_valid(self._piscesold) then self->addleaf, self._piscesold, 'piscesold'
     if obj_valid(self._offloadmodes) then self->addleaf, self._offloadmodes, 'offloadmodes'
     if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'
+    if obj_valid(self._slopes_null) then self->addleaf, self._slopes_null, 'slopesnull'
+    if obj_valid(self._modes_null) then self->addleaf, self._modes_null, 'modesnull'
 
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -272,7 +306,8 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "commands()", "reference to commands object (AOcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
-    self->addMethodHelp, "pisces()", "reference to PISCES object (AOpsf)"
+    self->addMethodHelp, "pisces()", "reference to PISCES object (AOscientificimage)"
+    self->addMethodHelp, "piscesold()", "reference to old PISCES object (AOpsfabstract)"
     self->addMethodHelp, "irtc()", "reference to IRTC object (AOpsf)"
     self->addMethodHelp, "tv()", "reference to TV ccd47 object (AOpsf)"
     self->addMethodHelp, "modal_rec()", "reference to modal reconstructor object (AOrecmatrix)"
@@ -282,11 +317,13 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "disturb()", "reference to disturb object (AOdisturb)"
     self->addMethodHelp, "modaldisturb()", "reference to modal disturb object (AOmodaldisturb)"
     self->addMethodHelp, "offloadmodes()", "reference to offload modes object (AOoffloadmodes)"
+    self->addMethodHelp, "accel()", "reference to adsec accelerometer data object (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz) (AOaccel)"
+    self->addMethodHelp, "slopesnull()", "reference to a slopesnull object (AOslopes)"
     self->addMethodHelp, "mag()", "equivalent star magnitude (R)"
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
     self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
     self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
-    self->addMethodHelp, "accel", "accelerometer data (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz)"
+    self->addMethodHelp, "meas_type()", "Return the type of measurement: LOOP, NCPA (non-common path calibration), AG (autogain)"
     self->addMethodHelp, "psf", "quick psf display"
     ; free memory
     self->free
@@ -318,6 +355,10 @@ function AOelab::operation_mode
 	return, self._operation_mode
 end
 
+function AOelab::meas_type
+	return, self._meas_type
+end
+
 ;;;;;;;;;;;;; Shortcut to most important functions/macro ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AOelab::tracknum
@@ -337,8 +378,14 @@ function AOelab::isOK, cause=cause
     		    cause += ' - Pyramid modulation mismatch'
     	    endif
     	    if ((self->wfs_status())->pupils())->pup_tracknum() ne (((self->intmat())->wfs_status())->pupils())->pup_tracknum() then begin
-    		    imok*=0B
-    		    cause += ' - Pupils mismatch'
+    		    ; TODO UGLY PATCH BECAUSE OF DIGITAL SHIFT OF THE PUPILS DONE IN June 2011 RUN
+                ; Here we should have families of pupils that belongs to the same set and are just shifted to optimize 
+                ; camera lens pupil recentering
+                if not ( ((self->wfs_status())->pupils())->pup_tracknum() eq '20110601-224135' and $ 
+                   (((self->intmat())->wfs_status())->pupils())->pup_tracknum() eq '20100525-171742' ) then begin 
+                    imok*=0B
+    		        cause += ' - Pupils mismatch'
+                endif
 			endif
     	endif
     if OBJ_VALID(self->irtc()) then imok *= (self->irtc())->isok(cause=cause)
@@ -457,6 +504,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     		print, string(format='(%"| %-30s | %s |")','IRTC dark', file_basename( (self->irtc())->dark_fname()))
     	endif
     	if obj_valid(self->pisces()) then begin
+    		print, string(format='(%"| %-30s | %s |")','filter',(self->pisces())->filter_name())
     		print, string(format='(%"| %-30s | %f |")','lambda [um]',(self->pisces())->lambda()*1e6)
     		print, string(format='(%"| %-30s | %f |")','exptime [s]',(self->pisces())->exptime())
     		print, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->pisces())->framerate())
@@ -464,6 +512,15 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     		print, string(format='(%"| %-30s | %f |")','SR SE' ,(self->pisces())->sr_se())
     		print, string(format='(%"| %-30s | %s |")','pisces dark', file_basename( (self->pisces())->dark_fname()))
     	endif
+       	if obj_valid(self->piscesold()) then begin
+    		print, string(format='(%"| %-30s | %f |")','piscesold lambda [um]',(self->piscesold())->lambda()*1e6)
+    		print, string(format='(%"| %-30s | %f |")','piscesold exptime [s]',(self->piscesold())->exptime())
+    		print, string(format='(%"| %-30s | %f |")','piscesold framerate [Hz]',(self->piscesold())->framerate())
+    		print, string(format='(%"| %-30s | %d |")','piscesold no. frames',(self->piscesold())->nframes())
+    		print, string(format='(%"| %-30s | %f |")','piscesold SR SE' ,(self->piscesold())->sr_se())
+    		print, string(format='(%"| %-30s | %s |")','piscesold dark', file_basename( (self->piscesold())->dark_fname()))
+    	endif
+
     endif
 end
 
@@ -621,6 +678,10 @@ function AOelab::pisces
     IF (OBJ_VALID(self._pisces)) THEN return, self._pisces else return, obj_new()
 end
 
+function AOelab::piscesold
+    IF (OBJ_VALID(self._piscesold)) THEN return, self._piscesold else return, obj_new()
+end
+
 function AOelab::modal_rec
     IF (OBJ_VALID(self._modal_rec)) THEN return, self._modal_rec else return, obj_new()
 end
@@ -647,6 +708,14 @@ end
 
 function AOelab::accel
   IF (OBJ_VALID(self._accel)) THEN return, self._accel else return, obj_new()
+end
+
+function AOelab::slopes_null
+    IF (OBJ_VALID(self._slopes_null)) THEN return, self._slopes_null else return, obj_new()
+end
+
+function AOelab::modes_null
+    IF (OBJ_VALID(self._modes_null)) THEN return, self._modes_null else return, obj_new()
 end
 
 function AOelab::ex, cmd,  isvalid=isvalid
@@ -727,6 +796,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._tv)) THEN  self._tv->free
     IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
     IF (OBJ_VALID(self._pisces)) THEN  self._pisces->free
+    IF (OBJ_VALID(self._piscesold)) THEN  self._piscesold->free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
     IF (OBJ_VALID(self._intmat)) THEN  self._intmat->free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
@@ -736,6 +806,8 @@ pro AOelab::free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
     IF (OBJ_VALID(self._accel )) THEN  self._accel->free
+    IF (OBJ_VALID(self._slopes_null)) THEN  self._slopes_null->free
+    IF (OBJ_VALID(self._modes_null)) THEN  self._modes_null->free
 end
 
 pro AOelab::Cleanup
@@ -756,6 +828,7 @@ pro AOelab::Cleanup
     obj_destroy, self._tv
     obj_destroy, self._irtc
     obj_destroy, self._pisces
+    obj_destroy, self._piscesold
 ;    obj_destroy, self._modal_rec
 ;    obj_destroy, self._intmat
 ;	 obj_destroy, self._modeShapes
@@ -764,6 +837,8 @@ pro AOelab::Cleanup
     obj_destroy, self._modaldisturb
     obj_destroy, self._offloadmodes
     obj_destroy, self._accel
+    obj_destroy, self._slopes_null
+    obj_destroy, self._modes_null
     self->AOhelp::Cleanup
 end
 
@@ -774,6 +849,7 @@ pro AOelab__define
         _recompute         : 0B,        $
         _n_periods		   : 0L,		$
         _operation_mode    : "",		$	; "RR": retroreflector, "ONSKY", idem.
+        _meas_type         : "",		$	; "LOOP", "NCPA", "AG" 
         _reflcoef		   : 0.,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
@@ -792,6 +868,7 @@ pro AOelab__define
         _tv                : obj_new(), $
         _irtc              : obj_new(), $
         _pisces            : obj_new(), $
+        _piscesold         : obj_new(), $
         _modal_rec         : obj_new(), $
         _intmat			   : obj_new(), $
         _modeShapes		   : obj_new(), $
@@ -800,6 +877,8 @@ pro AOelab__define
         _modaldisturb      : obj_new(), $
         _offloadmodes      : obj_new(), $
         _accel             : obj_new(), $
+        _slopes_null       : obj_new(), $
+        _modes_null        : obj_new(), $
         INHERITS AOhelp $
     }
 end

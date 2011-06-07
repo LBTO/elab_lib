@@ -9,6 +9,8 @@ function AOframes_counter::Init, frames_counter_file, wfs_status_obj
         return, 0
     endif
 
+    if not obj_valid(wfs_status_obj) then return, 0
+    if not obj_valid(wfs_status_obj->ccd39()) then return, 0
     self._framerate=(wfs_status_obj->ccd39())->framerate()
 ;    self->compute
 	frames_counter = readfits(frames_counter_file, header, /SILENT)

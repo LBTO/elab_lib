@@ -3,24 +3,28 @@
 ;
 ;-
 
-function AOslopes::Init, root_obj, slopes_file, fc_obj
+function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
 	if not file_test(slopes_file) then begin
         message, slopes_file + ' not found', /info
         return,0
     endif
     self._file = slopes_file
     self._fc_obj = fc_obj
-	self._wfs_status = root_obj->wfs_status()
+	;self._wfs_status = root_obj->wfs_status()
     self._fitsheader = ptr_new(headfits(self._file ,/SILENT), /no_copy)
-    self._store_fname = filepath(root=root_obj->elabdir(), 'slopes.sav')
-    self._store_psd_fname = filepath(root=root_obj->elabdir(), 'slopes_psd.sav')
-    self._store_peaks_fname = filepath(root=root_obj->elabdir(), 'slopes_peaks.sav')
+
+    if not keyword_set(store_label) then store_label=''
+
+    self._store_fname = filepath(root=root_obj->elabdir(), store_label+'.sav')
+    self._store_psd_fname = filepath(root=root_obj->elabdir(), store_label+'_psd.sav')
+    self._store_peaks_fname = filepath(root=root_obj->elabdir(), store_label+'_peaks.sav')
     if root_obj->recompute() eq 1B then begin
         file_delete, self._store_fname, /allow_nonexistent
         file_delete, self._store_psd_fname, /allow_nonexistent
         file_delete, self._store_peaks_fname, /allow_nonexistent
     endif
 
+    if not obj_valid(fc_obj) then return,0
     if not self->AOtime_series::Init(fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
 	self._spectra_units = textoidl('[slope units Hz^{-1/2}]')
 	self._plots_title = root_obj->tracknum()
@@ -85,9 +89,9 @@ function AOslopes::GetDati
     return, self._slopes
 end
 
-function AOslopes::wfs_status
-	return, self._wfs_status
-end
+;function AOslopes::wfs_status
+;	return, self._wfs_status
+;end
 
 ; returns Sx
 function AOslopes::sx, subap_idx=subap_idx, iter_idx=iter_idx
@@ -203,7 +207,7 @@ pro AOslopes__define
         _fitsheader       :  ptr_new(), $
         _slopes           :  ptr_new(), $
         _fc_obj           :  obj_new(), $
-        _wfs_status		  :  obj_new(), $
+        ;_wfs_status		  :  obj_new(), $
         _store_fname      : "", $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $

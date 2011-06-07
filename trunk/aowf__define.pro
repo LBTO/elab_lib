@@ -29,7 +29,7 @@ function AOwf::surfmat
 	if file_test(self._wf_store_fname) then begin
 		restore, self._wf_store_fname
 	endif else begin
-        dati = self->GetDati()
+        dati = self->GetDati() ; Derived class must implement GetDati returning a pointer to an array [niter, nmodes]
         if test_type(dati, /pointer) ne 0 then message, 'AOwf subclass::GetDati must return a pointer to float 1/2D array'
 
         ; compute all AOtime_series stuff here
@@ -43,7 +43,7 @@ function AOwf::surfmat
 end
 
 ;+
-; Computes the wf for a given lambda
+; Computes the wf (surface for consistence !!!but this is stupid!!!) for a given lambda
 ;-
 function AOwf::wfmat, lambda=lambda
 	if not keyword_set(lambda) then lambda=750e-9	;WFS central wavelength
@@ -52,8 +52,33 @@ function AOwf::wfmat, lambda=lambda
 	return, wfmat
 end
 
+function AOwf::surface, iter=iter
+    Dpix    = self._modeShapes->Dpix()
+    idxmask = self._modeShapes->idx_mask()
+    surfmat   = self->surfmat()
+    ntotiter = n_elements(surfmat[*,0])
+    if not keyword_set(iter) then iter = lindgen(ntotiter)
+    map = fltarr(dpix, dpix, n_elements(iter))
+    tmpmap = fltarr(dpix, dpix)
+    for i=0, n_elements(iter)-1 do begin 
+        tmpmap[idxmask] = surfmat[i,*]
+        map[*,*,i] = tmpmap
+    endfor
+    return, map
+end
+
+;
+; rms of the wf surface (m)
+; 
+function AOwf::surface_rms, iter=iter
+    ; TODO smart, puo' essere time series per fare spettro dell'rms
+    ;return, rms(surfmat[iter, 
+    return, 0
+end
+
 pro AOwf::addHelp, obj
     obj->addMethodHelp, "wfmat(lambda=lambda)", "Wavefront matrix [niter, npix] [rad]. Default lambda: 750nm"
+    obj->addMethodHelp, "surface(iter=iter)",   "Wavefront   [niter, dpix, dpix] [m]."
 end
 
 pro AOwf::free

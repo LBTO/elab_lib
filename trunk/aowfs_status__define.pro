@@ -44,8 +44,10 @@ function AOwfs_status::Init, root_obj, fitsfile
     
     self._ccd39  = obj_new('AOccd39',  self._header, self._wunit)
     self._pupils = obj_new('AOpupils', self._header, self._wunit)
-    self._filtw1 = obj_new('AOfiltw' , self._header, '1')
-    self._filtw2 = obj_new('AOfiltw' , self._header, '2')
+    self._filtw1 = obj_new('AOfiltw' , self._header, '1') ; TODO add wunit
+    self._filtw2 = obj_new('AOfiltw' , self._header, '2') ; TODO Add wunit
+    
+    self._slopes_null_fname = string(aoget_fits_keyword(self->header(), 'sc.SLOPENULL'))
 
 
     ; initialize help object and add methods and leafs
@@ -64,6 +66,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "lamp_intensity()",  "lamp intensity (a.u.)"
     self->addMethodHelp, "cube_angle()",  "cube rotator angle (degree)"
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
+    self->addMethodHelp, "slopes_null_fname()",  "slopesnull vector fitsfile name (string)"
     self->addMethodHelp, "summary", "Summary of WFS status"
     if obj_valid(self._ccd39) then self->addleaf, self._ccd39, 'ccd39'
     if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
@@ -128,6 +131,10 @@ function AOwfs_status::cube_stage
 	return, self._cubestage
 end
 
+function AOwfs_status::slopes_null_fname
+	return, self._slopes_null_fname
+end
+
 pro AOwfs_status::summary
     print, string(format='(%"%-30s %s")','Unit number', self->wunit() )
     print, string(format='(%"%-30s %f")','Frequency [Hz]', (self->ccd39())->framerate())
@@ -143,6 +150,7 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %f")','Lamp', self->lamp_intensity() )
     print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
     print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
+    print, string(format='(%"%-30s %s")','SlopesNull fname', self->slopes_null_fname() )
 end
 
 pro AOwfs_status::test
@@ -160,6 +168,7 @@ pro AOwfs_status::test
     d = self->lamp_intensity()
     d = self->cube_angle()
     d = self->cube_stage()
+    d = self->slopes_null_fname()
     (self->ccd39())->test
     (self->pupils())->test
     (self->filtw1())->test
@@ -199,6 +208,7 @@ pro AOwfs_status__define
         _filtw1         : obj_new(), $
         _filtw2         : obj_new(), $
         _wunit          : ""	   , $
+        _slopes_null_fname : ""    , $
         INHERITS    AOhelp  $
     }
 
