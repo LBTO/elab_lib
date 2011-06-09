@@ -151,6 +151,7 @@ pro AOwfs_status::summary
     print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
     print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
     print, string(format='(%"%-30s %s")','SlopesNull fname', self->slopes_null_fname() )
+    if obj_valid(self->pupils()) then (self->pupils())->summary
 end
 
 pro AOwfs_status::test
@@ -173,6 +174,12 @@ pro AOwfs_status::test
     (self->pupils())->test
     (self->filtw1())->test
     (self->filtw2())->test
+end
+
+function AOwfs_status::isok, cause=cause
+    imok = 1B
+    if obj_valid(self->pupils()) then imok *= (self->pupils())->isok(cause=cause)
+    return, imok
 end
 
 pro AOwfs_status::free
