@@ -12,17 +12,17 @@ function AOtel::Init, root, fitsfile
 	if angle_arcsec ne -9999. then self._rot_angle = (angle_arcsec/206264.806)*(180./!PI) else $
 								   self._rot_angle = !VALUES.F_NAN
 
-	az = float(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
-	if az ne -9999. then self._az = az/3600. else self._az = !VALUES.F_NAN
+	az = double(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
+	if az ne -9999. then self._az = az/3600d else self._az = !VALUES.F_NAN
 
-	el = float(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
-	if el ne -9999. then self._el = el/3600. else self._el = !VALUES.F_NAN
+	el = double(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
+	if el ne -9999. then self._el = el/3600d else self._el = !VALUES.F_NAN
 
-    dec =  float(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
-	if dec ne -9999. then self._dec = dec * 180./!pi else self._dec = !VALUES.F_NAN
+    dec =  double(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
+	if dec ne -9999. then self._dec = dec * 180d/!pi else self._dec = !VALUES.F_NAN
 
-    ra  =  float(aoget_fits_keyword(hdr, 'tel.TEL.RA'))
-	if ra ne -9999. then self._ra = ra * 180./!pi/15 else self._ra = !VALUES.F_NAN
+    ra  =  double(aoget_fits_keyword(hdr, 'tel.TEL.RA'))
+	if ra ne -9999. then self._ra = ra * 180d/!pi/15 else self._ra = !VALUES.F_NAN
 
     istracking = long(aoget_fits_keyword(hdr, 'tel.TEL.ISTRACKING'))
 	if istracking ne -9999 then self._istracking = istracking else self._istracking = -1L
@@ -163,19 +163,48 @@ function AOtel::ra
 	return, self._ra
 end
 
-function AOtel::hbs_on
+function AOtel::hbs_on, label=label
+    if keyword_set(label) then begin
+        case (self._tel_hbs_on) of
+            1: return, 'YES'
+            0: return, 'NO'
+           -1: return, 'UNKNOWN'
+        endcase
+    endif
 	return, self._tel_hbs_on
 end
 
-function AOtel::vent_on
+function AOtel::vent_on, label=label
+    if keyword_set(label) then begin
+        case (self._tel_vent_on) of
+            1: return, 'YES'
+            0: return, 'NO'
+           -1: return, 'UNKNOWN'
+        endcase
+    endif
 	return, self._tel_vent_on
 end
 
-function AOtel::istracking
+;Telescope tracking flag: 1L: Tracking. 0L: Not tracking. -1L: Unknown.
+function AOtel::istracking, label=label
+    if keyword_set(label) then begin
+        case (self._istracking) of
+            1: return, 'YES'
+            0: return, 'NO'
+           -1: return, 'UNKNOWN'
+        endcase
+    endif
 	return, self._ISTRACKING
 end
 
-function AOtel::isguiding
+function AOtel::isguiding, label=label
+    if keyword_set(label) then begin
+        case (self._isguiding) of
+            1: return, 'YES'
+            0: return, 'NO'
+           -1: return, 'UNKNOWN'
+        endcase
+    endif
 	return, self._isguiding
 end
 
@@ -232,19 +261,29 @@ pro AOtel::summary
     print, string(format='(%"%-30s %f")','Az angle', self->az() )
     print, string(format='(%"%-30s %f")','El angle', self->el() )
     print, string(format='(%"%-30s %f")','Rotator angle', self->rot_angle() )
-    print, string(format='(%"%-30s %f  %f")','Is tracking', self->istracking() )
+    print, string(format='(%"%-30s %f")','RA [hour]', self->ra() )
+    print, string(format='(%"%-30s %f")','Dec [degree]', self->dec() )
+    print, string(format='(%"%-30s %s")','Is tracking', self->istracking(/label) )
+    print, string(format='(%"%-30s %s")','Is guiding', self->isguiding(/label) )
+    print, string(format='(%"%-30s %s")','Is HBS on', self->hbs_on(/label) )
+    print, string(format='(%"%-30s %s")','Is mirror ventilation on', self->vent_on(/label) )
     print, string(format='(%"%-30s %f  %f  %f  %f  %f  %f")','Hexapod', self->hexapod() )
     print, string(format='(%"%-30s %f  %f  %f  %f")','Tertiary', self->tertiary() )
     print, string(format='(%"%-30s %f")','Swing arm', self->swing_arm() )
     print, string(format='(%"%-30s %f")','Dome Wind speed', self->wind_speed() )
+    print, string(format='(%"%-30s %f")','External Wind speed [m/s]', self->extern_wind_speed() )
+    print, string(format='(%"%-30s %f")','External Wind direction [deg]', self->extern_wind_direction() )
+    print, string(format='(%"%-30s %f")','Dimm seeing [arcsec]', self->dimm_seeing() )
+    print, string(format='(%"%-30s %f")','FWHM of guidecam x [arcsec]', self->guidecam_fwhm_x() )
+    print, string(format='(%"%-30s %f")','FWHM of guidecam y [arcsec]', self->guidecam_fwhm_y() )
 end
 
 
 pro AOtel__define
     struct = { AOtel, $
-        _rot_angle					: 0.			, $ ; AGW rotator angle in degrees
-        _az				            : 0.			, $	; Telescope azimuth in arcseconds
-        _el							: 0.			, $ ; Telescope elevation in arcseconds
+        _rot_angle					: 0d			, $ ; AGW rotator angle in degrees
+        _az				            : 0d			, $	; Telescope azimuth in arcseconds
+        _el							: 0d			, $ ; Telescope elevation in arcseconds
         _ISTRACKING					: 0L			, $ ; 1B if telescope is currently tracking, 0B otherwise.
         _indoor_wind				: 0.			, $ ; wind speed in dome
         _hex	    				: fltarr(6)		, $ ; hexapod
@@ -255,8 +294,8 @@ pro AOtel__define
         _extern_wind_speed     		: 0.     		, $ ;
         _guidecam_centroid_x  		: 0.     		, $ ;
         _guidecam_centroid_y 		: 0.     		, $ ;
-        _dec                 		: 0.     		, $ ;
-        _ra                  		: 0.     		, $ ;
+        _dec                 		: 0d     		, $ ;
+        _ra                  		: 0d     		, $ ;
         _tel_hbs_on          		: 0L     		, $ ;
         _tel_vent_on         		: 0L     		, $ ;
         _isguiding           		: 0L     		, $ ;
