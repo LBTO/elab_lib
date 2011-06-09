@@ -29,12 +29,16 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTER'),2)
     valid_filt_number = 1B
     CASE strtrim(self._filter_name,2) OF
+                                            ;0:2.14            
         'H2 2.122 um':  lambda = 2.122e-6   ;1:H2 2.122 um   
         'open':         lambda = 1e-6       ;2:OPEN
+                                            ;3:dark
     	'J':            lambda = 1.25e-6	;4:J
         'Ks':           lambda = 2.1e-6     ;5:ks
     	'H':            lambda = 1.65e-6	;6:H
+                                            ;7:BrGamma
     	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII 
+                                            ;9:2.086
      else: begin
      		;lambda = 1.
      		lambda = !VALUES.F_NAN
@@ -146,7 +150,7 @@ function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_tag, fram
 			dark_filter_tag = aoget_fits_keyword(dark_header, 'FILTER')
 			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
 			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-			if (dark_exptime eq exptime) and (filter_tag eq dark_filter_tag) and  $
+			if (dark_exptime eq exptime) and (strtrim(filter_tag,2) eq strtrim(dark_filter_tag,2)) and  $
 			   (dark_frame_w eq frame_w) and (dark_frame_h eq frame_h) then dark_found=1B else dd+=1
 		endwhile
 		if dark_found then begin
@@ -173,6 +177,15 @@ function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_tag, fram
 
 	return, dark_fname
 end
+
+;function aopisces::find_dark_from_tn, thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, err_msg=err_msg
+;    set = obj_new('aodataset', from -1h, to +1h) ; set of tn close in time to this
+;    setl = set->where('meas_type', 'eq', 'LOOP') ; only LOOP, no AutoGain, SlopesNull etc
+;    ; similar telescope pointing means same field
+;    ; find
+;    
+;end
+
 
 function aopisces::filter_name
 	return, self._filter_name

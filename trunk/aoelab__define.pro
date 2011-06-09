@@ -388,6 +388,7 @@ function AOelab::isOK, cause=cause
                 endif
 			endif
     	endif
+    if OBJ_VALID(self->wfs_status()) then imok *= (self->wfs_status())->isok(cause=cause)
     if OBJ_VALID(self->irtc()) then imok *= (self->irtc())->isok(cause=cause)
     if OBJ_VALID(self->pisces()) then imok *= (self->pisces())->isok(cause=cause)
     return, imok
@@ -402,15 +403,6 @@ function AOelab::closedloop
     return, (self->sanitycheck())->closedloop()
 end
 
-function AOelab::mag
-    if obj_valid(self->frames()) then $
-        if obj_valid(self->wfs_status()) then $
-            if obj_valid( (self->wfs_status())->ccd39() ) then $
-	            return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
-							((self->wfs_status())->ccd39())->framerate() )
-    message, 'impossible to compute the magnitude', /info
-    return, !values.f_nan
-end
 
 ;function AOelab::mag_v2
 ;    if obj_valid(self->frames()) then $
@@ -431,20 +423,9 @@ end
 ;    return, !values.f_nan
 ;end
 
-function AOelab::sr_from_positions, lambda_perf=lambda_perf
-	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
-	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
-	return, exp(-total(pos_coef_var))
-end
-
-pro AOelab::psf, WINDOW = WINDOW
-    psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure() 
-    loadct,3
-    if keyword_set(WINDOW) then www=WINDOW else www=0
-    window, www, title=self->tracknum()
-    image_show, /as, /sh, /log, psf>0.1
-end
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                   SUMMARY             
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     print, string(format='(%"| %-30s | %s |")','Tracknum',self->tracknum() )
@@ -524,6 +505,40 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
     endif
 end
 
+pro AOelab::fullsummary
+    if obj_valid(self._obj_tracknum) then if obj_hasmethod(self._obj_tracknum, 'summary') then self._obj_tracknum->summary
+    if obj_valid(self._adsec_status) then if obj_hasmethod(self._adsec_status, 'summary') then self._adsec_status->summary
+    if obj_valid(self._wfs_status) then if obj_hasmethod(self._wfs_status, 'summary') then self._wfs_status->summary
+    if obj_valid(self._tel) then if obj_hasmethod(self._tel, 'summary') then self._tel->summary
+    if obj_valid(self._sanitycheck) then if obj_hasmethod(self._sanitycheck, 'summary') then self._sanitycheck->summary
+    if obj_valid(self._control) then if obj_hasmethod(self._control, 'summary') then self._control->summary
+    if obj_valid(self._frames_counter) then if obj_hasmethod(self._frames_counter, 'summary') then self._frames_counter->summary
+    if obj_valid(self._slopes) then if obj_hasmethod(self._slopes, 'summary') then self._slopes->summary
+    if obj_valid(self._modal_rec) then if obj_hasmethod(self._modal_rec, 'summary') then self._modal_rec->summary
+    if obj_valid(self._intmat) then if obj_hasmethod(self._intmat, 'summary') then self._intmat->summary
+    if obj_valid(self._modeShapes) then if obj_hasmethod(self._modeShapes, 'summary') then self._modeShapes->summary
+    if obj_valid(self._residual_modes) then if obj_hasmethod(self._residual_modes, 'summary') then self._residual_modes->summary
+    if obj_valid(self._modes) then if obj_hasmethod(self._modes, 'summary') then self._modes->summary
+    if obj_valid(self._olmodes) then if obj_hasmethod(self._olmodes, 'summary') then self._olmodes->summary
+    if obj_valid(self._commands) then if obj_hasmethod(self._commands, 'summary') then self._commands->summary
+    if obj_valid(self._positions) then if obj_hasmethod(self._positions, 'summary') then self._positions->summary
+    if obj_valid(self._modalpositions) then if obj_hasmethod(self._modalpositions, 'summary') then self._modalpositions->summary
+    if obj_valid(self._tv) then if obj_hasmethod(self._tv, 'summary') then self._tv->summary
+    if obj_valid(self._frames) then if obj_hasmethod(self._frames, 'summary') then self._frames->summary
+    if obj_valid(self._disturb) then if obj_hasmethod(self._disturb, 'summary') then self._disturb->summary
+    if obj_valid(self._modaldisturb) then if obj_hasmethod(self._modaldisturb, 'summary') then self._modaldisturb->summary
+    if obj_valid(self._irtc) then if obj_hasmethod(self._irtc, 'summary') then self._irtc->summary
+    if obj_valid(self._pisces) then if obj_hasmethod(self._pisces, 'summary') then self._pisces->summary
+    ;if obj_valid(self._piscesold) then if obj_hasmethod(self._piscesold, 'summary') then self._piscesold->summary
+    if obj_valid(self._offloadmodes) then if obj_hasmethod(self._offloadmodes, 'summary') then self._offloadmodes->summary
+    if obj_valid(self._accel) then if obj_hasmethod(self._accel, 'summary') then self._accel->summary
+    if obj_valid(self._slopes_null) then if obj_hasmethod(self._slopes_null, 'summary') then self._slopes_null->summary
+    if obj_valid(self._modes_null) then if obj_hasmethod(self._modes_null, 'summary') then self._modes_null->summary
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                  PLOTS and SHORTCUTS             
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
     if self->operation_mode() eq "RR" then begin
@@ -599,12 +614,33 @@ pro AOelab::modalSpecPlot, modenum
 
 end
 
-; TODO this is redundant with AOelab::psf
-;pro AOelab::showIRTC 
-;    image_show, /as,/sh, /log, ((self->irtc())->longexposure())>1
-;end
+function AOelab::sr_from_positions, lambda_perf=lambda_perf
+	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
+	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
+	return, exp(-total(pos_coef_var))
+end
 
-;;;;;;;;;;;;;;;;;;;;;;;;; access to leafs ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
+pro AOelab::psf, WINDOW = WINDOW
+    psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure() 
+    loadct,3
+    if keyword_set(WINDOW) then www=WINDOW else www=0
+    window, www, title=self->tracknum()
+    image_show, /as, /sh, /log, psf>0.1
+end
+
+function AOelab::mag
+    if obj_valid(self->frames()) then $
+        if obj_valid(self->wfs_status()) then $
+            if obj_valid( (self->wfs_status())->ccd39() ) then $
+	            return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
+							((self->wfs_status())->ccd39())->framerate() )
+    message, 'impossible to compute the magnitude', /info
+    return, !values.f_nan
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                           MEMBERS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
 function AOelab::obj_tracknum
     return, (self._obj_tracknum)
