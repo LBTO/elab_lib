@@ -10,7 +10,7 @@ function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
     endif
     self._file = slopes_file
     self._fc_obj = fc_obj
-	;self._wfs_status = root_obj->wfs_status()
+	self._wfs_status = root_obj->wfs_status()
     self._fitsheader = ptr_new(headfits(self._file ,/SILENT), /no_copy)
 
     if not keyword_set(store_label) then store_label=''
@@ -89,9 +89,9 @@ function AOslopes::GetDati
     return, self._slopes
 end
 
-;function AOslopes::wfs_status
-;	return, self._wfs_status
-;end
+function AOslopes::wfs_status
+	return, self._wfs_status
+end
 
 ; returns Sx
 function AOslopes::sx, subap_idx=subap_idx, iter_idx=iter_idx
@@ -207,7 +207,7 @@ pro AOslopes__define
         _fitsheader       :  ptr_new(), $
         _slopes           :  ptr_new(), $
         _fc_obj           :  obj_new(), $
-        ;_wfs_status		  :  obj_new(), $
+        _wfs_status		  :  obj_new(), $
         _store_fname      : "", $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
