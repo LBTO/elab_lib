@@ -59,16 +59,62 @@ function AOpupils::Init, wfs_header, wunit
 	self._cx     = res.field1[1,*]
 	self._cy     = res.field1[2,*]
 
+    ; REAL MEASURED position of pupils
+    
+	self._real_radius = [ float(aoget_fits_keyword(hdr, 'pup0.DIAMETER'))/2, $
+                          float(aoget_fits_keyword(hdr, 'pup1.DIAMETER'))/2, $ 
+                          float(aoget_fits_keyword(hdr, 'pup2.DIAMETER'))/2, $ 
+                          float(aoget_fits_keyword(hdr, 'pup3.DIAMETER'))/2] 
+	self._real_cx = [ float(aoget_fits_keyword(hdr, 'pup0.CX')), $
+                      float(aoget_fits_keyword(hdr, 'pup1.CX')), $ 
+                      float(aoget_fits_keyword(hdr, 'pup2.CX')), $ 
+                      float(aoget_fits_keyword(hdr, 'pup3.CX'))] 
+	self._real_cy = [ float(aoget_fits_keyword(hdr, 'pup0.CY')), $
+                      float(aoget_fits_keyword(hdr, 'pup1.CY')), $ 
+                      float(aoget_fits_keyword(hdr, 'pup2.CY')), $ 
+                      float(aoget_fits_keyword(hdr, 'pup3.CY'))] 
+	self._real_side = [ float(aoget_fits_keyword(hdr, 'pup0.SIDE')), $
+                        float(aoget_fits_keyword(hdr, 'pup1.SIDE')), $ 
+                        float(aoget_fits_keyword(hdr, 'pup2.SIDE')), $ 
+                        float(aoget_fits_keyword(hdr, 'pup3.SIDE'))] 
+	self._diffx = [ float(aoget_fits_keyword(hdr, 'pup0.DIFFX')), $
+                    float(aoget_fits_keyword(hdr, 'pup1.DIFFX')), $ 
+                    float(aoget_fits_keyword(hdr, 'pup2.DIFFX')), $ 
+                    float(aoget_fits_keyword(hdr, 'pup3.DIFFX'))] 
+	self._diffy = [ float(aoget_fits_keyword(hdr, 'pup0.DIFFY')), $
+                    float(aoget_fits_keyword(hdr, 'pup1.DIFFY')), $ 
+                    float(aoget_fits_keyword(hdr, 'pup2.DIFFY')), $ 
+                    float(aoget_fits_keyword(hdr, 'pup3.DIFFY'))] 
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOpupils', 'Represent WFS pupils') then return, 0
     self->addMethodHelp, "indpup()", "pupil indexes  (lonarr)"
     self->addMethodHelp, "nsub()", "number of valid subapertures (long)"
-    self->addMethodHelp, "radius()", "radius of pupils (long[4])"
-    self->addMethodHelp, "cx()", "x-coord of pupils centers (long[4])"
-    self->addMethodHelp, "cy()", "y-coord of pupils centers (long[4])"
+    self->addMethodHelp, "radius()", "nominal radius of pupils (long[4])"
+    self->addMethodHelp, "cx()", "nominal x-coord of pupils centers (long[4])"
+    self->addMethodHelp, "cy()", "nominal y-coord of pupils centers (long[4])"
+    self->addMethodHelp, "real_radius()", "measured radius of pupils (long[4])"
+    self->addMethodHelp, "real_cx()", "measured x-coord of pupils centers (long[4])"
+    self->addMethodHelp, "real_cy()", "measured y-coord of pupils centers (long[4])"
+    self->addMethodHelp, "real_side()", "measured sides between pupils centers (long[4])"
+    self->addMethodHelp, "diffx()", "pupils centers error along x-axis (long[4])"
+    self->addMethodHelp, "diffy()", "pupils centers error along y-axis (long[4])"
     self->addMethodHelp, "pup_tracknum()", "pupils tracking number (string)"
-
 	return, 1
+end
+
+pro aopupils::summary
+    print, string(format='(%"%-30s %d")','number of valid subapertures', self->nsub() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal radius of pupils [px]', self->radius() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal x-coord of centers [px]', self->cx() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal y-coord of centers [px]', self->cy() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured radius of pupils [px]', self->real_radius() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured x-coord of centers [px]', self->real_cx() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured y-coord of centers [px]', self->real_cy() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured sides between pupils centers [px]', self->real_side() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along x-axis [px]', self->diffx() )
+    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along y-axis [px]', self->diffy() )
+    print, string(format='(%"%-30s %s")','pupils tracking number', self->pup_tracknum() )
 end
 
 function AOpupils::indpup
@@ -91,6 +137,30 @@ function AOpupils::cy
 	return, self._cy
 end
 
+function AOpupils::real_radius
+	return, self._real_radius
+end
+
+function AOpupils::real_cx
+	return, self._real_cx
+end
+
+function AOpupils::real_cy
+	return, self._real_cy
+end
+
+function AOpupils::real_side
+	return, self._real_side
+end
+
+function AOpupils::diffx
+	return, self._diffx
+end
+
+function AOpupils::diffy
+	return, self._diffy
+end
+
 function AOpupils::pup_tracknum
 	return, self._pup_tracknum
 end
@@ -101,7 +171,22 @@ pro AOpupils::test
     d=self->radius()
     d=self->cx()
     d=self->cy()
+    d=self->real_radius()
+    d=self->real_cx()
+    d=self->real_cy()
+    d=self->real_side()
+    d=self->diffx()
+    d=self->diffy()
     d=self->pup_tracknum()
+end
+
+function AOpupils::isok, cause=cause
+    imok = 1B
+    if max(abs([mean(self->diffx()), mean(self->diffy())])) gt 0.2 then begin
+        imok*=0B
+        cause += ' - Pupils not on target'
+    endif  
+    return, imok
 end
 
 pro AOpupils::free
@@ -124,6 +209,12 @@ pro AOpupils__define
         _radius		   : fltarr(4)	, $
         _cx			   : fltarr(4)	, $
         _cy			   : fltarr(4)	, $
+        _real_radius   : fltarr(4)	, $
+        _real_cx       : fltarr(4)	, $
+        _real_cy       : fltarr(4)	, $
+        _real_side     : fltarr(4)	, $
+        _diffx         : fltarr(4)	, $
+        _diffy         : fltarr(4)	, $
         INHERITS    AOhelp  $
     }
 end
