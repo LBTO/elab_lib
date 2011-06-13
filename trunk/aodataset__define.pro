@@ -21,6 +21,15 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
             caldat, now - (lastminute/1440.d),  m,d,y,hh,mm,ss
             from_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
         endif
+        if test_type(from_tracknum, /real) eq 0 then begin ; allow julian dates to be passed as 'from' argument
+            caldat, from_tracknum,  m,d,y,hh,mm,ss
+            from_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
+        endif
+        if test_type(to_tracknum, /real) eq 0 then begin ; allow julian dates to be passed as 'to' argument
+            caldat, to_tracknum,  m,d,y,hh,mm,ss
+            to_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
+        endif
+
     	objfrom_tracknum = obj_new('AOtracknum', from_tracknum)
     	objto_tracknum   = obj_new('AOtracknum', to_tracknum)
     	if (not obj_valid(objfrom_tracknum)) or (not obj_valid(objto_tracknum)) then return, 0
