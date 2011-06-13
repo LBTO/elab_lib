@@ -52,16 +52,17 @@ if side lt 0 then begin
 	message, errmsg, /info
 	return, 0
 endif
-side10 = fix(side)/10*10
-nside = side10/10 * 2 -1
+stepsize=4 ; even number
+side10 = fix(side)/stepsize*stepsize
+nside = side10/stepsize * 2 -1
 
 repeat begin
 	new_bg += fixbg
    	flux = fltarr(nside)
    	side_size= fltarr(nside)
    	for i= 1, nside do begin
-    	side_size(i-1) = 10*i
-      	ima_side = ima_bs(xc-5*i:xc+5*i-1,yc-5*i:yc+5*i-1)
+    	side_size(i-1) = stepsize*i
+      	ima_side = ima_bs(xc-(stepsize/2)*i:xc+(stepsize/2)*i-1,yc-(stepsize/2)*i:yc+(stepsize/2)*i-1)
 		;flux(i-1) = total(ima_side-replicate(new_bg,10*i,10*i)) ;ma non c'e bisogno di fare replicate!!
 	  	flux[i-1] = total(ima_side-new_bg) ; flux in squares of 10,20,30..10*nside pixels. Background dynamically corrected.
         ;print, 'side '+strtrim(side_size(i-1),2)+'  average_flux:',flux[i-1]/ n_elements(ima_side) 
@@ -93,7 +94,7 @@ dy = 5-abs(coeff(5)-round(coeff(5)))*10
 psf_difflim = rebin(shift(psf_difflim,dx,dy),np_psf/10,np_psf/10)*1e2
 dl_flux = total(psf_difflim)
 psf_difflim = psf_difflim/dl_flux*max(flux)
-max_dl = max(psf_difflim)
+;max_dl = max(psf_difflim)
 
 sr = max(ima_bs-new_bg)/max(psf_difflim)
 if keyword_set(plot) then print, 'Minimum SR value (obtained with flux max)', sr
