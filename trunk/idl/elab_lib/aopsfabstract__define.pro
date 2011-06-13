@@ -34,21 +34,9 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
         message, psf_fname + ' not found', /info
         return,0
     endif
-    ;self._fname = psf_fname
-    ;self._fitsheader = ptr_new(headfits(self._fname, /SILENT), /no_copy)
-
-    ;self._dark_fname = dark_fname
-   	;if not file_test(self->dark_fname()) then message, self->dark_fname() + ' Dark file does not exist', /info
-
-	;if keyword_set(badpixelmap_fname) then self._badpixelmap_fname = badpixelmap_fname
-
-    ;naxis = long(aoget_fits_keyword(self->header(), 'NAXIS'))
-    ;self._big_frame_w  = long(aoget_fits_keyword(self->header(), 'NAXIS1'))
-    ;self._big_frame_h  = long(aoget_fits_keyword(self->header(), 'NAXIS2'))
-    ;self._nframes = (naxis eq 2) ? 1 :  long(aoget_fits_keyword(self->header(), 'NAXIS3')) ;TODO
+    
     self._pixelscale = pixelscale
     self._lambda = lambda
-	;self._exptime = exptime
     self._framerate = framerate
 
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
@@ -86,14 +74,7 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 
 
 
-    if keyword_set(recompute) eq 1B then begin
-        file_delete, self._store_psd_fname, /allow_nonexistent
-        file_delete, self._store_peaks_fname, /allow_nonexistent
-        file_delete, self._stored_sr_se_fname, /allow_nonexistent
-        file_delete, self._stored_centroid_fname, /allow_nonexistent
-        file_delete, self._stored_profile_fname, /allow_nonexistent
-        file_delete, self._stored_enc_ene_fname, /allow_nonexistent ;Encircled energy computation:
-    endif
+    if keyword_set(recompute) eq 1B then self->deletestoredfiles
 
     ;initialize AOframe object
     if not self->AOframe::Init(psf_fname, dark_fname=dark_fname, badpixelmap_obj=badpixelmap_obj, roi=roi, $
@@ -102,6 +83,14 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
     return, 1
 end
 
+pro AOpsfAbstract::deletestoredfiles
+    if self._store_psd_fname       ne '' then file_delete, self._store_psd_fname, /allow_nonexistent
+    if self._store_peaks_fname     ne '' then file_delete, self._store_peaks_fname, /allow_nonexistent
+    if self._stored_sr_se_fname    ne '' then file_delete, self._stored_sr_se_fname, /allow_nonexistent
+    if self._stored_centroid_fname ne '' then file_delete, self._stored_centroid_fname, /allow_nonexistent
+    if self._stored_profile_fname  ne '' then file_delete, self._stored_profile_fname, /allow_nonexistent
+    if self._stored_enc_ene_fname  ne '' then file_delete, self._stored_enc_ene_fname, /allow_nonexistent ;Encircled energy computation:
+end
 
 pro AOpsfAbstract::addHelp, obj
     obj->AOframe::addHelp, obj
@@ -489,6 +478,18 @@ end
 function AOpsfAbstract::framerate
 	return, self._framerate
 end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+pro AOpsfAbstract::set_dark_image, dark_image
+    self->free
+    self->deletestoredfiles
+    self->AOframe::set_dark_image, dark_image
+end
+
+
 
 pro AOpsfAbstract::free
     if ptr_valid(self._centroid)    then ptr_free, self._centroid

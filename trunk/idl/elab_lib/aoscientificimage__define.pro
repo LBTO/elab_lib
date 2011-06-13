@@ -69,24 +69,26 @@ end
 ;
 ; On initialization need to determine where the brightest star is in the frame:
 ; search peak in the fullframe image and select a roi around it
-function aoscientificimage::longexposure
+function aoscientificimage::longexposure, _extra=ex
     if self._knowwherethestaris eq 0B then begin
         ;message, 'looking for brightest star ' ,/info
         ima = self->AOframe::longexposure(/fullframe)
+        ; TODO use find of astrolib?
         pk=max(ima, idxmax)
         xc = idxmax mod n_elements(ima[*,0])
         yc = idxmax / n_elements(ima[*,0])
 
+        ; TODO FQP convert with pixelscale to 2-3 arcsec of side
         roi = fltarr(4)
-        roi[0] = (xc-100)>0                 ; xmin
-        roi[1] = (xc+99) < (self->frame_w()-1) ; xmax
-        roi[2] = (yc-100)>0                 ; ymin
-        roi[3] = (yc+99) < (self->frame_h()-1) ; ymax
+        roi[0] = (xc-60)>0                 ; xmin
+        roi[1] = (xc+59) < (self->frame_w()-1) ; xmax
+        roi[2] = (yc-60)>0                 ; ymin
+        roi[3] = (yc+59) < (self->frame_h()-1) ; ymax
     
         self->setroi, roi
         self._knowwherethestaris = 1B
     endif
-    return, self->AOframe::longexposure()
+    return, self->AOframe::longexposure(_extra=ex)
 end
 
 
@@ -119,7 +121,7 @@ pro aoscientificimage::findstars, hmin=hmin
     ; for every detected object instantiate an aopsf object
     self._psfs = ptr_new(objarr(self._nsources))
     for i=0, self->nstars()-1 do begin
-        roi = [ (xx[i]-100)>0, (xx[i]+99)<(ima_w-1), (yy[i]-100)>0, (yy[i]+99)<(ima_h-1)]
+        roi = [ (xx[i]-60)>0, (xx[i]+59)<(ima_w-1), (yy[i]-60)>0, (yy[i]+59)<(ima_h-1)] ;TODO ROI SIZE parametrizzato
         objpsf = obj_new('aopsf', self->fname(), self->dark_fname(), self->pixelscale(), self->lambda(), $
              self->framerate(), ROI=roi, badpixelmap_obj=self->badpixelmap_obj(), recompute=self._recompute, $ 
              store_radix=self._store_radix+'_psf'+string(format='(%"%d")',i) ) 
@@ -170,6 +172,7 @@ end
 
 ; coordinates of stars in the image [ra, dec] [arcsec]
 function aoscientificimage::star_sky_coord
+    
     return, 0
 end
 
@@ -186,7 +189,11 @@ end
 
 ; FWHM of stars in the image [arcsec]
 function aoscientificimage::star_fwhm
-    return, 0
+    fwhm=fltarr(self->nstars())
+    for i=0, self->nstars()-1 do begin
+        fwhm[i] = ((self->psfs(i))->gaussfit())->fwhm()
+    endfor
+    return, fwhm*self->pixelscale()
 end
 
 ; SR of stars in the image [arcsec]
@@ -206,6 +213,12 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+pro AOscientificimage::set_dark_image, dark_image
+    self->free
+    self._knowwherethestaris = 0
+    self->AOpsfAbstract::set_dark_image, dark_image
+end
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;Returns the error messages
@@ -220,6 +233,14 @@ function aoscientificimage::isok, cause=cause
 end
 
 pro aoscientificimage::free
+    if ptr_valid(self._psfs) then begin
+        for i=0, self->nstars()-1 do obj_destroy, self->psfs(i)
+        ptr_free, self._psfs
+    endif
+    if ptr_valid(self._xx)   then ptr_free, self._xx
+    if ptr_valid(self._yy)   then ptr_free, self._yy
+    if ptr_valid(self._flux) then ptr_free, self._flux
+    
     self->AOpsfAbstract::free
 end
 
