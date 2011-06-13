@@ -59,17 +59,21 @@ pro AOgaussfit::fitta, debug=debug
     endif
 
 	; Get a subarray containing the PSF image
-    teeprev = 0.0
+    ;teeprev = 0.0
     sz = max([w,h])
     teev = dblarr(sz)
     for i=0L,sz-1 do begin
         xint = [0 > (xmax-i), (xmax+i) < (w-1)]
         yint = [0 > (ymax-i), (ymax+i) < (h-1)]
-        tee = total(fr[xint[0]:xint[1], yint[0]:yint[1]])
-        teev[i] = tee
-        if (tee/teeprev lt 1.002) then break
-        teeprev = tee
+        teev[i] = total(fr[xint[0]:xint[1], yint[0]:yint[1]])
+        ;if (tee/teeprev lt 1.002) then break
+        ;teeprev = tee
     endfor
+    i=min(where(teev gt 0.95*max(teev)))
+    xint = [0 > (xmax-i), (xmax+i) < (w-1)]
+    yint = [0 > (ymax-i), (ymax+i) < (h-1)]
+    tee = teev[i]
+      
     if (ddd) then  print, 'fitting subframe ', xint[0], xint[1], yint[0], yint[1], tee/toten
 
 	; Fit a 2D Gaussian

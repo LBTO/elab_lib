@@ -199,8 +199,8 @@ function AOelab::Init, tracknum, $
     self._irtc = obj_new('AOIRTC', self, irtc_fname, dark_fname)
 
     ; PISCES
-    pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
-    self._piscesold = obj_new('aopiscesold', self, pisces_fname, dark_fname)
+    ;pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
+    ;self._piscesold = obj_new('aopiscesold', self, pisces_fname, dark_fname)
 
     ; PISCES
     pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
@@ -620,12 +620,23 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	return, exp(-total(pos_coef_var))
 end
 
-pro AOelab::psf, WINDOW = WINDOW
-    psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure() 
+pro AOelab::psf, WINDOW = WINDOW, fullframe=fullframe, sr=sr
     loadct,3
-    if keyword_set(WINDOW) then www=WINDOW else www=0
-    window, www, title=self->tracknum()
-    image_show, /as, /sh, /log, psf>0.1
+    if keyword_set(sr) then begin
+        obj = OBJ_VALID(self->irtc()) ? self->irtc() : self->pisces() 
+        image_show, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos, obj->longexposure(/fullframe)>0.1
+        nstars = obj->nstars()
+        starpos = obj->star_position_px()
+        sr = 100.*obj->star_sr()
+        for i=0,nstars-1 do begin
+            starposdev = starpos[*,i]/1024 * [pos[2]-pos[0], pos[3]-pos[1]] + [pos[0],pos[1]] 
+            xyouts, starposdev[0], starposdev[1], string(format='(%"%d - %4.1f")', i, sr[i]), charsi=1.5, col='ffffff'x, /dev, alig=0.5
+        endfor 
+    endif else begin
+        psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure(fullframe=fullframe) 
+        xshow, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos,   psf>0.1
+    endelse
+    
 end
 
 function AOelab::mag
