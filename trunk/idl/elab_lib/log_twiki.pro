@@ -49,6 +49,7 @@ pro log_twiki, aodataset, ref_star=ref_star
         if obj_valid(ee->slopes_null()) then begin
             bname = file_basename((ee->slopes_null())->fname())
             if stregex( bname, '[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 6 )
+            if stregex( bname, '[0-9]*_[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 10 )
         endif
 
         print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $

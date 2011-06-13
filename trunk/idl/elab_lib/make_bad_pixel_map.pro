@@ -9,8 +9,8 @@ pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
 
     path = filepath(root=ao_datadir(), sub=['wfs_calib_'+wunit, camera, 'backgrounds', 'bin1'], '')
     files = file_search(path, '*.fits_cube.fits')
-    nfile = n_elements(files)
-    print, 'Found '+ string(nfile) + ' dark files'
+    nfiletot = n_elements(files)
+    print, 'Found '+ string(nfiletot) + ' dark files'
 
 	;Take by default only full-frame data
 	if not keyword_set(fr_w) then fr_w = camera eq 'irtc' ? 320L : 1024L
@@ -19,6 +19,10 @@ pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
 
 	;Compute dark cubes statistics (median & rms):
 	;---------------------------------------------------------
+    
+    ; use chunks of max 100 file to prevent memory allocation error
+    nfile = nfiletot<100
+    files = files[0:nfile-1]
     cubo_out_rms = fltarr(fr_w,fr_h,nfile)
     cubo_out_med = fltarr(fr_w,fr_h,nfile)
     tot = fltarr(nfile)
@@ -34,15 +38,20 @@ pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
 
         cubo= float(readfits(files[i],/SILENT))
         s = size(cubo,/DIM)
+        nframes = n_elements(s) eq 3 ? s[2] : 1  
         tot[i] = total(cubo)
 ;        median_im = fltarr(s[0],s[1])
 ;        rms_im = fltarr(s[0],s[1])
         thismedian = median(cubo)
         cubo = cubo/float(thismedian)
-        median_im = median(cubo, dim=3)
-        mean_im   = total(cubo,3)/float(s[2])
-        for k=0, s[2]-1 do cubo[*,*,k] -= mean_im
-        rms_im    = sqrt(total(cubo^2.,3)/(float(s[2]-1.)))
+        median_im = nframes gt 1 ? median(cubo, dim=3) : cubo
+        mean_im   = nframes gt 1 ? total(cubo,3)/float(nframes) : cubo
+        if nframes gt 1 then begin
+            for k=0, nframes-1 do cubo[*,*,k] -= mean_im
+            rms_im = sqrt(total(cubo^2.,3)/(float(nframes-1.)))
+        endif else begin
+            rms_im = 0.
+        endelse
 ;        for j = 0,s[0]-1 do begin
 ;            for k = 0,s[1]-1 do begin
 ;                median_im[j,k] = median(cubo[j,k,*])
@@ -57,6 +66,10 @@ pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
 	idx = where(tot ne 0.,nfile)
 	cubo_out_med = cubo_out_med[*,*,idx]
 	cubo_out_rms = cubo_out_rms[*,*,idx]
+    ;Remove single frames from rms computation
+    idxsingle = where(total(total(cubo_out_rms,1),1) ne 0.) 
+stop
+	cubo_out_rms = cubo_out_rms[*,*,idxsingle]
 
 	;Build bad pixel map:
 	;---------------------------------------------------------
@@ -87,6 +100,9 @@ pro make_bad_pixel_map, wunit, camera, fr_w=fr_w, fr_h=fr_h
     if count ge 1 then  badpixels[index] = 1
     index = where(median_im le (median(median_im)-stddev(median_im)*6.)>0.,count)
     if count ge 1 then badpixels[index] = 1
+
+    
+
 
     ; create triangulation for trigrid for interpolating bad pixels:
 	idxvalid = long(where( badpixels eq 0., nvalid))
