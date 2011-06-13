@@ -73,13 +73,14 @@ end
 
 pro AOframe::addHelp, obj
     ; initialize help object and add methods and leafs
-    obj->addMethodHelp, "longExposure()",   "long exposure corrected for dark, badpixel, line-noise [roi_w, roi_h]"
+    obj->addMethodHelp, "longExposure(/fullframe)",   "long exposure corrected for dark, badpixel, line-noise [roi_w, roi_h]"
     obj->addMethodHelp, "imageCube()", 		"psf frames each individually corrected for dark and badpixels [roi_w, roi_h, nframes]"
     obj->addMethodHelp, "rawImage(/dark_corr, /badpixel, /linenoise)",       "long exposure rawImage with optional correction [frame_w, frame_h]"
     obj->addMethodHelp, "dark_image()", 	"psf dark image (float) [frame_w, frame_h]"
     obj->addMethodHelp, "badpixelmap()", 	"bad pixel mask image [roi_w, roi_h]"
     obj->addMethodHelp, "fname()",      	"psf file name(s) [string or strarr]"
     obj->addMethodHelp, "dark_fname()", 	"psf dark file name(s) [string]"
+    obj->addMethodHelp, "set_dark_image, dark ", "set dark image. This overrides the dark_fname [frame_w, frame_h]"
     obj->addMethodHelp, "header()",  		"fits file headers [nfilesstrarr]"
     obj->addMethodHelp, "dark_header()", 	"psf dark fits file header  [strarr]"
     obj->addMethodHelp, "badpixelmap_fname()", 	"psf bad pixel map file name [string]"
@@ -156,7 +157,6 @@ end
 
 
 function AOframe::maneggiaFrame, psf
-	; psf = psf_in - self->dark_image()
     ; remove bad pixels interpolating with neighbours
     if obj_valid(self._badpixelmap_obj) then begin  ; TODO use catch!!!
         trstr = self._badpixelmap_obj->triangulation()
@@ -256,6 +256,7 @@ function AOframe::badPixelMap
 end
 
 function AOframe::dark_image
+    if ptr_valid(self._tmp_dark_image) then return, *(self._tmp_dark_image)
     if not (PTR_VALID(self._dark_image)) then begin
     	cube_fname = self->dark_fname()
    		if file_test(cube_fname) then begin
@@ -281,6 +282,14 @@ function AOframe::dark_image
     return, *(self._dark_image)
 end
 
+pro AOframe::set_dark_image, dark_image
+    self->free
+    if self._stored_le_fname ne '' then file_delete, self._stored_le_fname, /allow_nonexistent
+    if self._stored_cube_fname ne '' then file_delete, self._stored_cube_fname, /allow_nonexistent 
+    ; TODO check size
+    if ptr_valid(self._tmp_dark_image) then ptr_free, self._tmp_dark_image
+    self._tmp_dark_image=ptr_new(dark_image)
+end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                           API  Methods
@@ -296,19 +305,19 @@ function AOframe::longExposure, fullframe=fullframe
 			if used_dark_fname ne current_dark_fname then begin
 				message, 'WARNING: The dark used to compute the saved LE-frame is not the same as the current dark', /info
                 file_delete, self._stored_le_fname, /allow_nonexistent   
-                return, self->longExposure(fullframe=fullframe)
+                return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 			;Check whether the badpixelmap used to compute the saved LE PSF was the same....
 			if used_badpixelmap_fname ne current_badpixelmap_fname then begin
 				message, 'WARNING: The badpixelmap used to compute the saved LE-frame is not the same as the current badpixelmap', /info
                 file_delete, self._stored_le_fname, /allow_nonexistent   
-                return, self->longExposure(fullframe=fullframe)
+                return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 			;Check whether the object size used to compute the saved LE PSF was the same....
 			if used_object_size ne current_object_size then begin
 				message, 'WARNING: The object size used to compute the saved LE-frame is not the same as the current object size', /info
                 file_delete, self._stored_le_fname, /allow_nonexistent   
-                return, self->longExposure(fullframe=fullframe)
+                return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 		endif else begin
         	psf = float(readfits(self->fname(), header, /SILENT))
@@ -359,6 +368,11 @@ function AOframe::dark_fname
     return, self._dark_fname
 end
 
+;pro AOframe::set_dark_fname, dark_fname
+;    self._dark_fname = dark_fname
+;    self->free
+;end
+
 function AOframe::badpixelmap_fname
 	return, obj_valid(badpixelmap_fname) ? self._badpixelmap_obj->fname() : ""
 end
@@ -376,6 +390,7 @@ function AOframe::dark_header
         message, self->dark_fname() + ' Dark file does not exist', /info
         return, ""
     endif
+    if (PTR_VALID(self._dark_fitsheader)) then ptr_free, self._dark_fitsheader
     self._dark_fitsheader = ptr_new(headfits(self->dark_fname(), /SILENT), /no_copy)
     if (PTR_VALID(self._dark_fitsheader)) THEN return, *(self._dark_fitsheader) else return, ""
 end
@@ -426,6 +441,7 @@ pro AOframe::free
     if ptr_valid(self._imagecube)       then ptr_free, self._imagecube
     if ptr_valid(self._dark_image)      then ptr_free, self._dark_image
     if ptr_valid(self._longexposure)    then ptr_free, self._longexposure
+    ;if ptr_valid(self._tmp_dark_image)  then ptr_free, self._tmp_dark_image ; DONT FREE IT
 end
 
 pro AOframe::Cleanup
@@ -434,6 +450,7 @@ pro AOframe::Cleanup
     if ptr_valid(self._imagecube)       then ptr_free, self._imagecube
     if ptr_valid(self._dark_image)      then ptr_free, self._dark_image
     if ptr_valid(self._longexposure)    then ptr_free, self._longexposure
+    if ptr_valid(self._tmp_dark_image)  then ptr_free, self._tmp_dark_image
 end
 
 pro AOframe__define
@@ -445,6 +462,7 @@ pro AOframe__define
         _imagecube      :  ptr_new()	, $
         _longexposure	:  ptr_new()	, $
         _dark_image     :  ptr_new()	, $
+        _tmp_dark_image :  ptr_new()	, $
         _badpixelmap_obj:  obj_new()	, $
         _nframes        :  0L			, $
         _frame_w        :  0L			, $
