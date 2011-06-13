@@ -68,6 +68,13 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     frame_w  = long(aoget_fits_keyword(fitsheader, 'NAXIS1'))
     frame_h  = long(aoget_fits_keyword(fitsheader, 'NAXIS2'))
    
+    ;ra  = (root_obj->tel())->ra()
+    ;dec = (root_obj->tel())->dec()
+    ;stages_x = ((root_obj->wfs_status())->stages())[0]
+    ;stages_y = ((root_obj->wfs_status())->stages())[1]
+    ;thisJulday = (root_obj->obj_tracknum())->JulDay()
+    ;dark = self->find_dark_from_tn(thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, ra, dec, stages_x, stages_y, err_msg=dark_err_msg)
+;stop
 	;Dark Frame:
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'pisces','backgrounds','bin1']
     if (n_elements(dark_fname) eq 0) then begin
@@ -84,7 +91,8 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
         	self._pisces_err_msg += ' - ' + msg_temp
         endelse
     endif else begin
-		full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
+		;full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
+		full_dark_fname =  dark_fname
 		if not file_test(full_dark_fname) then begin
 			msg_temp = 'Overidden pisces dark file does not exist'
 			message, msg_temp, /info
@@ -178,12 +186,16 @@ function aopisces::find_dark, thisJulday, dark_subdir, exptime, filter_tag, fram
 	return, dark_fname
 end
 
-;function aopisces::find_dark_from_tn, thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, err_msg=err_msg
-;    set = obj_new('aodataset', from -1h, to +1h) ; set of tn close in time to this
-;    setl = set->where('meas_type', 'eq', 'LOOP') ; only LOOP, no AutoGain, SlopesNull etc
-;    ; similar telescope pointing means same field
+;function aopisces::find_dark_from_tn, thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, ra, dec, stages_x, stages_y, err_msg=err_msg
+;     set    = obj_new('aodataset', from=thisJulday-1d/48, to=thisJulday+1d/48) ; set of tn close in time to this
+;     setl   = set->where('meas_type', 'eq', 'LOOP') ; only LOOP, no AutoGain, SlopesNull etc
+;     xxx = 1d/60
+;     setra  = setl->where('tel.ra',   'between', [ra-xxx*15, ra+xxx*15])  ; similar telescope pointing 
+;     setdec = setra->where('tel.dec', 'between', [dec-xxx, dec+xxx])  ; similar telescope pointing
+;
 ;    ; find
-;    
+;
+;    return, setdec    
 ;end
 
 
