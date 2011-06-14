@@ -203,7 +203,8 @@ function AOelab::Init, tracknum, $
     ;self._piscesold = obj_new('aopiscesold', self, pisces_fname, dark_fname)
 
     ; PISCES
-    pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
+    pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits.cq'))
+    if file_test(pisces_fname) eq 0 then pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
     self._pisces = obj_new('aopisces', self, pisces_fname)
 
     ; offload modes
