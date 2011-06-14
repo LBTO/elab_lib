@@ -25,7 +25,7 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
 
 	; Read disturbance file header and retrieve general disturbance parameters:
 	header = headfits(self._disturb_fname, /SILENT)
-	self._type 	    = strtrim(aoget_fits_keyword(header, 'type'),2)
+	self._type 	    = strlowcase(strtrim(aoget_fits_keyword(header, 'type'),2))
     self._reflcoef	= float(aoget_fits_keyword(header, 'reflcoef'))
     n_realizations  = long(aoget_fits_keyword(header, 'naxis1'))
 
@@ -75,7 +75,7 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
     self->addMethodHelp, "header()",  "header of fitsfile (strarr)"
     self->addMethodHelp, "command()", "disturb commands matrix (real, [iter,n_act], [m])"
     self->addMethodHelp, "type()", "type of disturbance (string) (atm, vib, atmo_vib, etc...)"
-    self->addMethodHelp, "dist_freq()", "frequency at which disturbance was generated (float) [m]"
+    self->addMethodHelp, "dist_freq()", "frequency at which disturbance was generated (float) [Hz]"
     self->addMethodHelp, "reflcoef()", "reflection coefficient (float) [adim]"
     self->addMethodHelp, "ind_realizations()", "Number of independent disturbance realizations in data set"
     self->AOtime_series::addHelp, self
@@ -102,10 +102,11 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
 			if not self->AOdisturbvib::Init(root_obj) then return,0
 			self->AOdisturbvib::addHelp, self
 			END
-        'SINUSMODE': BEGIN
-            print, 'sinusmode'
+        'sinusmode': BEGIN
+            if not self->AOdisturb_sinmode::Init(root_obj) then return,0
+            self->AOdisturb_sinmode::addHelp, self
             END
-		'':	message, 'Uknown type of disturbance', /info
+		'':	message, 'Unknown type of disturbance', /info
 	ENDCASE
 
 	;Inherit time-series parameters:
@@ -191,6 +192,16 @@ function AOdisturb::isok, cause=cause
 		cause += " - M2C is not the same as the M2C used to pre-correct the atm disturb"
 		dist_ok = 0B
 	  endif
+	if strmatch(self._type, 'sinusmode') then begin
+	  if self._sin_m2c_mistmatch eq 1b then begin
+		cause += " - M2C used to generate sinusmode disturbance is NOT the same as current M2C"
+		dist_ok = 0B
+	  endif
+	  if self._sin_freq_mistmatch eq 1b then begin
+		cause += " - sinusmode disturbance framerate mistmach"
+		dist_ok = 0B
+	  endif
+	endif
 
 	return,dist_ok
 end
@@ -205,6 +216,7 @@ pro AOdisturb::Cleanup
 	if ptr_valid(self._commands) then ptr_free, self._commands
     if strmatch(self._type, '*vib*') then self->AOdisturbvib::Cleanup
     if strmatch(self._type, '*atm*') then self->AOdisturbatm::Cleanup
+    if strmatch(self._type, 'sinusmode') then self->AOdisturb_sinmode::Cleanup
     self->AOtime_series::Cleanup
     self->AOhelp::Cleanup
 end
@@ -223,6 +235,7 @@ pro AOdisturb__define
         _ind_realizations			: 0L		, $
         INHERITS AOdisturbatm                   , $
 		INHERITS AOdisturbvib                   , $
+		INHERITS AOdisturb_sinmode				, $
         INHERITS AOtime_series                  , $
         INHERITS AOhelp $
     }
