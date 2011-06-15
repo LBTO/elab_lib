@@ -26,7 +26,7 @@ function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
 
     if not obj_valid(fc_obj) then return,0
     if not self->AOtime_series::Init(fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
-	self._spectra_units = textoidl('[slope units Hz^{-1/2}]')
+	self._spectra_units = textoidl('a.u.')
 	self._plots_title = root_obj->tracknum()
 
     ;self->datiProducer
