@@ -70,6 +70,8 @@ function AOtel::Init, root, fitsfile
     endif else begin
         dimm = readfits(filepath(root=root->datadir(),  'Dimm_'+root->tracknum()+'.fits'), /SILENT)
         self._dimm_seeing = median(dimm[0,*])
+        if self._dimm_seeing lt 0. then self._dimm_seeing = float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))	;file Dimm...fits contiene merda....
+        if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN		;Tutto e' pieno di merda....
     endelse
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
     self._guidecam_centroid_y   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.Y'))
