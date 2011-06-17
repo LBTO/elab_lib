@@ -12,6 +12,7 @@ function AOmodalpositions::Init, root_obj
     self._fc_obj  = root_obj->frames_counter()
     self._root_obj = root_obj
     if not obj_valid(self._pos_obj) then return, 0
+	self._ts_surf_rms = -1.
 
     self._store_fname = filepath(root=root_obj->elabdir(), 'modalpositions.sav')
     self._store_psd_fname = filepath(root=root_obj->elabdir(), 'modalpositions_psd.sav')
@@ -25,7 +26,7 @@ function AOmodalpositions::Init, root_obj
     if not obj_valid(self._fc_obj) then return,0
     if not self->AOtime_series::Init(self._fc_obj->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
 	self._norm_factor   = 1e9 * root_obj->reflcoef()	;nm wf
-	self._spectra_units = textoidl('[nm-wf Hz^{-1/2}]')
+	self._spectra_units = textoidl('nm-wf')
 	self._plots_title = root_obj->tracknum()
 
 	;Initialize WF
@@ -34,6 +35,8 @@ function AOmodalpositions::Init, root_obj
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOmodalpositions', 'Represent mirror positions projected on modal basis') then return, 0
     self->addMethodHelp, "modalpositions()",  "mirror position modes matrix [nmodes,niter]"
+    self->addMethodHelp, "plotjitter, from_freq=from_freq, to_freq=to_freq",  "Plots TT cum PSDs"
+    self->addMethodHelp, "ts_surf_rms()",  "Thin Shell Surface RMS [m]"
     self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
     return, 1
@@ -59,7 +62,6 @@ function AOmodalpositions::nmodes
     return, self->AOtime_series::nseries()
 end
 
-
 ; to be implemented in AOtime_series subclasses
 function AOmodalpositions::GetDati
     if not ptr_valid(self._modalpositions) then self->datiProducer
@@ -84,6 +86,16 @@ pro AOmodalpositions::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=e
 	endelse
 end
 
+function AOmodalpositions::ts_surf_rms
+	if self._ts_wfe eq -1 then begin
+		meanpos = total(self->modalpositions(),1)/self->niter()
+		self._ts_surf_rms  = sqrt(total(meanpos[2:*]^2.))
+;		posShape = (self._root_obj->modeShapes())->modemat(mode_idx=indgen(n_elements(meanpos)-2)+2) ## meanpos[2:*]
+;		self._ts_surf_rms  = sqrt(total(posShape^2.)/float(n_elements(posShape)))
+	endif
+	return, self._ts_surf_rms
+end
+
 
 pro AOmodalpositions::free
     if ptr_valid(self._modalpositions) then ptr_free, self._modalpositions
@@ -106,9 +118,10 @@ pro AOmodalpositions__define
         _m2c_obj           :  obj_new(), $
         _pos_obj           :  obj_new(), $
         _fc_obj            :  obj_new(), $
-        _store_fname       : "", $
-        INHERITS    AOwf, $
-        INHERITS    AOtime_series, $
+        _store_fname       : ""		   , $
+        _ts_surf_rms	   : 0.		   , $
+        INHERITS    AOwf			   , $
+        INHERITS    AOtime_series	   , $
         INHERITS    AOhelp $
     }
 
