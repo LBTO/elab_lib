@@ -94,7 +94,7 @@ function AOslopes::wfs_status
 end
 
 ; returns Sx
-function AOslopes::sx, subap_idx=subap_idx, iter_idx=iter_idx
+function AOslopes::sx, subap_idx=subap_idx, iter_idx=iter_idx, slopevec=slopevec
 
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	niter = self->niter()
@@ -107,16 +107,24 @@ function AOslopes::sx, subap_idx=subap_idx, iter_idx=iter_idx
 		if max(iter_idx) ge niter then message, "Maximum number of iterations: "+strtrim(niter,2)
 	endif else iter_idx  = lindgen(niter)
 
-	sl = self->slopes()
-	sl = sl[*,0:nsub*2-1]
-	sx = sl[*,0:*:2]
-	sx = sx[*,subap_idx]
-	sx = sx[iter_idx,*]
+	if n_elements(slopevec) eq 0 then begin
+		sl = self->slopes()
+		sl = sl[*,0:nsub*2-1]
+		sx = sl[*,0:*:2]
+		sx = sx[*,subap_idx]
+		sx = sx[iter_idx,*]
+	endif else begin
+		if n_elements(slopevec) lt nsub*2L then message, 'SLOPEVEC has wrong dimensions'
+		sl = reform(slopevec)
+		sl = sl[0:nsub*2-1]
+		sx = sl[0:*:2]
+		sx = sx[subap_idx]
+	endelse
 	return, sx
 end
 
 ; returns Sy
-function AOslopes::sy, subap_idx=subap_idx, iter_idx=iter_idx
+function AOslopes::sy, subap_idx=subap_idx, iter_idx=iter_idx, slopevec=slopevec
 
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	niter = self->niter()
@@ -129,18 +137,27 @@ function AOslopes::sy, subap_idx=subap_idx, iter_idx=iter_idx
 		if max(iter_idx) ge niter then message, "Maximum number of iterations: "+strtrim(niter,2)
 	endif else iter_idx  = lindgen(niter)
 
-	sl = self->slopes()
-	sl = sl[*,0:nsub*2-1]
-	sy = sl[*,1:*:2]
-	sy = sy[*,subap_idx]
-	sy = sy[iter_idx,*]
+	if n_elements(slopevec) eq 0 then begin
+		sl = self->slopes()
+		sl = sl[*,0:nsub*2-1]
+		sy = sl[*,1:*:2]
+		sy = sy[*,subap_idx]
+		sy = sy[iter_idx,*]
+	endif else begin
+		if n_elements(slopevec) lt nsub*2L then message, 'SLOPEVEC has wrong dimensions'
+		sl = reform(slopevec)
+		sl = sl[0:nsub*2-1]
+		sy = sl[1:*:2]
+		sy = sy[subap_idx]
+	endelse
 	return, sy
 end
 
 ; return remapped signal vector
-function AOslopes::slopes2d, iter_idx=iter_idx
+function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 
 	if n_elements(iter_idx) eq 0 then niter = self->niter() else niter=n_elements(iter_idx)
+	if n_elements(slopevec) ne 0 then niter=1
 
 	mypup = 0	;use this pupil info to remap signals
 	nsub = ((self->wfs_status())->pupils())->nsub()
@@ -155,8 +172,8 @@ function AOslopes::slopes2d, iter_idx=iter_idx
 	sl2d_w = xr[1]-xr[0]+1
 	sl2d_h = yr[1]-yr[0]+1
 
-	sx = self->sx(iter_idx=iter_idx)
-	sy = self->sy(iter_idx=iter_idx)
+	sx = self->sx(iter_idx=iter_idx, slopevec=slopevec)
+	sy = self->sy(iter_idx=iter_idx, slopevec=slopevec)
 
 	s2d = fltarr(fr_sz,fr_sz)
 	sl_2d = fltarr(sl2d_w*2, sl2d_h, niter)
