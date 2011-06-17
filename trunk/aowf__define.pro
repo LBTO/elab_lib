@@ -7,6 +7,7 @@ function AOwf::Init, root_obj, modeShapes   ;, modeCoeffs
 		return,0
 	;if obj_valid(modeCoeffs) then self._modeCoeffs = modeCoeffs else $
 	;	return, 0
+;	self._root_obj = root_obj
 	self._reflcoef = root_obj->reflcoef()
 
 	;sav file
@@ -36,14 +37,17 @@ function AOwf::surfmat
         ss = size(*dati)
         niter   = ss[1]
         nmodes  = ss[0] eq 1 ? 1 : ss[2]
-		shapes  = self._modeShapes->modemat(mode_idx=lindgen(nmodes)) ## *(dati) ;; TODO lindgen(nmodes) seems bad: if modes are not consecutives?
+;		TO DO: Use mode_idx properly for non-consecutive modes!! Maybe it is convenient to create a class "modes" before!
+;  		mode_idx = (self._root_obj->modal_rec())->modes_idx() ;questo e' valido solo per residual_modes, modes, etc !!!
+		mode_idx = lindgen(nmodes)
+		shapes  = self._modeShapes->modemat(mode_idx=mode_idx) ## *(dati)
 		save, shapes, filename=self._wf_store_fname, /compress
 	endelse
 	return, shapes
 end
 
 ;+
-; Computes the wf (surface for consistence !!!but this is stupid!!!) for a given lambda
+; Computes the wf for a given lambda
 ;-
 function AOwf::wfmat, lambda=lambda
 	if not keyword_set(lambda) then lambda=750e-9	;WFS central wavelength
@@ -52,6 +56,10 @@ function AOwf::wfmat, lambda=lambda
 	return, wfmat
 end
 
+;+
+; Cube of surface maps [m]
+; Warning!: requires LOADS of memory
+;-
 function AOwf::surface, iter=iter
     Dpix    = self._modeShapes->Dpix()
     idxmask = self._modeShapes->idx_mask()
@@ -60,7 +68,7 @@ function AOwf::surface, iter=iter
     if not keyword_set(iter) then iter = lindgen(ntotiter)
     map = fltarr(dpix, dpix, n_elements(iter))
     tmpmap = fltarr(dpix, dpix)
-    for i=0, n_elements(iter)-1 do begin 
+    for i=0, n_elements(iter)-1 do begin
         tmpmap[idxmask] = surfmat[i,*]
         map[*,*,i] = tmpmap
     endfor
@@ -69,16 +77,17 @@ end
 
 ;
 ; rms of the wf surface (m)
-; 
+;
 function AOwf::surface_rms, iter=iter
     ; TODO smart, puo' essere time series per fare spettro dell'rms
-    ;return, rms(surfmat[iter, 
+    ;return, rms(surfmat[iter,
     return, 0
 end
 
 pro AOwf::addHelp, obj
     obj->addMethodHelp, "wfmat(lambda=lambda)", "Wavefront matrix [niter, npix] [rad]. Default lambda: 750nm"
-    obj->addMethodHelp, "surface(iter=iter)",   "Wavefront   [niter, dpix, dpix] [m]."
+    obj->addMethodHelp, "surfmat()", "Surface matrix [niter, npix] [m]"
+    obj->addMethodHelp, "surface(iter=iter)",   "Surface maps cube [dpix, dpix, niter] [m]."
 end
 
 pro AOwf::free
@@ -89,6 +98,7 @@ end
 
 pro AOwf__define
     struct = { AOwf, $
+;    	_root_obj				: obj_new()		, $	;defined in modes class
         _modeShapes				: obj_new()		, $
         ;_modeCoeffs				: obj_new()		, $
         _reflcoef			    : 0.			, $
