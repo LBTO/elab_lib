@@ -87,7 +87,7 @@ pro AOmodalpositions::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=e
 end
 
 function AOmodalpositions::ts_surf_rms
-	if self._ts_wfe eq -1 then begin
+	if self._ts_surf_rms eq -1 then begin
 		meanpos = total(self->modalpositions(),1)/self->niter()
 		self._ts_surf_rms  = sqrt(total(meanpos[2:*]^2.))
 ;		posShape = (self._root_obj->modeShapes())->modemat(mode_idx=indgen(n_elements(meanpos)-2)+2) ## meanpos[2:*]
