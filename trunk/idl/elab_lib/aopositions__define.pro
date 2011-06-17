@@ -39,6 +39,7 @@ function AOpositions::Init, root_obj, positions_file, fc_obj
     self->addMethodHelp, "positions()", "positions matrix [npositions,niter]"
     self->addMethodHelp, "npositions()", "number of positions"
     self->addMethodHelp, "flatpositions()", "positions of flat shape"
+    self->addMethodHelp, "display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos", "Displays positions in 2D [m]'
     self->AOtime_series::addHelp, self
     return, 1
 end
@@ -83,6 +84,41 @@ function AOpositions::flatpositions
     restore, ao_datadir()+path_sep()+(self._root_obj->adsec_status())->shape_file()
     flat=flattened_status.position
     return, flat
+end
+
+
+pro AOpositions::display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos
+	if n_elements(wait) eq 0 then wait=0.01
+	if n_elements(iter_idx) eq 0 then iter_idx = lindgen(self->niter())
+	if n_elements(thispos) eq 0 then niter = n_elements(iter_idx) else niter=1
+
+	adsec_save = (self._root_obj->adsec_status())->struct_adsec()
+	adsec_shell_save = (self._root_obj->adsec_status())->struct_adsec_shell()
+	sc_save = (self._root_obj->adsec_status())->struct_sc()
+	gr_save = (self._root_obj->adsec_status())->struct_gr()
+	meanpos = total(self->positions(),1)/self->niter()
+
+	if n_elements(thispos) ne 0 then begin
+		if n_elements(thispos) ne self->nseries() then begin
+			message, 'THISPOS has wrong dimensions',/info
+			return
+		endif else $
+			display, thispos[adsec_save.act_w_cl], adsec_save.act_w_cl, /no_num, /sh, _extra=ex $
+				, ADSEC_SAVE=adsec_save, ADSEC_SHELL_SAVE=adsec_shell_save, SC_SAVE=sc_save, GR_SAVE=gr_save
+	endif else begin
+    	if niter gt 1 then print, 'Type "s" to stop displaying!'
+		for ii=0, niter-1 do begin
+;			mypos = self->positions(iter_idx=iter_idx[ii], series_idx=adsec_save.act_w_cl) - flatpos[adsec_save.act_w_cl]
+			mypos = self->positions(iter_idx=iter_idx[ii], series_idx=adsec_save.act_w_cl)
+			mypos -= meanpos[adsec_save.act_w_cl]
+			display, mypos, adsec_save.act_w_cl, title='iteration '+strtrim(iter_idx[ii],2), /no_num, /sh, _extra=ex $
+				, ADSEC_SAVE=adsec_save, ADSEC_SHELL_SAVE=adsec_shell_save, SC_SAVE=sc_save, GR_SAVE=gr_save
+			wait, wait
+			key = get_kbrd(0.01)
+			if STRLOWCASE(key) eq 's' then break
+		endfor
+	endelse
+
 end
 
 pro AOpositions::free
