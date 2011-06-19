@@ -20,15 +20,18 @@ pro log_twiki, aodataset, ref_star=ref_star
         if ee->meas_type() ne 'LOOP' then begin
             ;message, objref[i] + ' skipped because meas type is '+ee->meas_type(), /info
             continue
-        endif 
+        endif
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
-        
-        gaintemp = [-1, -1]
+
         if obj_valid(ee->control()) then begin
-        	gaintemp = minmax( (ee->control())->gain() )
+        	gg = (ee->control())->gain()
+        	ggidx = rem_dup(gg)
+        	ggidx = ggidx[sort(ggidx)]
+        	gaintemp = gg[ggidx]
             if gaintemp[0] eq -1 then gaintemp=[-1, -1]
-        endif
+        endif else gaintemp = [-1, -1]
+
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of
         ;        1070: band = 'J'
@@ -77,7 +80,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
 
-        if i ne 0 then idlstring += "," 
+        if i ne 0 then idlstring += ","
         idlstring += "'"+ee->tracknum()+"'"
         ee->free
     endfor
