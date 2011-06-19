@@ -197,10 +197,10 @@ function AOdisturb::isok, cause=cause
 		cause += " - M2C used to generate sinusmode disturbance is NOT the same as current M2C"
 		dist_ok = 0B
 	  endif
-	  if self._sin_freq_mismatch eq 1b then begin
-		cause += " - sinusmode disturbance framerate mistmach"
-		dist_ok = 0B
-	  endif
+;	  if self._sin_freq_mismatch eq 1b then begin
+;		cause += " - sinusmode disturbance framerate mistmach"
+;		dist_ok = 0B
+;	  endif
 	endif
 
 	return,dist_ok
