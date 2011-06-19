@@ -22,6 +22,12 @@ function AOelab::Init, tracknum, $
 		return, 0
 	endif
 
+	temp = FILE_SEARCH(FILEPATH(root=self._datadir, 'gains_step*.fits'), COUNT=ngainfiles)
+	if ngainfiles ne 0 then begin
+		print, 'gain optimization data: Data_'+tracknum
+		return, 0
+	endif
+
     ; create elab dir and set permission / owner
     tmp_dir = filepath(root=ao_elabdir(), sub=[date], '')
     if file_test(tmp_dir, /dir) eq 0 then begin
@@ -69,7 +75,7 @@ function AOelab::Init, tracknum, $
 		endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
-   
+
 	;Single or double reflection
 	if self->operation_mode() eq "RR" then self._reflcoef=4. else self._reflcoef=2.
 
@@ -249,13 +255,13 @@ function AOelab::Init, tracknum, $
                 self._modes_null = obj_new('AOresidual_modes', self, self._slopes_null, self._modal_rec, store_label='modes_null')
         endif
     endif else message, 'Wfs object not available: slopesnull object not initialized!', /info
- 
+
 
     ;
-    ; measurement type 
+    ; measurement type
     ; if slope null file ==nc.fits then 'SlopeNullMeas'
     ; if file exists 'gains_step1.fits' then 'GainMeas'
-    ; else 'LoopMeas' 
+    ; else 'LoopMeas'
     self._meas_type = 'LOOP'
     if  obj_valid(self->wfs_status()) then $
         if strtrim(file_basename( (self->wfs_status())->slopes_null_fname()),2) eq 'nc.fits' then self._meas_type = 'NCPA'
@@ -380,10 +386,10 @@ function AOelab::isOK, cause=cause
     	    endif
     	    if ((self->wfs_status())->pupils())->pup_tracknum() ne (((self->intmat())->wfs_status())->pupils())->pup_tracknum() then begin
     		    ; TODO UGLY PATCH BECAUSE OF DIGITAL SHIFT OF THE PUPILS DONE IN June 2011 RUN
-                ; Here we should have families of pupils that belongs to the same set and are just shifted to optimize 
+                ; Here we should have families of pupils that belongs to the same set and are just shifted to optimize
                 ; camera lens pupil recentering
-                if not ( ((self->wfs_status())->pupils())->pup_tracknum() eq '20110601-224135' and $ 
-                   (((self->intmat())->wfs_status())->pupils())->pup_tracknum() eq '20100525-171742' ) then begin 
+                if not ( ((self->wfs_status())->pupils())->pup_tracknum() eq '20110601-224135' and $
+                   (((self->intmat())->wfs_status())->pupils())->pup_tracknum() eq '20100525-171742' ) then begin
                     imok*=0B
     		        cause += ' - Pupils mismatch'
                 endif
@@ -425,7 +431,7 @@ end
 ;end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                                   SUMMARY             
+;                                   SUMMARY
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
@@ -538,7 +544,7 @@ pro AOelab::fullsummary
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                                  PLOTS and SHORTCUTS             
+;                                  PLOTS and SHORTCUTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
@@ -624,20 +630,20 @@ end
 pro AOelab::psf, WINDOW = WINDOW, fullframe=fullframe, sr=sr
     loadct,3
     if keyword_set(sr) then begin
-        obj = OBJ_VALID(self->irtc()) ? self->irtc() : self->pisces() 
+        obj = OBJ_VALID(self->irtc()) ? self->irtc() : self->pisces()
         image_show, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos, obj->longexposure(/fullframe)>0.1
         nstars = obj->nstars()
         starpos = obj->star_position_px()
         sr = 100.*obj->star_sr()
         for i=0,nstars-1 do begin
-            starposdev = starpos[*,i]/1024 * [pos[2]-pos[0], pos[3]-pos[1]] + [pos[0],pos[1]] 
+            starposdev = starpos[*,i]/1024 * [pos[2]-pos[0], pos[3]-pos[1]] + [pos[0],pos[1]]
             xyouts, starposdev[0], starposdev[1], string(format='(%"%d - %4.1f")', i, sr[i]), charsi=1.5, col='ffffff'x, /dev, alig=0.5
-        endfor 
+        endfor
     endif else begin
-        psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure(fullframe=fullframe) 
+        psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure(fullframe=fullframe)
         xshow, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos,   psf>0.1
     endelse
-    
+
 end
 
 function AOelab::mag
@@ -652,7 +658,7 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                           MEMBERS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 function AOelab::obj_tracknum
     return, (self._obj_tracknum)
@@ -897,7 +903,7 @@ pro AOelab__define
         _recompute         : 0B,        $
         _n_periods		   : 0L,		$
         _operation_mode    : "",		$	; "RR": retroreflector, "ONSKY", idem.
-        _meas_type         : "",		$	; "LOOP", "NCPA", "AG" 
+        _meas_type         : "",		$	; "LOOP", "NCPA", "AG"
         _reflcoef		   : 0.,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
