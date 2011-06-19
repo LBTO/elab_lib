@@ -24,13 +24,16 @@ pro log_twiki, aodataset, ref_star=ref_star
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
 
+
         if obj_valid(ee->control()) then begin
         	gg = (ee->control())->gain()
-        	ggidx = rem_dup(gg)
-        	ggidx = ggidx[sort(ggidx)]
-        	gaintemp = gg[ggidx]
-            if gaintemp[0] eq -1 then gaintemp=[-1, -1]
-        endif else gaintemp = [-1, -1]
+        	case ((ee->wfs_status())->ccd39())->binning() of
+        	  1 : gaintemp = gg[[0,2,81]]
+        	  2 : gaintemp = gg[[0,2,33]]
+        	  3 : gaintemp = gg[[0,2,22]]
+        	  4 : gaintemp = gg[[0,2,6]]
+        	endcase
+        endif else gaintemp = [-1, -1, -1]
 
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of
@@ -55,7 +58,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             if stregex( bname, '[0-9]*_[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 10 )
         endif
 
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
+        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -67,7 +70,7 @@ pro log_twiki, aodataset, ref_star=ref_star
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->ccd39())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
             obj_valid(ee->wfs_status()) ?  round(((ee->wfs_status())->ccd39())->framerate()) : -1, $
-            gaintemp[0], gaintemp[1] ,$
+            gaintemp[0], gaintemp[1] , gaintemp[2], $
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
