@@ -178,9 +178,11 @@ function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 	s2d = fltarr(fr_sz,fr_sz)
 	sl_2d = fltarr(sl2d_w*2, sl2d_h, niter)
 	for kk=0L, long(niter)-1 do begin
-		s2d[indpup[*,mypup]] = sx[kk,*]
+		if n_elements(slopevec) eq 0 then s2d[indpup[*,mypup]] = sx[kk,*] else $
+			s2d[indpup[*,mypup]] = sx
 		s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-		s2d[indpup[*,mypup]] = sy[kk,*]
+		if n_elements(slopevec) eq 0 then s2d[indpup[*,mypup]] = sy[kk,*] else $
+			s2d[indpup[*,mypup]] = sy
 		s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 		sl_2d[*,*,kk] = [s2d_tmpA,s2d_tmpB]
 	endfor
