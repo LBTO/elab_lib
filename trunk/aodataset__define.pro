@@ -376,6 +376,79 @@ function aodataset::Remove, idx
 end
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Graphical methods for datasets
+
+;+
+;
+;-
+pro aodataset::modalplot
+	tr = self->tracknums()
+	if self->count() gt 1 then cols = [[0],comp_colors(self->count()-1)] else cols = [0]
+	for ii=0, self->count()-1 do begin
+		ao = getaoelab(self->get(pos=ii))
+		ao->modalplot, title='', OVERPLOT=ii, COLOR=cols[ii]
+	endfor
+	legend, tr, psym=replicate(-1,self->count()), color=cols, /right
+end
+
+
+;+
+;
+;-
+pro aodataset::plot, X_VAR, Y_VAR, HISTO_VAR=HISTO_VAR, GROUP_VAR=GROUP_VAR $
+		, g_leg_title=g_leg_title, h_leg_title=h_leg_title, _EXTRA = ex, CURSOR=CURSOR
+
+	nparams = n_params()
+	if nparams ne 2 then begin
+		message, 'Usage: db->plot, X, Y, [,...]',/info
+		return
+	endif
+
+	;X and Y variables
+	;- - - - - - - - - - -
+	X = self->value(X_VAR, set_out=set1)
+	if size(X,/type) eq 2 then if X[0] eq -1 then return
+	Y = set1->value(Y_VAR, set_out=set2)
+	if size(Y,/type) eq 2 then if Y[0] eq -1 then return
+	if n_elements(X) ne n_elements(Y) then X = set2->value(X_VAR)
+
+
+	;Histogram variable
+	;- - - - - - - - - - -
+	if n_elements(HISTO_VAR) ne 0 then begin
+		H = set2->value(HISTO_VAR, set_out=set3)
+		if H[0] eq -1 then return
+		if n_elements(H) ne n_elements(X) then begin
+			X = set3->value(X_VAR)
+			Y = set3->value(Y_VAR)
+		endif
+		if n_elements(h_leg_title) eq 0 then h_leg_title = HISTO_VAR+':'
+	endif else set3 = set2
+
+	;Group variable
+	;- - - - - - - - - - -
+
+	if n_elements(GROUP_VAR) ne 0 then begin
+		G = set3->value(GROUP_VAR, set_out=set4)
+		if size(G,/type) eq 2 then if G[0] eq -1 then return
+		if n_elements(G) ne n_elements(X) then begin
+			X = set4->value(X_VAR)
+			Y = set4->value(Y_VAR)
+			H = set4->value(HISTO_VAR)
+		endif
+		if n_elements(g_leg_title) eq 0 then g_leg_title = GROUP_VAR+':'
+	endif else set4 = set3
+
+	if keyword_set(CURSOR) then begin
+		tr = set4->value('tracknum')
+	endif
+
+	aoplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
+		  , g_leg_title=g_leg_title, h_leg_title=h_leg_title
+
+end
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
