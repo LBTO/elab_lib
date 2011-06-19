@@ -384,7 +384,7 @@ end
 ;-
 pro aodataset::modalplot
 	tr = self->tracknums()
-	if self->count() gt 1 then cols = [[0],comp_colors(self->count()-1)] else cols = [0]
+	if self->count() gt 1 then cols = [[!P.COLOR],comp_colors(self->count()-1)] else cols = [!P.COLOR]
 	for ii=0, self->count()-1 do begin
 		ao = getaoelab(self->get(pos=ii))
 		ao->modalplot, title='', OVERPLOT=ii, COLOR=cols[ii]
