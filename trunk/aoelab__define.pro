@@ -211,7 +211,7 @@ function AOelab::Init, tracknum, $
     ; PISCES
     pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits.cq'))
     if file_test(pisces_fname) eq 0 then pisces_fname = file_search(filepath(root=self._datadir, 'pisces.fits'))
-    self._pisces = obj_new('aopisces', self, pisces_fname)
+    self._pisces = obj_new('aopisces', self, pisces_fname, dark_fname)
 
     ; offload modes
     pos2mod_fname = filepath(root=ao_datadir(),  'matrix_proiezione_per_lorenzo.sav') ; TODO fix this name
