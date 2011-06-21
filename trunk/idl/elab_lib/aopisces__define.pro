@@ -29,20 +29,20 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTER'),2)
     valid_filt_number = 1B
     CASE strtrim(self._filter_name,2) OF
-                                            ;0:2.14            
-        'H2 2.122 um':  lambda = 2.122e-6   ;1:H2 2.122 um   
+                                            ;0:2.14
+        'H2 2.122 um':  lambda = 2.122e-6   ;1:H2 2.122 um
         'open':         lambda = 1e-6       ;2:OPEN
                                             ;3:dark
     	'J':            lambda = 1.25e-6	;4:J
         'Ks':           lambda = 2.1e-6     ;5:ks
     	'H':            lambda = 1.65e-6	;6:H
                                             ;7:BrGamma
-    	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII 
+    	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII
                                             ;9:2.086
      else: begin
      		;lambda = 1.
      		lambda = !VALUES.F_NAN
-     		msg_temp = 'Unknown pisces filter <'+self._filter_name+'>'  
+     		msg_temp = 'Unknown pisces filter <'+self._filter_name+'>'
             message, msg_temp, /info
 	        self._pisces_err_msg += ' - ' + msg_temp
     		valid_filt_number = 0B
@@ -67,7 +67,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     ; Frame size
     frame_w  = long(aoget_fits_keyword(fitsheader, 'NAXIS1'))
     frame_h  = long(aoget_fits_keyword(fitsheader, 'NAXIS2'))
-   
+
     ;ra  = (root_obj->tel())->ra()
     ;dec = (root_obj->tel())->dec()
     ;stages_x = ((root_obj->wfs_status())->stages())[0]
@@ -91,8 +91,8 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
         	self._pisces_err_msg += ' - ' + msg_temp
         endelse
     endif else begin
-		;full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
-		full_dark_fname =  dark_fname
+		full_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir,  dark_fname)
+;		full_dark_fname =  dark_fname
 		if not file_test(full_dark_fname) then begin
 			msg_temp = 'Overidden pisces dark file does not exist'
 			message, msg_temp, /info
@@ -108,7 +108,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
 	; initialize PSF object
     if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
     	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
- 
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('aopisces', 'pisces image') then return, 0
     self->addMethodHelp, "temp()", "pisces temperature (K)"
@@ -190,12 +190,12 @@ end
 ;     set    = obj_new('aodataset', from=thisJulday-1d/48, to=thisJulday+1d/48) ; set of tn close in time to this
 ;     setl   = set->where('meas_type', 'eq', 'LOOP') ; only LOOP, no AutoGain, SlopesNull etc
 ;     xxx = 1d/60
-;     setra  = setl->where('tel.ra',   'between', [ra-xxx*15, ra+xxx*15])  ; similar telescope pointing 
+;     setra  = setl->where('tel.ra',   'between', [ra-xxx*15, ra+xxx*15])  ; similar telescope pointing
 ;     setdec = setra->where('tel.dec', 'between', [dec-xxx, dec+xxx])  ; similar telescope pointing
 ;
 ;    ; find
 ;
-;    return, setdec    
+;    return, setdec
 ;end
 
 
