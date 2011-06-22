@@ -24,17 +24,12 @@ pro log_twiki, aodataset, ref_star=ref_star
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
 
-
+		gaintemp = [-1., -1., -1.]
         if obj_valid(ee->control()) then begin
         	gg = (ee->control())->gain()
-        	case ((ee->wfs_status())->ccd39())->binning() of
-        	  1 : gaintemp = gg[[0,2,81]]
-        	  2 : gaintemp = gg[[0,2,33]]
-        	  3 : gaintemp = gg[[0,2,22]]
-        	  4 : gaintemp = gg[[0,2,6]]
-        	endcase
-        endif else gaintemp = [-1, -1, -1]
-
+			ggidx = where(gg-shift(gg,1) ne 0)
+        	gaintemp[0] = gg[ggidx]
+        endif
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of
         ;        1070: band = 'J'
