@@ -384,7 +384,11 @@ end
 ;-
 pro aodataset::modalplot, _extra=ex
 	tr = self->tracknums()
-	if self->count() gt 1 then cols = [[!P.COLOR],comp_colors(self->count()-1)] else cols = [!P.COLOR]
+	case self->count() of
+	  1: cols = [!P.COLOR]
+	  2: cols = [!P.COLOR, 250L]
+	  else: cols = [[!P.COLOR],comp_colors(self->count()-1)]
+	endcase
 	for ii=0, self->count()-1 do begin
 		ao = getaoelab(self->get(pos=ii))
 		if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
