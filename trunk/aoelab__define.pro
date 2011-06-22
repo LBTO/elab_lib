@@ -581,45 +581,64 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 end
 
 
-pro AOelab::modalSpecPlot, modenum
+pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 
 	if n_params() ne 1 then begin
 		message, 'Missing parameter. Usage: ...->modalSpecPlot, modenum', /info
 		return
 	endif
 
-	nmodes = (self->modalpositions())->nmodes()
-	if modenum ge nmodes then begin
-		message, 'Mode number requested not available. The last mode available is '+strtrim(nmodes-1,2), /info
-		return
-	endif
+    if self->operation_mode() eq "RR" then begin
+		nmodes = (self->modalpositions())->nmodes()
+		if modenum ge nmodes then begin
+			message, 'Mode number requested not available. The last mode available is '+strtrim(nmodes-1,2), /info
+			return
+		endif
+		; corrected PSD
+		freq   = (self->modalpositions())->freq()
+		psd    = (self->modalpositions())->psd() * (1e9*self->reflcoef())^2.
+		; disturbance PSD
+		if obj_valid(self._disturb) then $
+	  	if (self->disturb())->dist_freq() ne -1 then begin
+			olfreq = (self->modaldisturb())->freq()
+			olpsd  = (self->modaldisturb())->psd() * (1e9*self->reflcoef())^2.
+			yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
+	  	endif else begin
+	  		message, 'disturbance frequency data not available', /info
+	  		yrange=sqrt(minmax(psd[1:*,modenum]))
+	  	endelse
+	endif else begin
+		nmodes = (self->modal_rec())->nmodes()
+		if modenum ge nmodes then begin
+			message, 'Mode number requested not available. The last mode available is '+strtrim(nmodes-1,2), /info
+			return
+		endif
+		; corrected PSD
+		freq   = (self->residual_modes())->freq()
+		psd    = (self->residual_modes())->psd() * (1e9*self->reflcoef())^2.
+		; OL rec PSD
+		if obj_valid(self._olmodes) then begin
+			olfreq = (self->olmodes())->freq()
+			olpsd  = (self->olmodes())->psd() * (1e9*self->reflcoef())^2.
+			yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
+	  	endif else begin
+	  		message, 'olmodes data not available', /info
+	  		yrange=sqrt(minmax(psd[1:*,modenum]))
+	  	endelse
+	endelse
 
-	; corrected PSD
-	freq   = (self->modalpositions())->freq()
-	psd    = (self->modalpositions())->psd() * (1e9*self->reflcoef())^2.
-
-	; disturbance PSD
-	if obj_valid(self._disturb) then $
-	  if (self->disturb())->dist_freq() ne -1 then begin
-		olfreq = (self->modaldisturb())->freq()
-		olpsd  = (self->modaldisturb())->psd() * (1e9*self->reflcoef())^2.
-		yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
-	  endif else begin
-	  	message, 'disturbance frequency data not available', /info
-	  	yrange=sqrt(minmax(psd[1:*,modenum]))
-	  endelse
-
-	loadct,39,/silent
-	!X.MARGIN = [12, 3]
-	plot_oo, freq[1:*], sqrt(psd[1:*,modenum]), charsize=1.2, xtitle='frequency [Hz]', ytitle=textoidl('[nm Hz^{-1/2}]') $
-		, title=self._obj_tracknum->tracknum()+', mode '+strtrim(modenum,2), yrange=yrange, ytickformat='(e9.1)'
-	if n_elements(olfreq) ne 0 then begin
-		oplot, olfreq[1:*], sqrt(olpsd[1:*,modenum]), color=250
-		legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
-	endif
-
+    if not keyword_set(OVERPLOT) then  begin
+		!X.MARGIN = [12, 3]
+		plot_oo, freq[1:*], sqrt(psd[1:*,modenum]), charsize=1.2, xtitle='frequency [Hz]', ytitle=textoidl('[nm Hz^{-1/2}]') $
+			, title=self._obj_tracknum->tracknum()+', mode '+strtrim(modenum,2), yrange=yrange, ytickformat='(e9.1)', _extra=ex
+		if n_elements(olfreq) ne 0 then begin
+			oplot, olfreq[1:*], sqrt(olpsd[1:*,modenum]), color=250
+			legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
+		endif
+	endif else oplot, freq[1:*], sqrt(psd[1:*,modenum]), COLOR=COLOR, _extra=ex
 
 end
+
 
 function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
