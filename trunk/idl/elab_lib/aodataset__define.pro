@@ -382,12 +382,13 @@ end
 ;+
 ;
 ;-
-pro aodataset::modalplot
+pro aodataset::modalplot, _extra=ex
 	tr = self->tracknums()
 	if self->count() gt 1 then cols = [[!P.COLOR],comp_colors(self->count()-1)] else cols = [!P.COLOR]
 	for ii=0, self->count()-1 do begin
 		ao = getaoelab(self->get(pos=ii))
-		ao->modalplot, title='', OVERPLOT=ii, COLOR=cols[ii]
+		if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
+						ao->modalplot, /OVERPLOT, COLOR=cols[ii]
 	endfor
 	legend, tr, psym=replicate(-1,self->count()), color=cols, /right
 end
