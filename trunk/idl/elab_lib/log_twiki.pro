@@ -28,7 +28,7 @@ pro log_twiki, aodataset, ref_star=ref_star
         if obj_valid(ee->control()) then begin
         	gg = (ee->control())->gain()
 			ggidx = where(gg-shift(gg,1) ne 0)
-        	gaintemp[0] = gg[ggidx]
+        	if ggidx[0] ne -1 then gaintemp[0] = gg[ggidx]
         endif
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of
