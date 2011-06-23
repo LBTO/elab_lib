@@ -36,7 +36,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     	'J':            lambda = 1.25e-6	;4:J
         'Ks':           lambda = 2.1e-6     ;5:ks
     	'H':            lambda = 1.65e-6	;6:H
-                                            ;7:BrGamma
+		'Br-g 2.166 um': lambda= 2.16e-6    ;7:BrGamma
     	'FeII 1.64 um': lambda = 1.64e-6	;8:FeII
                                             ;9:2.086
      else: begin
