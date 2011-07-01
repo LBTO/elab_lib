@@ -1,0 +1,126 @@
+-------------------------------------------------------------------------------
+5/27/2010 -- Update packaging of corquad to use the system's CFITSIO
+package, so that we are not depending on an ancient version.  Instead
+of relying on many different flavors of corquad for ARIES, Pisces,
+different detectors, different runs, etc., we are now reading the
+correlation coefficients from ${HOME}/.corquad.  So all you need to do
+is alter the contents of this file and rerun corquad, no recompilation
+necessary.  One corquad for everybody.  This unloads a lot of code and
+makes it easier to support. 
+
+Builds of corquad for Linux, BSD, and Mac OS X are now possible. For
+distribution of binaries, please use static linking.  For building on
+your own machine, dynamic linking is better. 
+
+I've also included a corquad shell script that will batch-convert a
+directory of files.  The only gotcha is that it won't convert files
+that start with the letter "q" since that's the appended prefix for the
+corquad task. 
+
+--CAK  (ckulesa@email.arizona.edu)
+
+-------------------------------------------------------------------------------
+7/13/2005 -- Update of corquad_a.c and cquad_a.cl to accomodate the new chip
+in ARIES during the 5/2005 MMT/AO run and afterwards.  The tarbell 
+corquad_a3.tar will produce the directory ../Corquad_a3/.  The new program
+corquad_a.c contains the updated polynomial fits appropriate to the new chip,
+and the Makefile has been updated.  Make will produce corquad_a3.e.  An 
+IRAF script cquad_a3.cl is also provided to call the corquad executable from 
+inside IRAF.
+
+Contact bbiller@as.arizona.edu if you can't get the update to compile.  As 
+of July 2005, using the Makefile to compile will produce a compilation warning,
+but should still compile ok.
+
+--BAB
+
+-------------------------------------------------------------------------------
+10/20/2003 -- Update of corquad.c and cquad.cl to accomodate the new chip
+in ARIES during the 10/2003 MMT/AO run. The tarball corquad_a.tar will
+produce the directory ../Corquad_a/. The new program corquad_a.c contains
+the updated polynomial fits appropriate to the new chip, and the Makefile
+has been updated accordingly, so "make" will produce corquad_a.e. The IRAF 
+script cquad_a.cl calls this executable, and the directories in login.cl
+described below should be updated point to these files.
+
+If you can't get the update to compile, e-mail Jackie at jam@as.arizona.edu.
+Generic corquad issues should be directed to R.deJong at STScI.
+-- JAM
+-------------------------------------------------------------------------------
+
+This routine corrects PISCES images for the negative "shadows" on all four
+quadrants due to bright sources. It actually assumes that any flux in a
+pixel has a negative effect on all 4 corresponding pixels in the 4
+quadrants at about a 0.002 level, plus a "shadow" at a much lower level.
+
+To install:
+> obtain a copy from
+http://gaffa.as.arizona.edu/~rdejong/gzip/corquad.tar.gz
+> gunzip corquad.tar.gz
+> tar -xvf corquad.tar
+> cd corquad
+> make
+
+The output executable is called corquad.e, works stand-alone (not in any
+particular package like IRAF) and expects 1 FITS file as input like:
+> corquad.e filename.fit
+The files do not have to be corrected for ushort int problems, any pixel
+with <-1000 ADU will have 2^16=65536 added to it. 
+
+The output file will be named "q"//infilename, and will be BITPIX=-32,
+so single precision floats.  Note that the use of BITPIX=-32 files is
+not recommended on DEC Alphas and IBM PCs, because they have the byte
+order swapped, which will slow down IO considerably.  Use IRAF .imh or
+what ever native file format of your reduction package instead. 
+
+To use this program in IRAF, add the following lines to your loginuser.cl
+file: 
+ task $corquad = $your_path_to_the_corquad_dir/corquad.e
+ task cquad = your_path_to_the_corquad_dir/cquad.cl
+You can now use the cquad IRAF script to multiple
+call the corquad task.
+cl> cquad *.fit
+or
+cl> cquad @filelist
+-------------------------------------------------------------------------------
+JAM -- for the ARIES update, make the above:
+ task $corquad_a = $your_path_to_the_Corquad_a_dir/corquad_a.e
+ task cquad_a = your_path_to_the_Corquad_a_dir/cquad_a.cl
+The cquad task becomes cquad_a:
+cl> cquad_a *.fit
+or
+cl> cquad_a @filelist
+-------------------------------------------------------------------------------
+BAB -- for the second ARIES update change above to:
+ task $corquad_a3 = $your_path_to_the_Corquad_a_dir/corquad_a3.e
+ task cquad_a3 = your_path_to_the_Corquad_a_dir/cquad_a3.cl
+The cquad task becomes cquad_a3:
+cl> cquad_a3 *.fit
+or
+cl> cquad_a3 @filelist
+
+The output files will still be named "qa"//infilename
+------------------------------------------------------------------------------
+
+
+The shape of the shadow was determined from a large stack of dark
+frames, showing shadows from hot pixels, but having very low photon
+noise. The shadow was fitted with a 4th order polynomial, except for the
+central few pixels, as these pixels have a much larger negative offset.
+
+The routine works quite simple:
+-split the 4 quadrants of image in 1D arrays, correcting for pix <-1000
+-convolve the shadow kernel with the individual quadrants
+-sum the 4 convolutions
+-subtract this sum from each of the 4 quadrants
+
+
+Note that the RA & DEC of the dark frames may have "illegal"
+(non-printable) characters if the telescope was down. Fix this first
+(with iraf HEDIT for instance) before using this program.
+cl > hedit dark*.fit RA 0 ver-
+cl > hedit dark*.fit DEC 0 ver-
+
+
+
+
