@@ -22,11 +22,12 @@ pro corquad, fitsfile
     for i=0, nframes-1 do begin
         writefits, filepath(root=tmp, 'pippo.fits'), imas[*,*,i], hdr
         ;spawn, '/home/aoacct/AO/current/idl/elab_lib/corquad/corquad /tmp/pippo.fits'
-        spawn, string(format='%("%s %s")', $
+        spawn, string(format='(%"%s %s")', $
              filepath(root=thisdir, sub=['corquad'], 'corquad'),  filepath(root=tmp, 'pippo.fits'))
         cq = readfits( 'pippo.cq.fits', /silent)
         imaout[*,*,i]=cq
     endfor
+    sxaddpar, hdr, 'CORQUAD', 'Y'
     writefits, fitsfile+'.cq', imaout, hdr
 end
 
