@@ -27,7 +27,7 @@ pro log_twiki, aodataset, ref_star=ref_star
 		gaintemp = [-1., -1., -1.]
         if obj_valid(ee->control()) then begin
         	gg = (ee->control())->gain()
-        	ngains = rem_dup(gg)
+        	ngains = n_elements(rem_dup(gg))
 			if ngains gt 1 then begin
 				ggidx = where(gg-shift(gg,1) ne 0)
         		if ggidx[0] ne -1 then gaintemp[0] = gg[ggidx]
