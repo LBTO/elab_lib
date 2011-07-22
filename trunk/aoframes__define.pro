@@ -136,9 +136,15 @@ function AOframes::antidrift_status
 	return, self._antidrift_status
 end
 
-function AOframes::dark
+function AOframes::dark, dark_ok=dark_ok
 	dark_ok = 1B
 	dark_fname = (*self._wfs_status->ccd39())->dark_fname()
+
+	if not file_test(dark_fname) then begin
+		message, 'CCD39 dark file not found', /info
+		dark_ok = 0B
+		return, -1
+	endif
 
 	;;;;;First implementation of Antidrift: DARK was overwritten!!!
 	if file_basename(dark_fname) eq 'darktmp.fits' then begin
@@ -164,11 +170,12 @@ end
 ;-
 function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
 	fr = float(readfits(self._filename, /SILENT))
+	if n_elements(fr) eq 1 then return,-1
 	if keyword_set(DARK_SUBTRACTED) then begin
 ;		dark = (*self._wfs_status->ccd39())->dark()
-		dark = self->dark()
-		if n_elements(dark) eq 1 then message, 'CCD39 DARK FILE NOT FOUND -> DARK NOT SUBTRACTED',/info else $
-			for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark
+		dark = self->dark(dark_ok=dark_ok)
+		if not dark_ok then return,-1
+		for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark
 	endif
 	return, fr
 end
@@ -183,7 +190,9 @@ pro AOframes::calc_number_photons
 		restore, self._fluxdata_fname
 	endif else begin
 		fr = self->frames(/DARK_SUB)
-		indpup = (*self._wfs_status->pupils())->indpup()
+		if n_elements(fr) eq 1 then return
+		if obj_valid(*self._wfs_status->pupils()) then $
+			indpup = (*self._wfs_status->pupils())->indpup() else return
 
 		; Estimate the number of counts in the pupil per integration time
 		adu_per_int      = fltarr(self._nframes)
@@ -221,6 +230,7 @@ pro AOframes::calc_ron
 		restore, self._rondata_fname
 	endif else begin
 		fr  = self->frames(/DARK_SUB)
+		if n_elements(fr) eq 1 then return
 		roi = self->ron_roi()
 		np = n_elements(roi)
 		ronmes = fltarr(np,self->nframes())
