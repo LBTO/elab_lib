@@ -1,16 +1,16 @@
 
 ;+
 ; AOpsfAbstract object initialization
-; 
+;
 ; An AOpsfAbstract represent a ROI of an image containing 1 and only 1 PSF in the field
 ; You can compute PSF quality parameters (SR, EE, FWHM)
 ; You can measure spectra of PSF vibrations (provided the image is a cube of images)
-; 
-; The image has a lambda and a pixelscale 
-; In case of a cube of images it has also a framerate 
-; 
+;
+; The image has a lambda and a pixelscale
+; In case of a cube of images it has also a framerate
+;
 ; The FoV is small: the image should contain only one object
-; 
+;
 ;
 ; INPUT
 ;   psf_fname            images cube fits file name (absolute path)
@@ -24,7 +24,7 @@
 ;	badpixelmap_fname	 (string) full path to the bad pixel map frame.
 ;   label                (string) label for plots
 ;   recompute            set to force recomputing of stored data
-;   store_radix          (string) example =filepath(root=root_obj->elabdir(), 'irtc')    
+;   store_radix          (string) example =filepath(root=root_obj->elabdir(), 'irtc')
 ;-
 
 function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framerate, $
@@ -34,7 +34,7 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
         message, psf_fname + ' not found', /info
         return,0
     endif
-    
+
     self._pixelscale = pixelscale
     self._lambda = lambda
     self._framerate = framerate
@@ -70,7 +70,7 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 	self._stored_sr_se_fname    = store_radix+'_sr_se.sav'
     self._stored_centroid_fname = store_radix+'_centroid.sav'
 	self._stored_profile_fname  = store_radix+'_profile.sav'
-	self._stored_enc_ene_fname  = store_radix+'_enc_ene.sav'       
+	self._stored_enc_ene_fname  = store_radix+'_enc_ene.sav'
 
 
 
@@ -78,8 +78,8 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 
     ;initialize AOframe object
     if not self->AOframe::Init(psf_fname, dark_fname=dark_fname, badpixelmap_obj=badpixelmap_obj, roi=roi, $
-        line_noise=halosizepx, stored_le=store_le_fname, stored_cube=store_cube_fname, recompute=recompute) then return, 0   
-    
+        line_noise=halosizepx, stored_le=store_le_fname, stored_cube=store_cube_fname, recompute=recompute) then return, 0
+
     return, 1
 end
 
@@ -211,7 +211,7 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima
     			if file_test(psf_dl_fname) then begin
         			restore, psf_dl_fname
     			endif else begin
-        			psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_lbt_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
+        			psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_pupil_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
         			save, psf_dl_ima, file=psf_dl_fname
     			endelse
     			sr_se = sr_esposito(ima1, psf_dl_ima, plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
@@ -225,7 +225,7 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima
     return, self._sr_se
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                  PSF averaged profile
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 pro AOpsfAbstract::compute_profile
@@ -301,7 +301,7 @@ pro AOpsfAbstract::set_prof_binsize, binsize
     file_delete, self._stored_profile_fname, /allow_nonexistent
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                    Encircled Energy
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 pro AOpsfAbstract::compute_encircled_energy
@@ -434,7 +434,7 @@ pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms
 
 	;airy disk:
 	airysep_lD = findgen(1000)/(1000.-1.)*100.
-	oc = 0.111 ; TODO questo è LBT-specific!!!!
+	oc = ao_pupil_oc()
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
@@ -480,7 +480,7 @@ function AOpsfAbstract::framerate
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 
+;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOpsfAbstract::set_dark_image, dark_image

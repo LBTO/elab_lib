@@ -5,8 +5,8 @@ function tell_me_the_mag, nph, fs
 
 
 ;Telescope Area:
-DpupM = 8.222
-oc = 0.111
+DpupM = ao_pupil_diameter()
+oc = ao_pupil_oc()
 PupilArea = !pi/4. * (DpupM)^2. *(1.-oc^2.)
 
 ;Telescope+FLAO transmission
