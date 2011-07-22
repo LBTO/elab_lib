@@ -45,18 +45,21 @@ function AOelab::Init, tracknum, $
     tmp = filepath(root=self._datadir, 'adsec.sav')
     if file_test(tmp) eq 0 then begin
     	message, 'Cannot find adsec_status file: '+tmp, /info
-	message, 'Warning: adsec_status object not available!', /info
+		message, 'Warning: adsec_status object not available!', /info
     	;return,0
     endif else begin
-	restore, tmp ; restore status
-	self._adsec_status = obj_new('AOadsec_status', self, status)
-	if not obj_valid(self._adsec_status) then message, 'Warning: adsec_status object not available!', /info ;return, 0
+		restore, tmp ; restore status
+		self._adsec_status = obj_new('AOadsec_status', self, status)
+		if not obj_valid(self._adsec_status) then message, 'Warning: adsec_status object not available!', /info ;return, 0
     endelse
 
     ; create wfs_status leaf
     wfs_status_file = filepath(root=self._datadir, 'wfs.fits')
     self._wfs_status = obj_new('AOwfs_status', self, wfs_status_file)
     if not obj_valid(self._wfs_status) then message, 'Warning: wfs object not available!', /info ;return, 0
+
+	; Global variables (e.g. telescope diameter and OC, ...)
+	ao_global_data_init, (self._wfs_status)->wunit()
 
 	; create telescope leaf
 	self._tel = obj_new('AOtel', self, wfs_status_file)
@@ -365,6 +368,7 @@ end
 function AOelab::meas_type
 	return, self._meas_type
 end
+
 
 ;;;;;;;;;;;;; Shortcut to most important functions/macro ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
