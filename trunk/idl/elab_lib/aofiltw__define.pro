@@ -3,7 +3,7 @@
 ;
 ;-
 
-function AOfiltw::Init, wfs_header, fw_number
+function AOfiltw::Init, wfs_header, wunit, fw_number
 
 	hdr = *wfs_header
 
@@ -14,7 +14,7 @@ function AOfiltw::Init, wfs_header, fw_number
 
 	self._header = wfs_header
 	self._fw_pos = round(float(aoget_fits_keyword(hdr, 'fw'+fw_number+'.POSITION')))
-	self->filtw_data, fw_number
+	self->filtw_data, wunit, fw_number
     self._fw_number = fw_number
 
        ; initialize help object and add methods and leafs
@@ -42,8 +42,9 @@ end
 ;	CW:		Central wavelength
 ;	BW:		Bandwidth centered on CW
 ;-
-pro AOfiltw::filtw_data, fw_number
+pro AOfiltw::filtw_data, wunit, fw_number
 
+  if strmid(wunit,0,1) eq 'W' then begin	;LBT
 	CASE fw_number OF
 
 ;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
@@ -139,6 +140,108 @@ pro AOfiltw::filtw_data, fw_number
 									  "BW"	,!VALUES.F_NAN	)
 		 ENDCASE
 	ENDCASE
+
+  endif else if wunit eq 'MAG' then begin
+
+	CASE fw_number OF
+
+;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;		      the TRANSMITTED light goes towards the CCD39
+	'1': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'	, $
+									  "R"	,0.50				, $
+									  "T"	,0.50				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!values.F_INFINITY	)
+
+			1: data_struct = CREATE_STRUCT("name", 'empty', $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			2: data_struct = CREATE_STRUCT("name", 'DARK', $
+									  "R"	,0.0				, $
+									  "T"	,0.0				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			3: data_struct = CREATE_STRUCT("name", 'empty', $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'empty', $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			5: data_struct = CREATE_STRUCT("name", 'LPF950nm'	, $		; lambda>950nm to CCD39
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+
+		 ENDCASE
+
+	'2': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			1: data_struct = CREATE_STRUCT("name", 'SDSS z'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,0.50				, $
+									  "CW"	,902. 				, $
+									  "BW"	,300.	)
+
+			2: data_struct = CREATE_STRUCT("name", 'SDSS r'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,0.70				, $
+									  "CW"	,625. 				, $
+									  "BW"	,150.	)
+
+			3: data_struct = CREATE_STRUCT("name", 'SDSS i'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,0.80				, $
+									  "CW"	,765.			    , $
+									  "BW"	,150.	)
+
+			4: data_struct = CREATE_STRUCT("name", 'LPF950'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,0.05				, $
+									  "CW"	,0.981		 		, $
+									  "BW"	,200.	)
+
+			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+		 ENDCASE
+	ENDCASE
+
+
+
+  ENDIF
 
 	self._fw_data = ptr_new(data_struct, /no_copy)
 

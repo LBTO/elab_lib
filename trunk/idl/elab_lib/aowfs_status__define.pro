@@ -28,25 +28,26 @@ function AOwfs_status::Init, root_obj, fitsfile
 	self._wunit = strtrim(wunit,2)
 
 	self._modulation = float(aoget_fits_keyword(self->header(), 'tt.LAMBDA_D'))
+	;TODO add here the case for magellan, for which tt.lambda_d is wrong
 
     self._stages[0] = float(aoget_fits_keyword(self->header(), 'stagex.POSITION'))
     self._stages[1] = float(aoget_fits_keyword(self->header(), 'stagey.POSITION'))
     self._stages[2] = float(aoget_fits_keyword(self->header(), 'stagez.POSITION'))
 
     self._rerotator = float(aoget_fits_keyword(self->header(), 'rerot.POSITION'))
-    
+
     self._camera_lens[0] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_X'))
     self._camera_lens[1] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_Y'))
-    
+
     self._lamp = float(aoget_fits_keyword(self->header(), 'lamp.INTENSITY'))
     self._cuberot   = float(aoget_fits_keyword(self->header(), 'cuberot.POSITION'))
     self._cubestage = float(aoget_fits_keyword(self->header(), 'cubestage.POSITION'))
-    
+
     self._ccd39  = obj_new('AOccd39',  self._header, self._wunit)
     self._pupils = obj_new('AOpupils', self._header, self._wunit)
-    self._filtw1 = obj_new('AOfiltw' , self._header, '1') ; TODO add wunit
-    self._filtw2 = obj_new('AOfiltw' , self._header, '2') ; TODO Add wunit
-    
+    self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
+    self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2')
+
     self._slopes_null_fname = string(aoget_fits_keyword(self->header(), 'sc.SLOPENULL'))
 
 
