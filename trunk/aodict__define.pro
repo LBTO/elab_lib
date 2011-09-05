@@ -16,7 +16,7 @@ function aodict::Init, k_type, v_type; , multiple=multiple ;, real=real, stringa
         else: message, 'unknown values type'
     endcase
     self._nelems = 0
-    ;self._multiple = keyword_set(multiple) 
+    ;self._multiple = keyword_set(multiple)
 
 ;    case k_type of
 ;        'integer': self._keys = ptr_new(0L)
@@ -113,19 +113,19 @@ function aodict::where_generic, set, op, value, count
     case op of
         'eq' : idx=where( set eq value, count)
         'ne' : idx=where( set ne value, count)
-        'le' : idx=where( set lt value, count)
+        'le' : idx=where( set le value, count)
         'lt' : idx=where( set lt value, count)
-        'ge' : idx=where( set gt value, count)
+        'ge' : idx=where( set ge value, count)
         'gt' : idx=where( set gt value, count)
         'in' : begin
             idx1=where( set le value[1], count1)
             idx2=where( set ge value[0], count2)
             if ( (count1 eq 0) or (count2 eq 0) ) then begin
-                count = 0 
+                count = 0
             endif else begin
                 dum = intersection(idx1, idx2, idx)
                 count = n_elements(idx)
-            endelse 
+            endelse
             end
         'like' : begin
             if  test_type(set[0], /string) ne 0 then begin
@@ -134,7 +134,7 @@ function aodict::where_generic, set, op, value, count
             endif
             idx = where(strmatch(set, "*"+value+"*", /fold_case) eq 1, count)
             end
-        else : begin 
+        else : begin
             message, 'undefined operator '+op, /info
             count = 0
             return, -1
@@ -147,15 +147,15 @@ end
 
 ;+
 ; :Description:
-;   Retrieves values matching conditions specified by op and key_value. See aodict::where 
+;   Retrieves values matching conditions specified by op and key_value. See aodict::where
 ;
 ; :Params:
-;    op 
+;    op
 ;    key_value
 ;    count
-;    
+;
 ;  :Return:
-;    Array of keys whose value is 'op' to 'value'   
+;    Array of keys whose value is 'op' to 'value'
 ;
 ; :Author: lbusoni
 ;-
@@ -164,13 +164,13 @@ function aodict::select, op, value, count
     if count eq 0 then begin
         return, -1
     end
-    return, (self->keys())[idx]  
+    return, (self->keys())[idx]
 end
 
 ;+
 ; :Description:
 ;    Return the values of the dictionary
-;  
+;
 ;
 ; :Author: lbusoni
 ;-
@@ -204,7 +204,7 @@ pro aodict::remove, key
     if self->count() eq 0 then return
     for j=0L, n_elements(key)-1 do begin
         idx=self->where('eq', key[j], count)
-        if count gt 0 then begin 
+        if count gt 0 then begin
             ; remove key
             keys = self->keys()
             ptr_free, self._keys
@@ -231,7 +231,7 @@ pro aodict::remove_value, value
     if self->count() eq 0 then return
     for j=0L, n_elements(value)-1 do begin
         idx=self->where_value('eq', value[j], count)
-        if count gt 0 then begin 
+        if count gt 0 then begin
             ; remove key
             keys = self->keys()
             ptr_free, self._keys
@@ -280,7 +280,7 @@ pro test_aodict
     t0=systime(/sec)
     for i=0L, nelem-1 do begin
         if  (i+1) mod 10000 eq 0  then print, i
-        dict->insert, randi[i] ,i 
+        dict->insert, randi[i] ,i
     endfor
     t1=systime(/sec)
     print, format='(%"insert took %9.6f sec (%9.3g record/sec)")', t1-t0, double(nelem)/(t1-t0)
