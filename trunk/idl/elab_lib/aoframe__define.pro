@@ -162,7 +162,15 @@ function AOframe::maneggiaFrame, psf
         trstr = self._badpixelmap_obj->triangulation()
         if trstr.np gt 0 then begin
             sz=size(psf, /dim)
-    	    psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
+            szbpm = [self._badpixelmap_obj->frame_w(), self._badpixelmap_obj->frame_h()]
+            if total(szbpm - sz) ne 0 then begin
+            	subframe = self->subframe()
+            	psf1 = make_array(szbpm, /float)
+            	psf1[subframe[0]:subframe[1]-1,subframe[2]:subframe[3]-1] = psf[0:sz[0]-2,0:sz[1]-2] ;seems that right border of subframe is always shitty...
+    	    	psf1 = TRIGRID(float(trstr.x), float(trstr.y), psf1[trstr.idx], trstr.tr, xout=findgen(szbpm[0]), yout=findgen(szbpm[1]))
+				psf = psf1[subframe[0]:subframe[1],subframe[2]:subframe[3]]
+            endif else $
+    	    	psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
         endif
     endif
     return, psf
