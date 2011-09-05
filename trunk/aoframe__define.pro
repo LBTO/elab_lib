@@ -1,34 +1,34 @@
 
 ;+
 ; AOframe object initialization
-; 
+;
 ; An AOframe represent an image (or cube of images)
 ;
 ; You can access frames at variuos stages during the cleanup process:
 ; from raw-data to dark_subtracted, badpixel interpolated, common-mode subtracted.
 ; You can access ROI of the frame(s)
-;  
+;
 ; Raw frames can be cleaned subtracting a dark image
-; If a badpixel map is provided, the missing pixels are reconstructed using triangular interpolation   
+; If a badpixel map is provided, the missing pixels are reconstructed using triangular interpolation
 ; Raw data and dark frame must be provided in a fits files [N,W,H] or [W,H], with positive values (integer or float)
 ; Badpixelmap must be provided in a sav file created using make_bad_pixel_map
 ;
 ; ROI is expressed as [xmin,xmax,ymin,ymax]
 ;
-; The AOframe does NOT care of lambda, pixelscale, exposure time and framerate 
-; 
+; The AOframe does NOT care of lambda, pixelscale, exposure time and framerate
+;
 ; INPUT
 ;   frames_fname         images cube fits file name (full path)
 ;
 ; KEYWORD
 ;   dark_fname           dark fits file name (full path)
 ;	badpixelmap_obj      bad pixel map object (AObadpixelmap).
-;	line_noise           set this keyword to correct the line noise. Use it if only one object is present in the frame 
+;	line_noise           set this keyword to correct the line noise. Use it if only one object is present in the frame
 ;                        Keyword value has to be the typical width of the feature in the frame [px].
-;   roi                  [xmin, xmax, ymin, ymax]              
+;   roi                  [xmin, xmax, ymin, ymax]
 ;   recompute            set to force recomputing of stored data
-;   stored_le_fname      where to save the longexposure  (full path) 
-;   stored_cube_fname    where to save the cube (full path) 
+;   stored_le_fname      where to save the longexposure  (full path)
+;   stored_cube_fname    where to save the cube (full path)
 ;-
 
 function AOframe::Init, frames_fname, dark_fname=dark_fname, badpixelmap_obj=badpixelmap_obj,line_noise=line_noise, roi=roi, $
@@ -47,9 +47,9 @@ function AOframe::Init, frames_fname, dark_fname=dark_fname, badpixelmap_obj=bad
     endif
 
 	if keyword_set(badpixelmap_obj) then self._badpixelmap_obj = badpixelmap_obj
-	
+
     if keyword_set(line_noise) then self._object_size = line_noise
-    
+
     if keyword_set(stored_le_fname)   then self._stored_le_fname    = stored_le_fname
     if keyword_set(stored_cube_fname) then self._stored_cube_fname  = stored_cube_fname
 
@@ -61,13 +61,13 @@ function AOframe::Init, frames_fname, dark_fname=dark_fname, badpixelmap_obj=bad
     ; ROI
     if not keyword_set(roi) then roi = [0, self._frame_w-1, 0, self._frame_h-1]
     self._roi = roi
-    
+
 
     if keyword_set(recompute) eq 1B then begin
         file_delete, self._stored_le_fname, /allow_nonexistent   ;Long-exposure PSF
         file_delete, self._stored_cube_fname, /allow_nonexistent ;PSF cube elaborated (dark-subtracted, badpixel corrected)
     endif
-	
+
     return, 1
 end
 
@@ -92,7 +92,7 @@ pro AOframe::addHelp, obj
     obj->addMethodHelp, "roi_w()", 		    "roi width [px] (long)"
     obj->addMethodHelp, "roi_h()", 		    "roi height [px] (long)"
     obj->addMethodHelp, "setroi, roi", 		"set subframe used to return images [xmin,xmax,ymin,ymax]"
-end 
+end
 
 
 pro aoframe::summary
@@ -118,21 +118,21 @@ pro AOframe::process_cube
         ;Check whether the dark used to compute the saved LE PSF was the same....
         if used_dark_fname ne current_dark_fname then begin
             message, 'WARNING: The dark used to compute the saved LE-frame is not the same as the current dark', /info
-            file_delete, self._stored_cube_fname, /allow_nonexistent   
+            file_delete, self._stored_cube_fname, /allow_nonexistent
             self->process_cube
             return
         endif
         ;Check whether the badpixelmap used to compute the saved LE PSF was the same....
         if used_badpixelmap_fname ne current_badpixelmap_fname then begin
             message, 'WARNING: The badpixelmap used to compute the saved LE-frame is not the same as the current badpixelmap', /info
-            file_delete, self._stored_cube_fname, /allow_nonexistent   
+            file_delete, self._stored_cube_fname, /allow_nonexistent
             self->process_cube
             return
         endif
         ;Check whether the object size used to compute the saved LE PSF was the same....
         if used_object_size ne current_object_size then begin
             message, 'WARNING: The object size used to compute the saved LE-frame is not the same as the current object size', /info
-            file_delete, self._stored_cube_fname, /allow_nonexistent   
+            file_delete, self._stored_cube_fname, /allow_nonexistent
             self->process_cube
             return
         endif
@@ -160,7 +160,7 @@ function AOframe::maneggiaFrame, psf
     ; remove bad pixels interpolating with neighbours
     if obj_valid(self._badpixelmap_obj) then begin  ; TODO use catch!!!
         trstr = self._badpixelmap_obj->triangulation()
-        if trstr.np gt 0 then begin  
+        if trstr.np gt 0 then begin
             sz=size(psf, /dim)
     	    psf = TRIGRID(float(trstr.x), float(trstr.y), psf[trstr.idx], trstr.tr, xout=findgen(sz[0]), yout=findgen(sz[1]))
         endif
@@ -285,7 +285,7 @@ end
 pro AOframe::set_dark_image, dark_image
     self->free
     if self._stored_le_fname ne '' then file_delete, self._stored_le_fname, /allow_nonexistent
-    if self._stored_cube_fname ne '' then file_delete, self._stored_cube_fname, /allow_nonexistent 
+    if self._stored_cube_fname ne '' then file_delete, self._stored_cube_fname, /allow_nonexistent
     ; TODO check size
     if ptr_valid(self._tmp_dark_image) then ptr_free, self._tmp_dark_image
     self._tmp_dark_image=ptr_new(dark_image)
@@ -304,19 +304,19 @@ function AOframe::longExposure, fullframe=fullframe
 			;Check whether the dark used to compute the saved LE PSF was the same....
 			if used_dark_fname ne current_dark_fname then begin
 				message, 'WARNING: The dark used to compute the saved LE-frame is not the same as the current dark', /info
-                file_delete, self._stored_le_fname, /allow_nonexistent   
+                file_delete, self._stored_le_fname, /allow_nonexistent
                 return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 			;Check whether the badpixelmap used to compute the saved LE PSF was the same....
 			if used_badpixelmap_fname ne current_badpixelmap_fname then begin
 				message, 'WARNING: The badpixelmap used to compute the saved LE-frame is not the same as the current badpixelmap', /info
-                file_delete, self._stored_le_fname, /allow_nonexistent   
+                file_delete, self._stored_le_fname, /allow_nonexistent
                 return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 			;Check whether the object size used to compute the saved LE PSF was the same....
 			if used_object_size ne current_object_size then begin
 				message, 'WARNING: The object size used to compute the saved LE-frame is not the same as the current object size', /info
-                file_delete, self._stored_le_fname, /allow_nonexistent   
+                file_delete, self._stored_le_fname, /allow_nonexistent
                 return, self->AOframe::longExposure(fullframe=fullframe)
             endif
 		endif else begin
@@ -374,11 +374,11 @@ end
 ;end
 
 function AOframe::badpixelmap_fname
-	return, obj_valid(badpixelmap_fname) ? self._badpixelmap_obj->fname() : ""
+	return, obj_valid(self._badpixelmap_obj) ? self._badpixelmap_obj->fname() : ""
 end
 
 function AOframe::badpixelmap_obj
-	return, obj_valid(badpixelmap_fname) ? self._badpixelmap_obj : obj_new()
+	return, obj_valid(self._badpixelmap_obj) ? self._badpixelmap_obj : obj_new()
 end
 
 function AOframe::header
