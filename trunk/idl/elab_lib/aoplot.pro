@@ -7,6 +7,11 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 		  , g_leg_title=g_leg_title, h_leg_title=h_leg_title, leg_in=leg_in, h_leg_pos=h_leg_pos $
 		  , g_leg_pos=g_leg_pos
 
+	;some "fixed" legend parameters
+	box=1
+	clear=1
+
+
 	nparams = n_params()
 	if nparams ne 2 then begin
 		message, 'Usage: aoplot, X, Y, [,...]',/info
@@ -35,9 +40,9 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 			;legend should appear below the plot. The size of the legend should be computed beforehand.
 			usersym, [-2,-2,2, 2,-2], [-1, 1,1,-1,-1], /fill	;rectangle
 			if n_elements(H_leg_title) eq 0 then begin
-				legend, histo.leg, corners=corners, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins), box=0, pspacing=1, CHARSIZE=1.2
+				legend, histo.leg, corners=corners, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins), box=box, pspacing=1, CHARSIZE=1.2, clear=clear
 			endif else begin
-				legend, [[H_leg_title], histo.leg], corners=corners, psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)], box=0, pspacing=1, CHARSIZE=1.2
+				legend, [[H_leg_title], histo.leg], corners=corners, psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)], box=box, pspacing=1, CHARSIZE=1.2, clear=clear
 			endelse
 			h_leg_xydims = [corners[2]-corners[0],corners[3]-corners[1]]
 		endif else if keyword_set(h_leg_pos) then begin
@@ -78,9 +83,9 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 		;legend should appear below the plot. The size of the legend should be computed beforehand.
 		if not keyword_set(leg_in) then begin
 			if n_elements(g_leg_title) eq 0 then begin
-				legend, [g_leg], corners=corners, psym=sym_type[indgen(ng)], linestyle=intarr(ng), box=0, pspacing=1, charsize=1.2
+				legend, [g_leg], corners=corners, psym=sym_type[indgen(ng)], linestyle=intarr(ng), box=box, pspacing=1, charsize=1.2, clear=clear
 			endif else begin
-				legend, [[g_leg_title],g_leg], corners=corners, psym=[[0],sym_type[indgen(ng)]], linestyle=[[-1],intarr(ng)], box=0, pspacing=1, charsize=1.2
+				legend, [[g_leg_title],g_leg], corners=corners, psym=[[0],sym_type[indgen(ng)]], linestyle=[[-1],intarr(ng)], box=box, pspacing=1, charsize=1.2, clear=clear
 			endelse
 			g_leg_xydims = [corners[2]-corners[0],corners[3]-corners[1]]
 		endif else if keyword_set(g_leg_pos) then begin
@@ -127,18 +132,18 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 		if not keyword_set(leg_in) then begin
 			if n_elements(g_leg_title) eq 0 then begin
 				legend, g_leg, corners=corners, psym=sym_type[indgen(ng)], linestyle=intarr(ng) $
-					 , pos=[0.5*!X.WINDOW[0], !P.REGION[1]], /norm, box=0, pspacing=1, charsize=1.2
+					 , pos=[0.5*!X.WINDOW[0], !P.REGION[1]], /norm, box=box, pspacing=1, charsize=1.2, clear=clear
 			endif else begin
 				legend, [[g_leg_title],g_leg], psym=[[0],sym_type[indgen(ng)]], linestyle=[[-1],intarr(ng)] $
-					 , pos=[0.5*!X.WINDOW[0], !P.REGION[1]], /norm, box=0, pspacing=1, charsize=1.2
+					 , pos=[0.5*!X.WINDOW[0], !P.REGION[1]], /norm, box=box, pspacing=1, charsize=1.2, clear=clear
 			endelse
 		endif else begin
 			if n_elements(g_leg_title) eq 0 then begin
-				legend, g_leg, psym=sym_type[indgen(ng)], linestyle=intarr(ng), box=0, pspacing=1, charsize=1.2 $
-					  , bottom=g_leg_bottom, right=g_leg_right
+				legend, g_leg, psym=sym_type[indgen(ng)], linestyle=intarr(ng), box=box, pspacing=1, charsize=1.2 $
+					  , bottom=g_leg_bottom, right=g_leg_right, clear=clear
 			endif else begin
 				legend, [[g_leg_title],g_leg], psym=[[0],sym_type[indgen(ng)]], linestyle=[[-1],intarr(ng)] $
-					  , box=0, pspacing=1, charsize=1.2, bottom=g_leg_bottom, right=g_leg_right
+					  , box=box, pspacing=1, charsize=1.2, bottom=g_leg_bottom, right=g_leg_right, clear=clear
 
 			endelse
 		endelse
@@ -151,18 +156,18 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 			if PLOT_TYPE eq 'HG' then h_leg_pos = [!X.WINDOW[1]-h_leg_xydims[0],!P.REGION[1]] else h_leg_pos = [0.5*!X.WINDOW[0], !P.REGION[1]]
 			if n_elements(H_leg_title) eq 0 then begin
 				legend, histo.leg, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins) $
-					  , color=histo.cols, pos=h_leg_pos, /norm, box=0, pspacing=1, charsize=1.2
+					  , color=histo.cols, pos=h_leg_pos, /norm, box=box, pspacing=1, charsize=1.2, clear=clear
 			endif else begin
 				legend, [[H_leg_title], histo.leg], psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)] $
-			  		  , color=[[0],histo.cols], pos=h_leg_pos, /norm, box=0, pspacing=1, charsize=1.2
+			  		  , color=[[0],histo.cols], pos=h_leg_pos, /norm, box=box, pspacing=1, charsize=1.2, clear=clear
 			endelse
 		endif else begin
 			if n_elements(H_leg_title) eq 0 then begin
 				legend, histo.leg, psym=replicate(8,nvalidbins), linestyle=intarr(nvalidbins) $
-					  , color=histo.cols, box=0, pspacing=1, charsize=1.2, bottom=h_leg_bottom, right=h_leg_right
+					  , color=histo.cols, box=box, pspacing=1, charsize=1.2, bottom=h_leg_bottom, right=h_leg_right, clear=clear
 			endif else begin
 				legend, [[H_leg_title], histo.leg], psym=[[0],replicate(8,nvalidbins)], linestyle=[[-1],intarr(nvalidbins)] $
-			  		  , color=[[0],histo.cols], box=0, pspacing=1, charsize=1.2, bottom=h_leg_bottom, right=h_leg_right
+			  		  , color=[[0],histo.cols], box=box, pspacing=1, charsize=1.2, bottom=h_leg_bottom, right=h_leg_right, clear=clear
 			endelse
 		endelse
 	endif
