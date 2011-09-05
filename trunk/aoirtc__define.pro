@@ -43,17 +43,17 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
     filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
     valid_filt_number = 1B
     CASE filter_number OF
-    	1: begin 
+    	1: begin
             lambda = 1.30e-6	;BROADBAND (central wavelength (?))
-            self._filter_name = 'EMPTY' 
+            self._filter_name = 'EMPTY'
            end
-    	2: begin 
+    	2: begin
     	    lambda = 1.07e-6	;J
-            self._filter_name = 'J' 
+            self._filter_name = 'J'
            end
-    	3: begin 
+    	3: begin
     	    lambda = 1.60e-6	;H
-            self._filter_name = 'H' 
+            self._filter_name = 'H'
            end
      else: begin
      		;lambda = 1.
@@ -119,6 +119,7 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 
 	;Badpixelmap filename:
 	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
+	self._badpixelmap_fname = badpixelmap_fname
 	badpixelmap_obj = keyword_set(badpixelmap_fname) ? getbadpixelmap(badpixelmap_fname) : 0
 
     ; subframe
