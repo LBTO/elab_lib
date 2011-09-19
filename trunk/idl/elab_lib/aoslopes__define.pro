@@ -200,7 +200,9 @@ pro AOslopes::replay, wait=wait, zoom=zoom
     window,/free, xsize=dim[0]*zoom, ysize=dim[1]*zoom
     print, 'Type "s" to stop!'
 	for ii=0, self->niter()-1 do begin
-		tvscl, rebin(bytscl(sl[*,*,ii], min=rr[0], max=rr[1]), dim[0]*zoom, dim[1]*zoom)
+;		tv, rebin(bytscl(sl[*,*,ii], min=rr[0], max=rr[1]), dim[0]*zoom, dim[1]*zoom)
+		tv, rebin(bytscl(sl[*,*,ii], min=-1., max=1.), dim[0]*zoom, dim[1]*zoom)
+;		cgImage, rebin(bytscl(sl[*,*,ii], min=-1., max=1.), dim[0]*zoom, dim[1]*zoom)
 		wait, wait
 		key = get_kbrd(0.01)
 		if STRLOWCASE(key) eq 's' then break
