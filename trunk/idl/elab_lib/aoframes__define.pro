@@ -64,6 +64,7 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self->addMethodHelp, "antidrift_values()", "AntiDrift correction history (float)"
     self->addMethodHelp, "antidrift_status()", "Returns 1 if AntiDrift is activated, 0 otherwise (integer)"
     self->addMethodHelp, "ron()", "Estimate of Read-Out Noise"
+    self->addMethodHelp, "replay, wait=wait, zoom=zoom", "Replay the CCD frames"
     return, 1
 end
 
@@ -266,6 +267,28 @@ function AOframes::ron
 	if self._ron eq -1.0 then self->calc_ron
 	return, self._ron
 end
+
+
+;Replay the ccd frames
+pro AOframes::replay, wait=wait, zoom=zoom
+	if n_elements(wait) eq 0 then wait=0.01
+	if not keyword_set(zoom) then zoom=1
+	fr = self->frames(/dark) > 0
+	dim = (size(fr,/dim))[0:1]
+	rr = minmax(fr)
+
+    window,/free, xsize=dim[0]*zoom, ysize=dim[1]*zoom
+    print, 'Type "s" to stop!'
+;	for ii=0, self->nframes()-1 do begin
+		for ii=0, 2000 do begin
+		tv, rebin(bytscl(fr[*,*,ii], min=rr[0], max=rr[1]), dim[0]*zoom, dim[1]*zoom)
+;		cgImage, rebin(bytscl(fr[*,*,ii], min=-1., max=1.), dim[0]*zoom, dim[1]*zoom)
+		wait, wait
+		key = get_kbrd(0.01)
+		if STRLOWCASE(key) eq 's' then break
+	endfor
+end
+
 
 pro AOframes::free
     if ptr_valid(self._header) then ptr_free, self._header
