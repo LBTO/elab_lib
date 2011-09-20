@@ -5,7 +5,7 @@
 
 PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 		  , g_leg_title=g_leg_title, h_leg_title=h_leg_title, leg_in=leg_in, h_leg_pos=h_leg_pos $
-		  , g_leg_pos=g_leg_pos
+		  , g_leg_pos=g_leg_pos, sym_size=sym_size
 
 	;some "fixed" legend parameters
 	box=1
@@ -105,15 +105,15 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 
 	CASE PLOT_TYPE OF
 
-	''	:	oplot, X, Y, psym=8, symsize=1.0
+	''	:	oplot, X, Y, psym=8, symsize=sym_size
 
 	'H' :	for i=0, nvalidbins-1 do  begin
-				oplot, X[*histo.idxarr[histo.valididx[i]]], Y[*histo.idxarr[histo.valididx[i]]], psym=8, color=histo.cols[i], symsize=1.0
+				oplot, X[*histo.idxarr[histo.valididx[i]]], Y[*histo.idxarr[histo.valididx[i]]], psym=8, color=histo.cols[i], symsize=sym_size
 			endfor
 
 	'G' :	for i=0, ng-1 do begin
 				grpidx = where(G eq g_ele[i])
-				oplot, X[grpidx], Y[grpidx], psym=symcat(sym_type[i]), symsize=1.0
+				oplot, X[grpidx], Y[grpidx], psym=symcat(sym_type[i]), symsize=sym_size
 			endfor
 	'HG':	for i=0, nvalidbins-1 do $
 	 			for j=0, ng-1 do begin
@@ -122,7 +122,7 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 	 				idx = setintersection(*histo.idxarr[histo.valididx[i]],grpidx)
 	 				if idx[0] eq -1 then continue
 	 				if sym_type[j] eq 8 then plotsym,0
-	 				oplot, [X[idx]], [Y[idx]], color=histo.cols[i], psym=symcat(sym_type[j]), symsize=1.0
+	 				oplot, [X[idx]], [Y[idx]], color=histo.cols[i], psym=symcat(sym_type[j]), symsize=sym_size
 	 			endfor
 	ENDCASE
 
