@@ -110,7 +110,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
     obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in arcsec in lambda/D units"
     obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in PIXELS from longExposure PSF center"
-    obj->addMethodHelp, "show_psf,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
+    obj->addMethodHelp, "replay,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
     obj->AOtime_series::addHelp, obj
 end
 
@@ -413,7 +413,7 @@ end
 ;					P S F   D I S P L A Y   R O U T I N E S
 ;===================================================================================
 
-pro AOpsfAbstract::show_psf, wait=wait
+pro AOpsfAbstract::replay, wait=wait
 	if n_elements(wait) eq 0 then wait=0.01
     loadct,3,/silent
     print, 'Type "s" to stop!'
@@ -428,6 +428,39 @@ pro AOpsfAbstract::show_psf, wait=wait
 		if STRLOWCASE(key) eq 's' then break
 	endfor
 end
+
+;+
+;
+; radius: radius of PSF image to show [arcsec]
+; log : to plot logscale image. Log can be used to introduce threshold: e.g. log=1e-4
+; peak1 : set this keyword to normalize to peak.
+;-
+pro AOpsfAbstract::show_psf, radius=radius, _extra=ex, log=log, peak1=peak1, psfroi=psfroi
+	ps = self->pixelscale()
+	lim = self->lambda()
+	lp1 = self->longexposure()
+    center = (self->gaussfit())->center()	;center in pixels
+	xc = round(center[0])
+	yc = round(center[1])
+
+	;crop PSF
+	if not keyword_set(radius) then radius = 1.0
+	npix = round(radius*2./ps)
+	sz  = size(lp1,/dim)
+	roi = [Xc-npix/2,Xc+npix/2-1,Yc-npix/2,Yc+npix/2-1]
+	while ((where(roi lt 0))[0] ne -1) do begin
+		npix-=2
+		roi = [Xc-npix/2,Xc+npix/2-1,Yc-npix/2,Yc+npix/2-1]
+	endwhile
+	psfroi = lp1[roi[0]:roi[1],roi[2]:roi[3]]
+	imrange1 = [-npix/2., npix/2.] * ps
+
+	if not keyword_set(log) then log = 0.
+	if not keyword_set(peak1) then maxpsf=1. else maxpsf = max(psfroi)
+;	image_show, (psfroi/maxpsf) > log, xaxis=imrange1, yaxis=imrange1, /as, /sh, log=log, charsize=1.5, _extra=ex $
+;		, xtitle='arcsec', title=tracknum
+end
+
 
 pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms
     if not (PTR_VALID(self._psfprofile)) THEN self->compute_profile
