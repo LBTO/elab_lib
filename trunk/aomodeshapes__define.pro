@@ -12,8 +12,9 @@ function AOmodeShapes::Init, fname
     if not self->AOhelp::Init('AOmodeShapes', 'Represent the shapes of a set of modes') then return, 0
     self->addMethodHelp, "fname()",   "mode shape matrix file name (string)"
     self->addMethodHelp, "nmodes()", "number of modal shapes"
-    self->addMethodHelp, "modemat()", "matrix of modal shapes [npix x nmodes]"
+    self->addMethodHelp, "modemat([mode_idx=mode_idx, anglerot=anglerot, shiftval=shiftval])", "matrix of modal shapes [npix x nmodes]"
     self->addMethodHelp, "idx_mask()", "index vector of pupil mask points  [npix]"
+    self->addMethodHelp, "mask()", "pupil mask [npix x npix]"
     self->addMethodHelp, "xx()", "x-coord of pupil mask points  [npix]"
     self->addMethodHelp, "yy()", "y-coord of pupil mask points  [npix]"
     self->addMethodHelp, "Dpix()", "Diameter in pixels of modal shapes"
@@ -30,16 +31,44 @@ pro AOmodeShapes::restore_sav
 	self._nmodes = (size(*self._modemat,/dim))[0]
 end
 
-function AOmodeShapes::fname
-	return, self._sav_file
-end
 
-function AOmodeShapes::modemat, mode_idx=mode_idx
+;+
+; This function returns the matrix of modes.
+; If requested, the phase maps of the modes can be rotated and/or shifted.
+;
+; mode_idx  index vector to wanted modes
+; anglerot	angle of rotation (degrees clockwise)
+; shiftval  vector of two elements [shift_x,shift_y] in percent of pupil size
+;
+;-
+function AOmodeShapes::modemat, mode_idx=mode_idx, anglerot=anglerot, shiftval=shiftval
 	if not ptr_valid(self._modemat) then self->restore_sav
+
+	;subset of modes:
 	if n_elements(mode_idx) ne 0 then begin
 		if max(mode_idx) gt self->nmodes()-1 then message, 'Mode index out of range'
-		return, (*self._modemat)[mode_idx, *]
-	endif else return, *self._modemat
+		modemat = (*self._modemat)[mode_idx, *]
+	endif else modemat = *self._modemat
+
+	;shifts and anglerot handling
+	if n_elements(anglerot) eq 0 then anglerot = 0.
+	if n_elements(shiftval) eq 0 then shiftval = [0., 0.]
+    if n_elements(shiftval) ne 2 then message, 'SHIFTVAL must be of the form: [xshift,yshift]'
+	shiftPix  = shiftval/100.*self->Dpix()		;convert shifts in number of pixels.
+	if keyword_set(anglerot) or (total(shiftval NE fltarr(2))) then begin
+        nbmot = (size(modemat,/dim))[0]
+        map = make_array(size=size(self->mask()))
+        for kkk=0, nbmot-1 do begin
+            map[self->idx_mask()] = modemat[kkk,*]
+            map = rot_and_shift_image(map, anglerot, shiftPix, mask=self->mask(), /interp)
+            modemat[kkk,*] = map[self->idx_mask()]
+        endfor
+	endif
+	return, modemat
+end
+
+function AOmodeShapes::fname
+	return, self._sav_file
 end
 
 function AOmodeShapes::idx_mask
@@ -65,6 +94,12 @@ end
 function AOmodeShapes::nmodes
 	if self._nmodes eq -1L then self->restore_sav
 	return, self._nmodes
+end
+
+function AOmodeShapes::mask
+	mask = fltarr(self->Dpix(),self->Dpix())
+	mask[self->idx_mask()] = 1.
+	return, mask
 end
 
 pro AOmodeShapes::free
