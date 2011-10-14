@@ -1,14 +1,18 @@
-pro log_twiki, aodataset, ref_star=ref_star
+pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     if not keyword_set(ref_star) then ref_star='???'
 
     objref =  aodataset->Get(/all)
 
-    print, "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
+    hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
            "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
            "| *notes* "+$
            "| "
 
+    print, hdr
+    TEXT = hdr
+
     idlstring = "["
+    VALID = ['']
 
     for i=0, aodataset->Count()-1 do begin
         ee = getaoelab(objref[i])
@@ -56,7 +60,8 @@ pro log_twiki, aodataset, ref_star=ref_star
             if stregex( bname, '[0-9]*_[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 10 )
         endif
 
-        print, string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
+        VALID = [VALID, ee->tracknum()]
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -81,6 +86,9 @@ pro log_twiki, aodataset, ref_star=ref_star
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
 
+        print, str
+        TEXT = [TEXT, str]
+
         if i ne 0 then idlstring += ","
         idlstring += "'"+ee->tracknum()+"'"
         ee->free
@@ -89,4 +97,5 @@ pro log_twiki, aodataset, ref_star=ref_star
 
     idlstring +="]"
     print, 'IDL string:  ' +idlstring
+    if n_elements(VALID) gt 1 then VALID = VALID[1:*]
 end
