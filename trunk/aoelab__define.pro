@@ -438,82 +438,84 @@ end
 ;                                   SUMMARY
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY
-    print, string(format='(%"| %-30s | %s |")','Tracknum',self->tracknum() )
-    print, string(format='(%"| %-30s | %s |")','Closed Loop', self->closedloop() ? 'Yes' : 'No' )
-    print, string(format='(%"| %-30s | %s %s |")','Is OK?', ( self->isOK(cause=cause) eq 1L) ? "OK" :  "No", cause  )
+pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
+    TEXT = [string(format='(%"| %-30s | %s |")','Tracknum',self->tracknum() )]
+    TEXT = [TEXT, string(format='(%"| %-30s | %s |")','Closed Loop', self->closedloop() ? 'Yes' : 'No' )]
+    TEXT = [TEXT, string(format='(%"| %-30s | %s %s |")','Is OK?', ( self->isOK(cause=cause) eq 1L) ? "OK" :  "No", cause  )]
     if obj_valid(self->disturb()) then begin
       if strmatch((self->disturb())->type(),'*atm*') then begin
-        print, string(format='(%"| %-30s | %f |")','seeing [arcsec]',(self->disturb())->seeing() )
-	    print, string(format='(%"| %-30s | %f |")','Vwind [m/s]',(self->disturb())->vwind() )
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','seeing [arcsec]',(self->disturb())->seeing() )]
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Vwind [m/s]',(self->disturb())->vwind() )]
 	    if (self->disturb())->cor_nmodes() ne 0 then $
-	      print, 'Modal pre-correction: '+string((self->disturb())->cor_nmodes())+' modes, starting from mode number '+strtrim((self->disturb())->cor_first_mode(),2)
+	      TEXT = [TEXT, 'Modal pre-correction: '+string((self->disturb())->cor_nmodes())+' modes, starting from mode number '+strtrim((self->disturb())->cor_first_mode(),2)]
 	  endif
 	  if strmatch((self->disturb())->type(),'*vib*') then begin
-		print, string(format='(%"| %-30s | %f |")','number of vibrations',(self->disturb())->totnvib() )
-		print, string(format='(%"| %-30s | %f |")','type of vibration',(self->disturb())->casevib() )
+		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','number of vibrations',(self->disturb())->totnvib() )]
+		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','type of vibration',(self->disturb())->casevib() )]
 	  endif
     endif
     if obj_valid(self->frames()) then begin
-    	print, string(format='(%"| %-30s | %s |")','AntiDrift', (self->frames())->antidrift_status() ? 'ON':'OFF' )
-        print, string(format='(%"| %-30s | %f |")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())
+    	TEXT = [TEXT, string(format='(%"| %-30s | %s |")','AntiDrift', (self->frames())->antidrift_status() ? 'ON':'OFF' )]
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())]
     endif
-    print, string(format='(%"| %-30s | %f |")','Magnitude', self->mag())
+    TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Magnitude', self->mag())]
     if obj_valid(self->modal_rec()) then begin
-        print, string(format='(%"| %-30s | %d |")','# Modes', (self->modal_rec())->nmodes())
-        print, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )
+        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','# Modes', (self->modal_rec())->nmodes())]
+        TEXT = [TEXT, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )]
     endif
     if obj_valid(self->wfs_status()) then if obj_valid((self->wfs_status())->ccd39())  then begin
-        print, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->ccd39())->binning())
-        print, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())
-        print, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )
-        ;print, string(format='(%"%-30s %s")','B0_a matrix', (self->control())->b0_a_fname())
+        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->ccd39())->binning())]
+        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())]
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )]
+        ;TEXT = [TEXT, string(format='(%"%-30s %s")','B0_a matrix', (self->control())->b0_a_fname())]
         if obj_valid((self->wfs_status())->filtw1()) then $
-        	print, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )
+        	TEXT = [TEXT, string(format='(%"| %-30s | %s |")','FW1', ((self->wfs_status())->filtw1())->name() )]
 		if obj_valid((self->wfs_status())->filtw2()) then $
-        	print, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )
+        	TEXT = [TEXT, string(format='(%"| %-30s | %s |")','FW2', ((self->wfs_status())->filtw2())->name() )]
     endif
     if obj_valid(self->control()) then begin
         gaintemp = minmax( (self->control())->gain() )
-        if gaintemp[0] eq -1 then print, 'Gain: AUTO' else $
-        print, string(format='(%"| %-30s | %f %f |")','Gain minmax', gaintemp)
+        if gaintemp[0] eq -1 then TEXT = [TEXT, 'Gain: AUTO'] else $
+        TEXT = [TEXT, string(format='(%"| %-30s | %f %f |")','Gain minmax', gaintemp)]
     endif
     if obj_valid(self->tel()) then begin
-        print, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el() )
-        print, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Telescope elevation', (self->tel())->el() )]
+        TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Wind speed', (self->tel())->wind_speed() )]
     endif
     if obj_valid(self->olmodes()) then begin
-    	print, string(format='(%"| %-30s | %f |")','seeing from OL modes', (self->olmodes())->seeing() )
+    	TEXT = [TEXT, string(format='(%"| %-30s | %f |")','seeing from OL modes', (self->olmodes())->seeing() )]
     endif
     if not keyword_set(PARAMS_ONLY) then begin
-    	;print, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
+    	;TEXT = [TEXT, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self->irtc()) then begin
-    		print, string(format='(%"| %-30s | %f |")','lambda [um]',(self->irtc())->lambda()*1e6)
-    		print, string(format='(%"| %-30s | %f |")','exptime [s]',(self->irtc())->exptime())
-    		print, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->irtc())->framerate())
-    		print, string(format='(%"| %-30s | %d |")','no. frames',(self->irtc())->nframes())
-    		print, string(format='(%"| %-30s | %f |")','SR SE' ,(self->irtc())->sr_se())
-    		print, string(format='(%"| %-30s | %s |")','IRTC dark', file_basename( (self->irtc())->dark_fname()))
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','lambda [um]',(self->irtc())->lambda()*1e6)]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','exptime [s]',(self->irtc())->exptime())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->irtc())->framerate())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %d |")','no. frames',(self->irtc())->nframes())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','SR SE' ,(self->irtc())->sr_se())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %s |")','IRTC dark', file_basename( (self->irtc())->dark_fname()))]
     	endif
     	if obj_valid(self->pisces()) then begin
-    		print, string(format='(%"| %-30s | %s |")','filter',(self->pisces())->filter_name())
-    		print, string(format='(%"| %-30s | %f |")','lambda [um]',(self->pisces())->lambda()*1e6)
-    		print, string(format='(%"| %-30s | %f |")','exptime [s]',(self->pisces())->exptime())
-    		print, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->pisces())->framerate())
-    		print, string(format='(%"| %-30s | %d |")','no. frames',(self->pisces())->nframes())
-    		print, string(format='(%"| %-30s | %f |")','SR SE' ,(self->pisces())->sr_se())
-    		print, string(format='(%"| %-30s | %s |")','pisces dark', file_basename( (self->pisces())->dark_fname()))
+    		TEXT = [TEXT, string(format='(%"| %-30s | %s |")','filter',(self->pisces())->filter_name())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','lambda [um]',(self->pisces())->lambda()*1e6)]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','exptime [s]',(self->pisces())->exptime())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->pisces())->framerate())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %d |")','no. frames',(self->pisces())->nframes())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','SR SE' ,(self->pisces())->sr_se())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %s |")','pisces dark', file_basename( (self->pisces())->dark_fname()))]
     	endif
        	if obj_valid(self->piscesold()) then begin
-    		print, string(format='(%"| %-30s | %f |")','piscesold lambda [um]',(self->piscesold())->lambda()*1e6)
-    		print, string(format='(%"| %-30s | %f |")','piscesold exptime [s]',(self->piscesold())->exptime())
-    		print, string(format='(%"| %-30s | %f |")','piscesold framerate [Hz]',(self->piscesold())->framerate())
-    		print, string(format='(%"| %-30s | %d |")','piscesold no. frames',(self->piscesold())->nframes())
-    		print, string(format='(%"| %-30s | %f |")','piscesold SR SE' ,(self->piscesold())->sr_se())
-    		print, string(format='(%"| %-30s | %s |")','piscesold dark', file_basename( (self->piscesold())->dark_fname()))
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','piscesold lambda [um]',(self->piscesold())->lambda()*1e6)]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','piscesold exptime [s]',(self->piscesold())->exptime())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','piscesold framerate [Hz]',(self->piscesold())->framerate())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %d |")','piscesold no. frames',(self->piscesold())->nframes())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %f |")','piscesold SR SE' ,(self->piscesold())->sr_se())]
+    		TEXT = [TEXT, string(format='(%"| %-30s | %s |")','piscesold dark', file_basename( (self->piscesold())->dark_fname()))]
     	endif
 
     endif
+
+    for i=0,n_elements(TEXT)-1 do print,TEXT[i]
 end
 
 pro AOelab::fullsummary
@@ -650,8 +652,9 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	return, exp(-total(pos_coef_var))
 end
 
-pro AOelab::psf, WINDOW = WINDOW, fullframe=fullframe, sr=sr
+pro AOelab::psf, PARENT = PARENT, fullframe=fullframe, sr=sr
     loadct,3
+    if ((not obj_valid(self->irtc())) and (not obj_valid(self->pisces()))) then return
     if keyword_set(sr) then begin
         obj = OBJ_VALID(self->irtc()) ? self->irtc() : self->pisces()
         image_show, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos, obj->longexposure(/fullframe)>0.1
@@ -664,7 +667,7 @@ pro AOelab::psf, WINDOW = WINDOW, fullframe=fullframe, sr=sr
         endfor
     endif else begin
         psf = OBJ_VALID(self->irtc()) ?  (self->irtc())->longexposure() : (self->pisces())->longexposure(fullframe=fullframe)
-        xshow, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos,   psf>0.1
+        xshow, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos,   psf>0.1, PARENT = PARENT
     endelse
 
 end
