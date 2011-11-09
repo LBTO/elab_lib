@@ -89,7 +89,7 @@ pro delay_optics_gain_estimation, trckn, mode_idx=mode_idx, smw=smw, optvars=opt
 	; Module of the closed loop transfer function from modal commands
 	; to modal measurements determined from the data
 	TF = sqrt(modal_meas/modal_comm)
-	plot_oo, freq, smooth(TF[*,0],param.smw)
+	plot_oo, freq, smooth(TF[*,0],smw)
 	; common to pass the data to the function called by amoeba
 	delay = max([(fs-300.)/1000., 0])
 	; systime to display the elapsed time
