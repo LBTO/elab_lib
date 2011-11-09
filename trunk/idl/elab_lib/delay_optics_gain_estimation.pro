@@ -49,11 +49,11 @@ for i=0, n_elements(variables[1:*])-1 do begin
 	if variables[i+1] lt 0 then return, 1e6*abs(1-variables[i+1])
 	if variables[i+1] gt 2 then return, 1e6*abs(variables[i+1]-1)
 	; determine the TF from the theory
-	aocltf, param.fs, param.gain[param.idx[i]], 1, variables[0], wgain=variables[i+1], CLC2M=CLC2M, freq=param.freq
+	aocltf, param.fs, param.gain[i], 1, variables[0], wgain=variables[i+1], CLC2M=CLC2M, freq=param.freq
 	; increase the res with the res of the mode param.idx[i]
 	; that is equal to the l2-norm of the difference of the
 	; theoric TF module and the module of the TF determined from the data
-	res+=total((CLC2M-smooth(param.TF[*,param.idx[i]],param.smw))^2)
+	res+=total((CLC2M-smooth(param.TF[*,i],param.smw))^2)
 endfor
 return, res
 end
