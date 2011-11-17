@@ -49,7 +49,7 @@ end
 
 ; --------------
 ;
-; Read current dataset and display value in the listbox 
+; Read current dataset and display value in the listbox
 pro read_cur_dataset, RECALC = RECALC
 common xelab_common
 
@@ -221,7 +221,7 @@ common xelab_common
     base_select = widget_base(ids.base_root, /ROW, /FRAME)
 
     ; Day list
-    cur_days = reverse(FILE_SEARCH(GETENV('ADOPT_DATA')+'/towerdata/adsec_data/20*'))
+    cur_days = reverse(FILE_SEARCH(filepath(root=ao_datadir(),'adsec_data/20*')))
     for i=0, n_elements(cur_days)-1 do cur_days[i] = file_basename(cur_days[i])
 
     ids.daylist = WIDGET_LIST(base_select, VALUE=cur_days, $
@@ -252,8 +252,8 @@ common xelab_common
 
     base_buttons = WIDGET_BASE(ids.base_root, /ROW)
     ids.recalc_acq = WIDGET_BUTTON(base_buttons, VALUE='Force recalc', UVALUE='acq_recalc')
-     
-    
+
+
 
     widget_control, ids.base_root, /REALIZE
 
