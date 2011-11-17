@@ -63,12 +63,12 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 
     ; File names
     if not keyword_set(store_radix) then store_radix = filepath(root=getenv('IDL_TMPDIR'), 'psfabstract')
+    self._stored_centroid_fname = store_radix+'_centroid.sav'
     self._store_psd_fname       = store_radix+'_centroid_psd.sav'      ;aotime_series
     self._store_peaks_fname     = store_radix+'_centroid_peaks.sav'    ;aotime_series
 	self._stored_le_fname       = store_radix+'_le.sav'                ;aoframe
 	self._stored_cube_fname     = store_radix+'_cube.sav'              ;aoframe
 	self._stored_sr_se_fname    = store_radix+'_sr_se.sav'
-    self._stored_centroid_fname = store_radix+'_centroid.sav'
 	self._stored_profile_fname  = store_radix+'_profile.sav'
 	self._stored_enc_ene_fname  = store_radix+'_enc_ene.sav'
 
