@@ -58,8 +58,8 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
 	endif
   ; con il filename corrispondente (e.g. 'adsec_structs_20100101.sav') lo passiamo al multiton che ti rende la referenza a quell'oggetto
   self._adsec_structs = getadsecstructs(self._adsec_struct_file)
-  
-  
+
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOadsec_status', 'Represents the AdSec status') then return, 0
     self->addMethodHelp, "fsm_state()", "return AdSec FSM state (string)"
@@ -96,22 +96,22 @@ pro AOadsec_status::summary
 end
 
 pro AOadsec_status::test
-    d = self->fsm_state() 
-    d = self->b0_a_file() 
-    d = self->b_delay_a_file() 
-    d = self->a_delay_file() 
-    d = self->c_file() 
-    d = self->g_gain_a_file() 
-    d = self->disturb_file() 
-    d = self->disturb_status() 
-    d = self->shape_file() 
-    d = self->ff_matrix_file() 
-    d = self->adsec_struct_file() 
-    d = self->struct_adsec() 
-    d = self->struct_adsec_shell() 
-    d = self->struct_gr() 
-    d = self->struct_sc() 
-    d = self->act_coordinates() 
+    d = self->fsm_state()
+    d = self->b0_a_file()
+    d = self->b_delay_a_file()
+    d = self->a_delay_file()
+    d = self->c_file()
+    d = self->g_gain_a_file()
+    d = self->disturb_file()
+    d = self->disturb_status()
+    d = self->shape_file()
+    d = self->ff_matrix_file()
+    d = self->adsec_struct_file()
+    d = self->struct_adsec()
+    d = self->struct_adsec_shell()
+    d = self->struct_gr()
+    d = self->struct_sc()
+    d = self->act_coordinates()
 end
 
 pro AOadsec_status::ConvertFilePath, struct
@@ -119,33 +119,33 @@ pro AOadsec_status::ConvertFilePath, struct
     ; search for /bla/bla/bla/adsec/foo1/foo2/... and convert into adsec_calib/foo1/foo2/...
     if struct.b0_a  ne "" then begin
         extr = strsplit(struct.b0_a, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.b0_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
     if struct.a_delay  ne "" then begin
         extr = strsplit(struct.a_delay, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.a_delay  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
     if struct.b_delay_a  ne "" then begin
         extr = strsplit(struct.b_delay_a, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.b_delay_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
     if struct.m2c  ne "" then begin
         extr = strsplit(struct.m2c, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.m2c  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
     if FILE_BASENAME(struct.g_gain_a) eq 'tmp_gain.fits' then struct.g_gain_a = ""
     if struct.g_gain_a  ne "" then begin
         extr = strsplit(struct.g_gain_a, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.g_gain_a  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
     if struct.disturb  ne "" then begin
         extr = strsplit(struct.disturb, '/', /extr)
-        idx = where(extr eq 'adsec',count)
+        idx = (where(stregex(extr, 'adsec*', /BOOLEAN),count))[0]
         if count gt 0 then struct.disturb  = 'adsec_calib/'+strjoin(extr[idx+1:*], '/')
     endif
 
