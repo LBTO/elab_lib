@@ -24,30 +24,10 @@ function AOintmat::Init, fname
     self._nslopes = -1
     self._wfs_status = obj_new('AOwfs_status', self, full_fname)
 
-	;modal disturbance sequence
-    md_fn = strtrim(aoget_fits_keyword(header, 'M_DIST_F'))
-    md_fn  = file_basename(md_fn)
-    md_dir = file_dirname(self->fname())
-    md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))+'disturb'
-    self._modal_dist_fname = md_dir+path_sep()+md_fn
-
     self._im_file_fitsheader = ptr_new(header, /no_copy)
 
-	;retrieve data from header of modal disturbance sequence
-    full_fname = ao_datadir()+path_sep()+self->modal_dist_fname()
-    header = headfits(full_fname ,/SILENT, errmsg=errmsg)
-    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
-
-	md_fn = strtrim(aoget_fits_keyword(header, 'PP_AMP_F'))
-    md_fn  = file_basename(md_fn)
-    md_dir = file_dirname(self->fname())
-    md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))+'modesAmp'
-    self._modalamp_fname = md_dir+path_sep()+md_fn
-
-	;Amplitude envelope
-	md_dir = file_dirname(self->fname())
-	md_dir = strmid(md_dir, 0, strpos(md_dir,'RECs'))
-	self._amp_envelope_fname = md_dir+'amp_envelope.fits'
+	; synthetic or measured IM?
+	if not self->AOintmat_meas::Init() then return,0
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOintmat', 'Represent an interaction matrix (IM)') then return, 0
@@ -66,12 +46,8 @@ function AOintmat::Init, fname
     self->addMethodHelp, "slopes_idx()", "index vector of non-null rows in IM"
     self->addMethodHelp, "basis()", "modal basis calibrated"
     self->addMethodHelp, "wfs_status()", "reference to wfs_status object"
-    self->addMethodHelp, "modalamp_fname()", "fitsfile name of modal amplitudes (string)"
-    self->addMethodHelp, "modalamp()", "modal amplitudes (fltarr)"
-    self->addMethodHelp, "modal_dist_fname()", "fitsfile name of modal disturbance sequence (fltarr)"
-    self->addMethodHelp, "modal_dist()", "modal disturbance sequence (fltarr)"
-    self->addMethodHelp, "amp_envelope_fname()", "fitsfile name of modal amplitude envelope (string)"
-    self->addMethodHelp, "amp_envelope()", "modal amplitude envelope (fltarr)"
+    self->AOintmat_meas::addHelp, self
+
     return, 1
 end
 
@@ -153,39 +129,6 @@ end
 ; return wfs_status object
 function AOintmat::wfs_status
     IF (OBJ_VALID(self._wfs_status)) THEN return, self._wfs_status else return, obj_new()
-end
-
-; return filename of modal disturbance sequence used for the acquistion.
-function AOintmat::modal_dist_fname
-	return, self._modal_dist_fname
-end
-
-; return modal disturbance sequence
-function AOintmat::modal_dist
-    md = readfits(ao_datadir()+path_sep()+self->modal_dist_fname(), /SILENT)
-	return, md
-end
-
-; return filename of modal amplitudes
-function AOintmat::modalamp_fname
-	return, self._modalamp_fname
-end
-
-; return modal amplitudes
-function AOintmat::modalamp
-	ma = readfits(ao_datadir()+path_sep()+self->modalamp_fname(), /SILENT)
-	return, ma
-end
-
-; return filename of amp envelope
-function AOintmat::amp_envelope_fname
-	return, self._amp_envelope_fname
-end
-
-; return amp envelope
-function AOintmat::amp_envelope
-	me = readfits(ao_datadir()+path_sep()+self->amp_envelope_fname(), /SILENT)
-	return, me
 end
 
 ; returns Sx in 2D
@@ -286,12 +229,19 @@ pro AOintmat::Cleanup
     ptr_free, self._sy2d_cube
     ptr_free, self._s2d_mask
     obj_destroy, self._wfs_status
+    if obj_hasmethod(self,'clcalib_intmat') then begin
+    	imobj = self
+    	while obj_valid(imobj->clcalib_intmat()) do begin
+    		obj_destroy, (imobj->clcalib_intmat())->wfs_status()
+    		imobj=imobj->clcalib_intmat()
+    	endwhile
+    endif
     self->AOhelp::Cleanup
 end
 
 
 pro AOintmat__define
-    struct = { AOintmat, $
+    struct = { AOintmat									, $
         _im_file                          : ""			, $
         _im_file_fitsheader               : ptr_new()	, $
         _basis							  : ""			, $
@@ -303,9 +253,7 @@ pro AOintmat__define
         _sx2d_cube						  : ptr_new()	, $
         _sy2d_cube						  : ptr_new()   , $
         _s2d_mask						  : ptr_new()	, $
-        _modal_dist_fname				  : ''			, $
-        _modalamp_fname					  : ''			, $
-        _amp_envelope_fname				  : ''			, $
-        INHERITS AOhelp $
+		INHERITS AOintmat_meas							, $
+        INHERITS AOhelp 								  $
     }
 end
