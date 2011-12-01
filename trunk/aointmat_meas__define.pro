@@ -17,6 +17,10 @@ function AOintmat_meas::Init
 	;acquisition dir (find total number of parts in which acq is split)
 	acq_dir = strtrim(aoget_fits_keyword(im_header, 'IM_ACQ_D'),2)
 	acq_params_fn = file_search(filepath(root=ao_datadir(), sub=['adsec_calib',acq_dir], 'SwitchBCU*params.sav'), count=total_parts)
+	if file_test(acq_params_fn[0]) then begin
+		restore, acq_params_fn[0]
+		if n_elements(params) ne 0 then	frames_len = params.frames_len else frames_len = 0
+	endif else frames_len = 0
 
 	;retrieve data from header of modal disturbance sequence
     full_fname = ao_datadir()+path_sep()+self->modal_dist_fname()
@@ -27,7 +31,7 @@ function AOintmat_meas::Init
 	;PUSH-PULL: compute number of PP cycles per mode:
 	meas_cycles = long(aoget_fits_keyword(header, 'PP_CYCLE'))
 	dist_size = long(aoget_fits_keyword(header, 'NAXIS1'))
-	self._npp_per_mode = total_parts * meas_cycles / (dist_size/4000L)
+	self._npp_per_mode = total_parts * meas_cycles / (dist_size/4000L) * (frames_len/4000L)
 
 	md_fn = strtrim(aoget_fits_keyword(header, 'PP_AMP_F'),2)
     md_fn  = file_basename(md_fn)
