@@ -1,4 +1,7 @@
-pro pisces_save_dark, set
+; set  = tracknum (string) or aodataset
+pro pisces_save_dark, setin
+
+if test_type(setin, /string) eq 0 then set = obj_new('aodataset', setin) else set=setin
 
 ;from_tn = '20110610_095353'
 ;to_tn = '20110610_095758'

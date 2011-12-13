@@ -43,7 +43,7 @@ function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
     self->addMethodHelp, "sy( [subap_idx=subap_idx, iter_idx=iter_idx] )", "return y-slopes [nsubaps x niter]."
 	self->addMethodHelp, "slopes2d( [iter_idx=iter_idx] )", "return cube with remapped slopes in 2D."
 	self->addMethodHelp, "replay[,wait=wait ,zoom=zoom]", "Replays the slopes history in 2D."
-
+    self->AOtime_series::addHelp, self
     return, 1
 end
 

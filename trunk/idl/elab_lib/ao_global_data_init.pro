@@ -6,6 +6,10 @@ pro ao_global_data_init, wunit
 		DpupM = 8.222
 		oc = 0.111
 	endif else $
+	if strmid(wunit,0,4) eq 'LBTI' then begin	;LBT
+		DpupM = 8.222
+		oc = 0.111
+	endif else $
 	if wunit eq 'MAG' then begin			;MAGELLAN
 	 	DpupM = 6.5
 	 	oc = 0.29
