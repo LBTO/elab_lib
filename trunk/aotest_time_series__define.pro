@@ -3,6 +3,7 @@
 ; test class for aotime_series
 ;-
 function AOtest_time_series::Init, time_series, dt, _extra=e
+    
     self._time_series = ptr_new(time_series)
     self._store_psd_fname = getenv('IDL_TMPDIR')+'merda_psd.sav'
     self._store_peaks_fname = getenv('IDL_TMPDIR')+'merda_peaks.sav'

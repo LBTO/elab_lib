@@ -68,14 +68,15 @@ function AOelab::Init, tracknum, $
 	;				  "ONSKY" : @Telescope on-sky!
 	if obj_valid(self._tel) then begin
 		;if (self->tel())->el() lt 89. then self._operation_mode = "ONSKY" $
-		if not (finite( (self->tel())->rot_angle())) then self._operation_mode = "RR" else begin
+		; ADI breaks next check! 
+        ;if not (finite( (self->tel())->rot_angle())) then self._operation_mode = "RR" else begin
 
 			if ((self->wfs_status())->cube_stage() lt -40.) then self._operation_mode = "ONSKY" else $
 			if (self->wfs_status())->lamp_intensity() gt .001 then self._operation_mode = "RR" else begin
 				self._operation_mode = "ONSKY"
 				message, 'Warning: Cube stage inside with lamp off.... Better move it out!',/info
 			endelse
-		endelse
+		;endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
 
 

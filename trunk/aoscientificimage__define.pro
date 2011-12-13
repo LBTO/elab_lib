@@ -182,9 +182,10 @@ function aoscientificimage::star_offset_sky
 end
 
 ; position of stars in the image [x,y] from bottomleft corner [px]
-function aoscientificimage::star_position_px
+function aoscientificimage::star_position_px, idx
     if not ptr_valid(self._psfs) then self->findstars
-    return, transpose([[ *(self._xx)],[*(self._yy)]])
+    if n_elements(idx) eq 0 then idx=indgen(n_elements(*(self._xx)))
+    return, (transpose([[ *(self._xx)],[*(self._yy)]]))[*,idx]
 end
 
 ; FWHM of stars in the image [arcsec]

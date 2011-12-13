@@ -56,6 +56,12 @@ stepsize=4 ; even number
 side10 = fix(side)/stepsize*stepsize
 nside = side10/stepsize * 2 -1
 
+if nside lt 1 then begin
+	errmsg = 'Center of PSF estimation error'
+   	message, errmsg, /info
+   	return, 0
+endif
+
 repeat begin
 	new_bg += fixbg
    	flux = fltarr(nside)

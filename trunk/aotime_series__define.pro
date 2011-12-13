@@ -75,9 +75,11 @@ pro AOtime_series::SpectraCompute
         nfreqs   = npoints/(2*self._nwindows)
         nspectra = n_elements((*dati)[0,*])
         dati_psd = fltarr(nfreqs, nspectra)
+        dati_phase = fltarr(nfreqs, nspectra)
 
         for i=0L,nspectra-1 do begin
-          psd1 = fltarr(nfreqs)
+          psd1   = fltarr(nfreqs)
+          phase1 = fltarr(nfreqs)
           for j=0L,self._nwindows-1 do begin
          	  dati1d_raw = (*dati)[j*nfreqs*2:(j+1)*nfreqs*2-1,i]
               case strlowcase(self._window) of
@@ -87,19 +89,22 @@ pro AOtime_series::SpectraCompute
               endcase
         	  mv = mean(dati1d)
         	  dati1d = dati1d - mv
-              fft1, dati1d, self._dt, fspec=fspec, psd=psd, /noplot
+              fft1, dati1d, self._dt, fspec=fspec, psd=psd, pspe=pspectrum, /noplot
+              phase1 += pspectrum(1,1:n_elements(fspec))
               psd1 += psd
           endfor
           dati_psd[*,i] = psd1 * winnorm/self._nwindows
+          dati_phase[*,i] = phase1 /self._nwindows  
         endfor
-
         ; save psd
-        save, dati_psd, fspec, nfreqs, nspectra, file=self._store_psd_fname
+        save, dati_psd, fspec, nfreqs, nspectra, dati_phase, file=self._store_psd_fname
     endelse
 
     if (ptr_valid(self._psd))  THEN ptr_free, self._psd
+    if (ptr_valid(self._phase))  THEN ptr_free, self._phase
     if (ptr_valid(self._freq)) THEN ptr_free, self._freq
     self._psd      = ptr_new(dati_psd, /no_copy)
+    self._phase    = ptr_new(dati_phase, /no_copy)
     self._freq     = ptr_new(fspec, /no_copy)
     self._nfreqs   = nfreqs
     self._nspectra = nspectra
@@ -175,6 +180,36 @@ function AOtime_series::psd, spectrum_idx
     IF not (PTR_VALID(self._psd)) THEN self->SpectraCompute
     if n_elements(spectrum_idx) eq 0 then return, *(self._psd) else return,  (*(self._psd))[*,spectrum_idx]
 end
+
+; phase of spectrum_idx averaged between from_freq and to to_freq
+; if spectrum_idx is not specified it returns a scalar that is the average of the phase on all the spectra and between from an to
+; return an array n_elements(spectrum_idx) 
+;
+function AOtime_series::phase, spectrum_idx, from_freq=from_freq, to_freq=to_freq, average=average
+    IF not (PTR_VALID(self._phase)) THEN self->SpectraCompute
+
+	minfreq = min(self->freq())
+	maxfreq = max(self->freq())
+	if n_elements(from_freq) eq 0 then from_freq = minfreq else $
+		from_freq = minfreq > from_freq < maxfreq
+  	if n_elements(to_freq) eq 0 then to_freq = maxfreq else $
+  		to_freq = minfreq > to_freq < maxfreq
+	if from_freq ge to_freq then message, "from_freq must be less than to_freq"
+
+    idx_from = closest(from_freq, self->freq())
+    idx_to   = closest(to_freq, self->freq())
+    if n_elements(spectrum_idx) eq 0 then begin
+        if keyword_set(average) then return, mean( (*(self._phase))[idx_from:idx_to, *] ) $
+        else return, (*(self._phase))[idx_from:idx_to, *]
+    endif else begin
+        if keyword_set(average) then res = total( (*(self._phase))[idx_from:idx_to, spectrum_idx], 1 ) / (idx_to-idx_from+1) $
+        else res = (*(self._phase))[idx_from:idx_to, spectrum_idx]
+        return, res
+    endelse
+    
+end
+
+
 
 function AOtime_series::freq, from_freq=from_freq, to_freq=to_freq
     IF not (PTR_VALID(self._freq)) THEN self->SpectraCompute
@@ -577,6 +612,7 @@ pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "freq()",   "frequency vector [nfreqs] (Hz)"
     obj->addMethodHelp, "nspectra()",   "number of spectra"
     obj->addMethodHelp, "psd(spectrum_idx)",   "return psd of spectra identified by the index vector idx. All spectra if index is not present"
+    obj->addMethodHelp, "phase(idx, from_freq=from, to_freq=to, /cumulative, /sumspectra)", "return phase of idx-th spectrum between frequencies from_freq and to_freq, eventually cumulating on freqs and/or summing on spectra"
     obj->addMethodHelp, "fftwindow()", "returns the type of apodization window applied in the computation of the PSD."
     obj->addMethodHelp, "set_fftwindow,fftwindow", "sets the apodization window to be used in the computation of the PSD."
     obj->addMethodHelp, "power(idx, from_freq=from, to_freq=to, /cumulative, /sumspectra)", "return power of idx-th spectrum between frequencies from_freq and to_freq, eventually cumulating on freqs and/or summing on spectra"
@@ -608,6 +644,7 @@ end
 
 pro AOtime_series::free
     ptr_free, self._psd
+    ptr_free, self._phase
     ptr_free, self._time_variance
     ptr_free, self._time_average
     ptr_free, self._ensemble_variance
@@ -630,6 +667,7 @@ pro AOtime_series::Cleanup
     ptr_free, self._ensemble_variance
     ptr_free, self._ensemble_average
     ptr_free, self._psd
+    ptr_free, self._phase
     ptr_free, self._freq
     ptr_free, self._peaks
 end
@@ -649,6 +687,7 @@ struct = { AOtime_series, $
     _ensemble_variance :  ptr_new()	, $
     _ensemble_average  :  ptr_new()	, $
     _psd               :  ptr_new()	, $
+    _phase             :  ptr_new()	, $
     _freq              :  ptr_new()	, $
     _peaks             :  ptr_new() , $
     _norm_factor	   :  0.		, $
