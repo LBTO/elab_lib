@@ -82,6 +82,11 @@ function modalif_to_zonalif, mirmodes_file, idx_mask=idx_mask
   return, IFmatrix
 end
 
+function restore_modalif, mirmodes_file, idx_mask=idx_mask, mm2c=mm2c
+  ; Restore MMmatrix and mm2c
+  restore, mirmodes_file
+  return, MMmatrix
+end
 
 
 ;+
@@ -160,7 +165,8 @@ scr_size_m   = max([scr_size_m_x,scr_size_m_y], ang_idx)		;
 scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 
 ;rname = 'dist_'+disturb_type		;FLAO1
-rname = 'dist_flao2a'+disturb_type	;FLAO2
+;rname = 'dist_flao2a'+disturb_type	;FLAO2
+rname = 'dist_flao2_20111210_'+disturb_type	;FLAO2
 
 
 ; Vibration Disturbance Handling
@@ -293,13 +299,16 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	endif
 
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
-	if file_test(disturb_dir+'inv_IFmatrix_flao2a.sav') then begin
+	;inv_IFmat = disturb_dir+'inv_IFmatrix_flao2.sav'
+	;inv_IFmat = disturb_dir+'inv_MMmatrix_mag585.sav'
+	inv_IFmat = disturb_dir+'inv_MMmatrix_flao2_20111210.sav'
+	if file_test(inv_IFmat) then begin
 		undefine, IFmatrix
-		restore, disturb_dir+'inv_IFmatrix_flao2a.sav'
+		restore, inv_IFmat
 	endif else begin
-		if n_elements(IFmatrix) eq 0 then IFmatrix = modalif_to_zonalif(mirmodes_file, idx_mask=idx_mask)
-		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE)
-		save, inv_IFmatrix, Dpix, idx_mask, filename=disturb_dir+'inv_IFmatrix_flao2a.sav', /compress
+		if n_elements(IFmatrix) eq 0 then IFmatrix = restore_modalif(mirmodes_file, idx_mask=idx_mask, mm2c=mm2c)
+		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE, N_MODES_TO_DROP=1)
+		save, inv_IFmatrix, Dpix, idx_mask, mm2c, filename=inv_IFmat, /compress
 		undefine, IFmatrix
 	endelse
 
@@ -335,7 +344,8 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 			ph = (ph - total(ph)/np) * maskPup
 		endif
 
-		command_hist[*,ii] = inv_IFmatrix ## ph[idx_mask]	;project phase onto IFs
+		command_hist[*,ii] = mm2c ## reform(inv_IFmatrix ## ph[idx_mask])	;project phase onto IFs
+		;command_hist[*,ii] = inv_IFmatrix ## ph[idx_mask]	;project phase onto IFs
 		position -= shft									;update position
 		print, 'step number '+strtrim(ii,2)
 	;	tvscl, ph
