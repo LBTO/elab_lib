@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# flao-adsec     Start/Stop FLAO AdSec processes
+#
+# chkconfig: 345 99 00
+# description: The First Light AO system
+#
+# How to install
+#
+# 1. Put this file in /etc/init.d 
+#   1.1   chmod a+x /etc/init.d/flao-adsec
+#
+# 2. Set it up with: chkconfig --add flao-adsec
+#
+# 3. Test it with:
+#
+#    service flao-adsec start
+#    service flao-adsec stop
+#
+# The current adopt_environment.sh file must be in: /usr/local/etc
+#
+
+AO_ENV=/usr/local/etc/adopt_environment.sh
+
+if [ -f $AO_ENV ]; then
+   . $AO_ENV
+else
+   echo "$0: AdOpt environment file ($AO_ENV) not found!"
+   logger "$0 : AdOpt environment file ($AO_ENV) not found!"
+   exit 2
+fi
+
+start() {
+	echo "$0: Starting FLAO AdSec processes"
+	logger "$0 : Starting FLAO AdSec processes"
+	. $ADOPT_ROOT/bin/adsc_start
+}
+
+stop() {
+	echo "$0: Stopping FLAO AdSec processes"
+	logger "$0: Stopping FLAO AdSec processes"
+	. $ADOPT_ROOT/bin/adsc_stop
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $0 {start|stop}"
+	exit 2
+esac
+
