@@ -24,6 +24,7 @@ function AOhelp::fmthelp, syntax, descr, indent, style=style, root=root
         'method' : begin & spacer='---' & col2pos=60  & end
     endcase 
     if keyword_set(root) then begin
+	if root eq 'ee' and self->howDoTheyCallMe() eq 'ee' then cmd1 = self->howDoTheyCallMe()+"->"+syntax else $
         cmd1="("+root+"->"+self->howDoTheyCallMe()+")->"+syntax
     endif else begin
         cmd1=strjoin([ indent gt 0 ? replicate(spacer,indent) : "", " ", syntax])
@@ -41,19 +42,21 @@ pro AOhelp::printhelp, syntax, descr, indent, style=style
 end
 
 function AOhelp::cmdlist,root=root
-    if not keyword_set(root) then root="ee"
+    ;if not keyword_set(root) then root="ee"
     cmdlista = ['']
     if obj_valid(self._methods_help) then begin
         for i=0L, self._methods_help->Count()-1 do begin
             meth_help = self._methods_help->Get(pos=i)
-            cmdlista = [temporary(cmdlista), self->AOhelp::fmthelp(meth_help->syntax(), meth_help->descr(), 0, root=root)]
+	    sroot=  n_elements(root) ne 0  ? root : self->howDoTheyCallMe()
+            cmdlista = [temporary(cmdlista), self->AOhelp::fmthelp(meth_help->syntax(), meth_help->descr(), 0, root=sroot)]
         endfor
     endif
 
     ; go down in tree
     if obj_valid(self._leafs) then begin
         for i=0L, self._leafs->Count()-1 do begin
-            cmdlista = [temporary(cmdlista), (self._leafs->Get(pos=i))->AOhelp::cmdlist(root="("+root+"->"+self->howDoTheyCallMe()+")")]
+	    sroot=  n_elements(root) ne 0  ? "("+root+"->"+self->howDoTheyCallMe()+")" : self->howDoTheyCallMe()
+            cmdlista = [temporary(cmdlista), (self._leafs->Get(pos=i))->AOhelp::cmdlist(root=sroot)]
         endfor
     endif
     return, cmdlista
