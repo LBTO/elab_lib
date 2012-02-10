@@ -53,6 +53,8 @@ end
 pro read_cur_dataset, RECALC = RECALC
 common xelab_common
 
+     catch, error
+     if error eq 0 then print,'ciao'
      set_status,'Reading dataset...', /BUSY
      dataset = obj_new('aodataset', from=cur.day+'_000000', to=cur.day+'_235959', REC = RECALC)
      log_twiki, dataset, TEXT = text, VALID = VALID

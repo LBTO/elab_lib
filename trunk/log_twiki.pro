@@ -28,7 +28,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
 
-		gaintemp = [-1., -1., -1.]
+		gaintemp = fltarr(672)
         if obj_valid(ee->control()) then begin
         	gg = (ee->control())->gain()
         	ngains = n_elements(rem_dup(gg))
