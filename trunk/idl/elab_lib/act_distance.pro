@@ -1,6 +1,6 @@
 
  
-pro act_distance, tracknum
+pro act_distance, tracknum, ACT_DISTANCE = ACT_DISTANCE
 
   a = getaoelab(tracknum)
   s = (a->slopes())->slopes2d()
@@ -46,6 +46,9 @@ pro act_distance, tracknum
   y2 = cent[ok[1],1]
 
   print, cent
-  print,'Distance: ', sqrt((x2-x1)*(x2-x1)+ (y2-y1)*(y2-y1))
+  distance = sqrt((x2-x1)*(x2-x1)+ (y2-y1)*(y2-y1))
+  print,'Distance: ', distance
+  if keyword_set(act_distance) then $
+      print,'Percentage of theoretical distance: ', (distance/30. * 911.) / act_distance
 
 end
