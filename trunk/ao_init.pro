@@ -39,8 +39,10 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 	endif
 
 	if not keyword_set(phasemapdir) then begin
-		if getenv('ADOPT_PHASEMAPS') ne '' then phasemapdir = getenv('ADOPT_PHASEMAPS') else $
+		if getenv('ADOPT_PHASEMAPS') ne '' then phasemapdir = getenv('ADOPT_PHASEMAPS') else begin
+			message, 'WARNING: PHASEMAPDIR not initialized.', /info
 			phasemapdir = rootdir
+		endelse
 	endif
 
     if keyword_set(LEFT) or keyword_set(RIGHT) then begin
@@ -62,7 +64,7 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
         root           : rootdir, $
         datadir        : rootdir +path_sep()+'towerdata', $
         elabdir        : elabdir, $
-        phasemapdir    : phasemapdir +path_sep()+'phase_maps' $
+        phasemapdir    : phasemapdir $
     }
 
 ;defsysv, "!ao_env", EXISTS=exists
