@@ -2,12 +2,19 @@
 ;>>>>>>>>>> on CORSICA -> cd, /savedata
 ;disturbance parameters
 ;******************************************************************
-disturb_type = 'atm+vib' ;'vib', 'atm', 'atm+vib'
+disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
 ;disturb_dir = 'phase_screens/'
-;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
-disturb_dir = '/savedata/phase_screens_flao2/'
 
-ao_init, root='~'
+;FLAO#2
+disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
+disturb_dir = '/savedata/phase_screens_flao2/'
+;prefix = 'dist_FLAO2_20111210_'
+
+;MAG585
+;disturb_dir = '/savedata/phase_screens_mag585/'
+;prefix = 'dist_mag585_'
+
+ao_init;, root='~'
 
 ;atmospheric parameters
 ;******************************************************************
@@ -18,19 +25,24 @@ L0 = 40.
 v_wind = 15.
 seed = 1983L
 n_steps = 4000
-hz = [500., 625., 800., 1000.]
-;hz = [1000.]
+;hz = [500., 625., 800., 1000.]
+hz = [600.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
 ;******************************************************************
 ;Dpix		  = 233			; pupil diameter [pix]			;FLAO1
-Dpix		  = 232			; pupil diameter [pix]			;FLAO2
+;Dpix		  = 232			; pupil diameter [pix]			;FLAO2
+Dpix		  = 219			; pupil diameter [pix]			;FLAO2 20111210
+;Dpix		  = 217			; pupil diameter [pix]			;MAG585
+
 
 ;mirror modes file (required to compute zonal IFmatrix)
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'	;FLAO1
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sav'	;FLAO2 @ aosimul
-mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ corsica
+;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ corsica
+;mirmodes_file = '/savedata/phase_maps/MMmatrix_MAG585_20110706.sav'	;MAG585 @ corsica
+mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20111210.sav'
 
 ; Pre-correction parameters:
 ;*************************************************************
@@ -118,6 +130,7 @@ vib={$
 for ii=0, nseeing-1 do $
   for jj=0, nhz-1 do $
     generate_disturb, disturb_type      , $
+;    generate_disturb_mag585, disturb_type      , $
     seeing        =     seeing[ii]     	, $
     L0            =     L0          	, $
     v_wind        =     v_wind      	, $
@@ -132,4 +145,7 @@ for ii=0, nseeing-1 do $
 	m2c_cor_fname =		m2c_cor_fname	, $
 	boost_tt	  = 	boost_tt		, $
 	Dpix		  =		Dpix			, $
-	mirmodes_file =		mirmodes_file
+	mirmodes_file =		mirmodes_file	;, $
+;	prefix		  =		prefix
+
+end
