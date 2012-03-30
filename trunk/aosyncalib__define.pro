@@ -262,8 +262,8 @@ function AOsyncalib::find_registration, mode_list, visu=visu, verbose=verbose
 
     ;positions = [dmrot, xshift, yshift]
 ;    positions = [-21.,0.,0.]	;FLAO1
-	positions = [45.,0.,0.]		;FLAO2
-	positions = [48.6,0.2617,0.2617]
+;	positions = [45.,0.,0.]		;FLAO2
+	positions = [48.8, 0., 0.]
     Ftol = 1.
     initdir = transpose([[3.,0.,0.],[0.,0.1,0.],[0.,0.,0.1]])
     POWELL, positions, initdir, Ftol, Fmin, 'flao_optogeom_errorfunc', ITER=ncalls
