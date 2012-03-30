@@ -183,7 +183,7 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	reflcoeff = 4L	;for measured intmats done with retro-reflector setup
 
 ;	mymodes =lindgen(10)
-	modemat = self._modeShapes->modemat( mode_idx=mymodes, anglerot=anglerot, shiftval=shfitval)
+	modemat = self._modeShapes->modemat( mode_idx=mymodes, anglerot=anglerot, shiftval=shiftval)
 	nmodes = n_elements(mymodes)
 	idx  = self._modeShapes->idx_mask()
 	Dpix = self._modeShapes->Dpix()
