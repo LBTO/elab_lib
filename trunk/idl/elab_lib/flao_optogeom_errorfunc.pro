@@ -54,37 +54,47 @@ end
 ;-----------------------------------------------------------------
 
 FUNCTION flao_optogeom_errorfunc, misalignments
-; misalignments is a 3-dimensional vector containing:
-;  [anglerot, shift_x, shift_y]
-shiftval   = misalignments[1:2]	;in percent of pupil size
-anglerot = misalignments[0]
+	; misalignments is a 3-dimensional vector containing:
+	;  [anglerot, shift_x, shift_y]
+	shiftval   = misalignments[1:2]	;in percent of pupil size
+	anglerot = misalignments[0]
 
-common syncalib_common
-nsub = long(total(scobj->exp_slmask()))
+	common syncalib_common
+	nsub = long(total(scobj->exp_slmask()))
 
-matinter = scobj->syn_intmat(mymodes, anglerot, shiftval, verbose=funcverbose);, visu=funcvisu)
+	;check if matrix has already been created to avoid repetitions (typical of POWELL method)
+	synmat_fname = 'synmat' + $
+		'_angle'+strtrim(string(anglerot,format='(f6.2)'),2) + $
+		'_shiftx'+strtrim(string(shiftval[0], format='(f7.3)'),2) + $
+		'_shifty'+strtrim(string(shiftval[1], format='(f7.3)'),2) + $
+		'.sav'
+	synmat_fname = filepath(root=func_tempdir, synmat_fname)
+	if file_test(synmat_fname) then restore, synmat_fname, verbose=funcverbose else begin
+		matinter = scobj->syn_intmat(mymodes, anglerot, shiftval, verbose=funcverbose);, visu=funcvisu)
+		save, matinter, filename=synmat_fname
+	endelse
 
-IF total(size(matinter) NE size(mintlab)) then message,'The two matrices are not of same size.'
-error = sqrt(total( (double(mintlab)*1e-6 - double(matinter)*1e-6)^2d0)) ;/ trace(transpose(mintlab)##matinter)
+	IF total(size(matinter) NE size(mintlab)) then message,'The two matrices are not of same size.'
+	error = sqrt(total( (double(mintlab)*1e-6 - double(matinter)*1e-6)^2d0)) ;/ trace(transpose(mintlab)##matinter)
 
-;show one mode at every iteration
-if funcvisu then begin
-	mode = n_elements(mymodes)-1
-;	synsx = sqrt(ratio[mode])*reform(matinter[mode,0:nsub-1])
-;	synsy = sqrt(ratio[mode])*reform(matinter[mode,nsub:*])
-	synsx = reform(matinter[mode,0:nsub-1])
-	synsy = reform(matinter[mode,nsub:*])
-	expsx = reform(mintlab[mode,0:nsub-1])
-	expsy = reform(mintlab[mode,nsub:*])
-	show_sigs, synsx, synsy, expsx, expsy
-endif
+	;show one mode at every iteration
+	if funcvisu then begin
+		mode = n_elements(mymodes)-1
+	;	synsx = sqrt(ratio[mode])*reform(matinter[mode,0:nsub-1])
+	;	synsy = sqrt(ratio[mode])*reform(matinter[mode,nsub:*])
+		synsx = reform(matinter[mode,0:nsub-1])
+		synsy = reform(matinter[mode,nsub:*])
+		expsx = reform(mintlab[mode,0:nsub-1])
+		expsy = reform(mintlab[mode,nsub:*])
+		show_sigs, synsx, synsy, expsx, expsy
+	endif
 
-print, 'anglerot is ', anglerot
-print, 'shift is ', shiftval
-print, 'error is ', error
+	print, 'anglerot is ', anglerot
+	print, 'shift is ', shiftval
+	print, 'error is ', error
 
-if funcvisu then wait,0.05
+	if funcvisu then wait,0.05
 
-return, error
+	return, error
 
 END
