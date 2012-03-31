@@ -258,13 +258,18 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	return, im1
 end
 
-function AOsyncalib::find_registration, mode_list, visu=visu, verbose=verbose
-	common syncalib_common, scobj, mymodes, mintlab, funcvisu, funcverbose
+function AOsyncalib::find_registration, mode_list, init_pos=init_pos, visu=visu, verbose=verbose, tempdir=tempdir
+	common syncalib_common, scobj, mymodes, mintlab, funcvisu, funcverbose, func_tempdir
 
 	mymodes = mode_list
 	scobj = self
 	if keyword_set(visu) then funcvisu=1B else funcvisu=0b
 	if keyword_set(verbose) then funcverbose=1B else funcverbose=0b
+
+	;Create temporary dir to save IMs
+	if n_elements(tempdir) eq 0 then func_tempdir = self->syndata_dir() else $
+		func_tempdir = filepath(root=self->syndata_dir(), tempdir)
+	if not file_test(func_tempdir,/dir) then file_mkdir, func_tempdir
 
 	;exp IM
 	nsub = long(total(scobj->exp_slmask()))
@@ -284,13 +289,17 @@ function AOsyncalib::find_registration, mode_list, visu=visu, verbose=verbose
 
 
     ;positions = [dmrot, xshift, yshift]
-;    positions = [-21.,0.,0.]	;FLAO1
-;	positions = [45.,0.,0.]		;FLAO2
-	positions = [48.8, 0., 0.]
+;   positions = [-21.,0.,0.]	;FLAO1
+;	positions = [48.8,0.,0.]	;FLAO2
+	if n_elements(init_pos) eq 0 then positions = [0., 0., 0.] else positions = init_pos
+	if n_elements(positions) ne 3 then message, 'init_pos should be [dmrot, xshift, yshift]'
+
+
     Ftol = 1.
     initdir = transpose([[3.,0.,0.],[0.,0.1,0.],[0.,0.,0.1]])
     POWELL, positions, initdir, Ftol, Fmin, 'flao_optogeom_errorfunc', ITER=ncalls
-;    POWELL, positions, initdir, Ftol, Fmin, 'flao_anglerot_errorfunc', ITER=ncalls
+    if keyword_set(verbose) then print, 'total number of POWELL iterations: ', strtrim(ncalls,2)
+
 	return, positions
 end
 
