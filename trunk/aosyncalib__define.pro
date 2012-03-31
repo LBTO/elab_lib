@@ -1,30 +1,24 @@
-function AOsyncalib::Init, syndata_dir=syndata_dir
+function AOsyncalib::Init, im_tracknum, basis, syndata_dir=syndata_dir
+
+	if n_params() ne 2 then begin
+		message, "SINTAXIS: sc=obj_new('AOsyncalib', im_tracknum, basis)",/info
+		return,0
+	endif
 
 	if not keyword_set(syndata_dir) then syndata_dir='.'
 	self._syndata_dir = syndata_dir
 
-;	General parameters:
-;======================================================================================
-	DpupM   = 8.222
-	self._DpupM = DpupM
-	oc		= 0.111
-	self._oc = oc
-
 
 ;	Measured IM data:
 ;======================================================================================
-;	basis = 'KL_v7'
-	basis = 'KL_v9'
-	modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
-	if file_test(modeshapes_fname) then modeShapes = get_modes_shapes(modeShapes_fname) else $
-		message, 'Mode Shapes file not found',/info
-	self._modeShapes = modeShapes
-
-	;im_tracknum = '20101024_092604'	;KL_v7
-	im_tracknum  = '20120202_185742'	;KL_v9
+	self._im_tracknum = im_tracknum
 	im_fname = 'adsec_calib'+path_sep()+'M2C'+path_sep()+basis+path_sep()+'RECs'+path_sep()+'Intmat_'+im_tracknum+'.fits'
 	im_obj = obj_new('AOintmat', im_fname)
-	self._expim_obj = im_obj
+	if obj_valid(im_obj) then self._expim_obj = im_obj else return,0
+
+	modeshapes_fname = filepath(root=ao_phasemapdir(), 'KLmatrix_'+basis+'.sav')
+	modeShapes = get_modes_shapes(modeShapes_fname)
+	if obj_valid(modeShapes) then self._modeShapes = modeShapes else return,0
 
 	slmask = im_obj->s2d_mask()
 	slsz = size(slmask)
@@ -34,11 +28,28 @@ function AOsyncalib::Init, syndata_dir=syndata_dir
 	slmask = slmask[slxr[0]:slxr[1],slyr[0]:slyr[1]]
 	self._exp_slmask = ptr_new(slmask)
 
+
+;	Telescope parameters:
+;======================================================================================
+	DpupM   = 8.222
+	self._DpupM = DpupM
+	oc		= 0.125			;This value was enlarged "by eye" from the official of 0.111
+							;to remove from syn IM the subapertures close to the OC subject
+							;to interpolation errors that caused spikes on the signals.
+	self._oc = oc
+
+
 ;	synthetic IM data:
 ;=======================================================================================
 	defsysv, '!FFTW_AVAILABLE', 0B
 	defsysv, '!FFTW_ARCETRI', 1B
 	init_parallel,0
+
+	binning = ((im_obj->wfs_status())->ccd39())->binning()
+	print, 'binning mode #',strtrim(binning,2)
+
+	amp_mod = float(round((im_obj->wfs_status())->modulation()))
+	print, 'TT modulation radius (lambda/D):  ', strtrim(amp_mod,2)
 
 	pyr = {pyr,					 	 $
 	Dpix				: 150L		,$ ; Telescope Pupil diameter (in pixels)
@@ -46,13 +57,18 @@ function AOsyncalib::Init, syndata_dir=syndata_dir
 	distanza_pup		: 36		,$ ; Separazione richiesta fra i centri di due pupille adiacenti (in pixels)
 	fov     			: 2.1		,$ ; WFS Field-of-view (in arcsec)
 	steps_mod 			: 16		,$ ; Number of discrete steps to emulate the tip-tilt modulation
-	amp_mod 			: 3.0		,$ ; Modulation radius (in lambda/D units).
-	ccd_size			: 90		,$ ; CCD real size
+	amp_mod 			: amp_mod	,$ ; Modulation radius (in lambda/D units).
+	ccd_size			: 90		,$ ; CCD  size
 	ccd_dynamic_range	: 120000L	,$ ; CCD dynamic range (e.g. 16 bit).
 	binning				: 1			,$ ; CCD binning (1x1, 2x2, 3x3)
 	shifts      		: [0,0]	    ,$ ; Shifts of input phase in pixels
 	lwfs				: 750.e-9	,$ ; lambda WFS (en m)
 	simul_pyrpup		: 'pups_pyrlbt_30x30_1x1.sav' }	;name of pupils used in simulator
+
+	if pyr.binning ne binning then begin
+		message, 'Only binning mode #1 supported in this version!',/info
+		return,0
+	endif
 
 	self._syn_pyr = ptr_new(pyr)
 
@@ -183,7 +199,7 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	reflcoeff = 4L	;for measured intmats done with retro-reflector setup
 
 ;	mymodes =lindgen(10)
-	modemat = self._modeShapes->modemat( mode_idx=mymodes, anglerot=anglerot, shiftval=shiftval)
+	modemat = self._modeShapes->modemat( mode_idx=mymodes, anglerot=anglerot);, shiftval=shiftval)
 	nmodes = n_elements(mymodes)
 	idx  = self._modeShapes->idx_mask()
 	Dpix = self._modeShapes->Dpix()
@@ -191,7 +207,8 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 
 	modamp = mymodes+2
 	zern_num, modamp, n=nn
-	modamp = 1.0/sqrt(nn)		;to calibrate KL modes without saturating WFS
+;	modamp = 1.0/sqrt(nn)		;to calibrate KL modes without saturating WFS
+	modamp = 1.0/nn
 
 	;syn model and params
 	pyrpup = self->syn_pyrpup()
@@ -200,6 +217,12 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	mask1 = make_mask(pyr.Dpix, obs=self._oc)
 	idx1 = where(mask1)
 
+	;Introduce shifts on the CCD frame
+	if n_elements(shiftval) eq 0 then shiftval = [0., 0.]
+    if n_elements(shiftval) ne 2 then message, 'SHIFTVAL must be of the form: [xshift,yshift]'
+	pyrm.pups_shifts += shiftval
+
+	;allocate memory
 	klmode  = make_array(size=size(mask))
 	im1 = fltarr(nmodes,pyrpup.n_sspp*2L)
 	sigminmax = fltarr(nmodes,2)
@@ -272,23 +295,15 @@ function AOsyncalib::find_registration, mode_list, visu=visu, verbose=verbose
 end
 
 function AOsyncalib::scramble_syn2exp, synmat
-	synmask = self->syn_slmask()
-	expmask = self->exp_slmask()
-	idx  = where(synmask, nsub)
-	idx1 = where(expmask,nsub1)
-	sx = synmat[*,0:nsub-1]
-	sy = synmat[*,nsub:*]
+	nsub1 = (size(synmat,/dim))[1] / 2L
 	nmode = (size(synmat,/dim))[0]
-	s2d = fltarr(30,30)
+	sx = synmat[*,0:nsub1-1]
+	sy = synmat[*,nsub1:*]
 	synmat1 = fltarr(672,1600)
 	slv = fltarr(nsub1*2)
 	for ii=0, nmode-1 do begin
-		s2d[idx] = sx[ii,*]
-		sx1 = s2d[idx1]
-		s2d[idx] = sy[ii,*]
-		sy1 = s2d[idx1]
-		slv[0:*:2] = sx1
-		slv[1:*:2] = sy1
+		slv[0:*:2] = sx[ii,*]
+		slv[1:*:2] = sy[ii,*]
 		synmat1[ii,0] = transpose(slv)
 	endfor
 	return, synmat1
@@ -341,9 +356,73 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 	window,2, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='difference'
 
+	diff = [synsx,synsy] - [expsx,expsy]
 	window,3
 	plot, [synsx,synsy],yrange=minmax([synsx,synsy,expsx,expsy])
 	oplot, [expsx,expsy], color=255L
+	oplot, diff, color=255L*250L
+
+	print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
+
+end
+
+
+
+pro AOsyncalib::export_synmat, anglerot, shiftval, export_date=export_date, nmodes=nmodes, verbose=verbose
+	if n_params() ne 2 then begin
+		message, 'SYNTAXIS: ...->export_synmat, anglerot, shiftval', /info
+		return
+	endif
+	if n_elements(shiftval) ne 2 then begin
+		message, 'Shiftval should be a two-dimensional vector [shiftx, shifty]',/info
+		return
+	endif
+
+	; If generated previously, restore synmat with selected position and max number of modes.
+	max_nmodes = self._expim_obj->nmodes()
+	synmat_fname = 'synmat_'+self._im_tracknum + $
+		'_angle'+strtrim(string(anglerot,format='(f6.2)'),2) + $
+		'_shiftx'+strtrim(string(shiftval[0], format='(f7.3)'),2) + $
+		'_shifty'+strtrim(string(shiftval[1], format='(f7.3)'),2) + $
+		'.sav'
+	synmat_fname = filepath(root=self->syndata_dir(), synmat_fname)
+	if file_test(synmat_fname) then restore, synmat_fname, verbose=verbose else begin
+		mymodes = lindgen(max_nmodes)
+		matinter = self->syn_intmat(mymodes, anglerot, shiftval, verbose=verbose)
+		save, matinter, filename=synmat_fname, /compress
+	endelse
+
+	;If requested, export a synthetic IM with a lower number of modes
+	if n_elements(nmodes) eq 0 then nmodes = max_nmodes
+	matinter = matinter[0:nmodes-1,*]
+	matinter = self->scramble_syn2exp(matinter)
+
+	;Prepare fits to hold exported IM
+	if n_elements(export_date) eq 0 then begin
+		today_date = bin_date()
+		export_date = 	string(today_date[0],format='(i4)') 	+ $
+						string(today_date[1],format='(i02)')	+ $
+						string(today_date[2],format='(i02)')
+	endif
+	export_tracknum = export_date + '_' + string(nmodes, format='(i06)')
+	export_fname = 'Intmat_'+export_tracknum+'.fits'
+	exp_hdr = self._expim_obj->header()
+	mkhdr, hdr, matinter, /EXTEND
+  	sxaddpar, hdr, 'IM_TYPE', 'SYN', 'IM calib method'
+  	sxaddpar, hdr, 'EXP_IM', self._expim_obj->fname(), 'measured IM matched'
+  	sxaddpar, hdr, 'ANGLEROT', anglerot, 'ASM angle (degrees)'
+  	sxaddpar, hdr, 'X_SHIFT', shiftval[0], 'ASM x-shift (% of pupil size)'
+  	sxaddpar, hdr, 'Y_SHIFT', shiftval[1], 'ASM y-shift (% of pupil size)'
+	sxaddpar, hdr, 'FILETYPE', 'intmat'
+	sxaddpar, hdr, 'M2C', 		aoget_fits_keyword(exp_hdr, 'M2C')
+	sxaddpar, hdr, 'BINNING', 	aoget_fits_keyword(exp_hdr, 'BINNING')
+	sxaddpar, hdr, 'IM_MODES', 	nmodes
+	sxaddpar, hdr, 'PUPILS', 	aoget_fits_keyword(exp_hdr, 'PUPILS')
+	sxaddpar, hdr, 'INSTR', 	aoget_fits_keyword(exp_hdr, 'INSTR')
+	sxaddpar, hdr, 'SENSOR', 	aoget_fits_keyword(exp_hdr, 'SENSOR')
+	sxaddpar, hdr, 'W_UNIT', 	aoget_fits_keyword(exp_hdr, 'W_UNIT')
+	sxaddpar, hdr, 'LAMBDA_D', (self->syn_pyr()).amp_mod
+	writefits, filepath(root=self->syndata_dir(), export_fname), matinter, hdr
 
 end
 
@@ -428,6 +507,7 @@ pro AOsyncalib__define
     	_oc				   : 0.		   , $
         _modeShapes		   : obj_new() , $
         _expim_obj		   : obj_new() , $
+        _im_tracknum	   : ""		   , $
         _exp_slmask		   : ptr_new() , $
 ;	synthetic parameters
 		_syn_pyr		   : ptr_new() , $
