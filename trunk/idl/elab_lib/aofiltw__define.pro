@@ -304,6 +304,15 @@ pro AOfiltw::Cleanup
     self->AOhelp::Cleanup
 end
 
+pro AOfiltw::summary, COMPREHENSIVE=COMPREHENSIVE
+    if keyword_set(COMPREHENSIVE) then begin
+		print, 'Filter Wheel #'+strtrim(self->fw_number(),2)+':'
+    	print_struct, self->fw_data()
+	endif else begin
+		print, string(format='(%"%-30s %s")','FW#'+strtrim(self->fw_number(),2), self->name() )
+	endelse
+end
+
 pro AOfiltw__define
     struct = { AOfiltw, $
         _header     : ptr_new()	, $
