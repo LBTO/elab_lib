@@ -72,6 +72,7 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
     self->addMethodHelp, "disturb_status()", "return disturb enable/disable (int)"
     self->addMethodHelp, "shape_file()", "return shape filename (string)"
     self->addMethodHelp, "ff_matrix_file()", "return ff matrix filename (string)"
+    self->addMethodHelp, "ovsamp_time()", "return oversampling period (s)"
     self->addMethodHelp, "adsec_struct_file()", "return adsec_struct filename (string)"
     self->addMethodHelp, "struct_adsec()", "(struct)"
     self->addMethodHelp, "struct_adsec_shell()", "(struct)"
@@ -92,6 +93,7 @@ pro AOadsec_status::summary
     print, string(format='(%"disturb_status = %d")', self->disturb_status() )
     print, string(format='(%"shape_file = %s")', self->shape_file() )
     print, string(format='(%"ff_matrix_file = %s")', self->ff_matrix_file() )
+    print, string(format='(%"ovsamp_time = %f")', self->ovsamp_time() )
     print, string(format='(%"adsec_struct_file = %s")', self->adsec_struct_file() )
 end
 
