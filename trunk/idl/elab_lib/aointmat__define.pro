@@ -23,17 +23,33 @@ function AOintmat::Init, fname
     self._nmodes  = -1
     self._nslopes = -1
     self._wfs_status = obj_new('AOwfs_status', self, full_fname)
-
+	im_type = strtrim(aoget_fits_keyword(header, 'IM_TYPE'))
     self._im_file_fitsheader = ptr_new(header, /no_copy)
 
-	; synthetic or measured IM?
-	if not self->AOintmat_meas::Init() then return,0
+	; synthetic, on-sky calibration, or classical measured IM with RR?
+	CASE im_type  OF
+		'SYN' : begin
+				self._im_type = 'SYN'
+				;self->AOintmat_syn::Init()
+			end
+		'ONSKY_CALIB' : begin
+				self._im_type = 'ONSKY_CALIB'
+				message, 'onsky calib IM: not supported yet...', /info
+			end
+		else : begin
+				self._im_type = 'RR_CALIB'
+				if not self->AOintmat_meas::Init() then message, 'IM calib with RR: extended info not available', /info
+			end
+	ENDCASE
+
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOintmat', 'Represent an interaction matrix (IM)') then return, 0
-    self->addMethodHelp, "fname()",   "fitsfile name (string)"
-    self->addMethodHelp, "header()",     "header of fitsfile (strarr)"
-    self->addMethodHelp, "im()", 	"interaction matrix"
+    self->addMethodHelp, "fname()",   	"fitsfile name (string)"
+    self->addMethodHelp, "header()",  	"header of fitsfile (strarr)"
+    self->addMethodHelp, "im_type()",	"calibration method (RR, ONSKY, SYNTHETIC)"
+    self->addMethodHelp, "basis()",		"modal basis calibrated"
+    self->addMethodHelp, "im()", 		"interaction matrix"
     self->addMethodHelp, "sx([idx])", 	"x-slopes (idx: index to selected modes)"
     self->addMethodHelp, "sy([idx])", 	"y-slopes (idx: index to selected modes)"
     self->addMethodHelp, "sx2d([idx])", "x-slopes remapped in 2D (idx: index to selected modes)"
@@ -44,9 +60,8 @@ function AOintmat::Init, fname
     self->addMethodHelp, "modes_idx()", "index vector of non-null columns in IM"
     self->addMethodHelp, "nslopes()", "number of non-null rows in IM"
     self->addMethodHelp, "slopes_idx()", "index vector of non-null rows in IM"
-    self->addMethodHelp, "basis()", "modal basis calibrated"
     self->addMethodHelp, "wfs_status()", "reference to wfs_status object"
-    self->AOintmat_meas::addHelp, self
+    if self._im_type eq 'RR_CALIB' then self->AOintmat_meas::addHelp, self
 
     return, 1
 end
@@ -57,6 +72,10 @@ end
 
 function AOintmat::header
     if ptr_valid(self._im_file_fitsheader) then return, *(self._im_file_fitsheader) else return, ""
+end
+
+function AOintmat::im_type
+	return, self._im_type
 end
 
 function AOintmat::im
@@ -244,6 +263,7 @@ pro AOintmat__define
     struct = { AOintmat									, $
         _im_file                          : ""			, $
         _im_file_fitsheader               : ptr_new()	, $
+        _im_type						  : ""			, $
         _basis							  : ""			, $
         _nmodes                           : -1L			, $
         _modes_idx                        : ptr_new()	, $
