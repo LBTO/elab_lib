@@ -19,17 +19,17 @@ function AOpupils::Init, wfs_header, wunit
 
 	self._pup_tracknum = (strsplit(pp, '/', /EXTRACT))[1]
 
-    
+
     ; test pupil files: 'pup[1234].fits' and 'pupdata.txt'
     for i=1,4 do begin
         fname=filepath(root=pups_path, 'pup'+strtrim(string(i),2)+'.fits')
-	    if not file_test(fname) then begin 
+	    if not file_test(fname) then begin
             message, 'File not found:'+fname
             return, 0
         endif
     endfor
     fname=filepath(root=pups_path, 'pupdata.txt')
-	if not file_test(fname) then begin 
+	if not file_test(fname) then begin
         message, 'File not found:'+fname
         return, 0
     endif
@@ -60,31 +60,31 @@ function AOpupils::Init, wfs_header, wunit
 	self._cy     = res.field1[2,*]
 
     ; REAL MEASURED position of pupils
-    
+
 	self._real_radius = [ float(aoget_fits_keyword(hdr, 'pup0.DIAMETER'))/2, $
-                          float(aoget_fits_keyword(hdr, 'pup1.DIAMETER'))/2, $ 
-                          float(aoget_fits_keyword(hdr, 'pup2.DIAMETER'))/2, $ 
-                          float(aoget_fits_keyword(hdr, 'pup3.DIAMETER'))/2] 
+                          float(aoget_fits_keyword(hdr, 'pup1.DIAMETER'))/2, $
+                          float(aoget_fits_keyword(hdr, 'pup2.DIAMETER'))/2, $
+                          float(aoget_fits_keyword(hdr, 'pup3.DIAMETER'))/2]
 	self._real_cx = [ float(aoget_fits_keyword(hdr, 'pup0.CX')), $
-                      float(aoget_fits_keyword(hdr, 'pup1.CX')), $ 
-                      float(aoget_fits_keyword(hdr, 'pup2.CX')), $ 
-                      float(aoget_fits_keyword(hdr, 'pup3.CX'))] 
+                      float(aoget_fits_keyword(hdr, 'pup1.CX')), $
+                      float(aoget_fits_keyword(hdr, 'pup2.CX')), $
+                      float(aoget_fits_keyword(hdr, 'pup3.CX'))]
 	self._real_cy = [ float(aoget_fits_keyword(hdr, 'pup0.CY')), $
-                      float(aoget_fits_keyword(hdr, 'pup1.CY')), $ 
-                      float(aoget_fits_keyword(hdr, 'pup2.CY')), $ 
-                      float(aoget_fits_keyword(hdr, 'pup3.CY'))] 
+                      float(aoget_fits_keyword(hdr, 'pup1.CY')), $
+                      float(aoget_fits_keyword(hdr, 'pup2.CY')), $
+                      float(aoget_fits_keyword(hdr, 'pup3.CY'))]
 	self._real_side = [ float(aoget_fits_keyword(hdr, 'pup0.SIDE')), $
-                        float(aoget_fits_keyword(hdr, 'pup1.SIDE')), $ 
-                        float(aoget_fits_keyword(hdr, 'pup2.SIDE')), $ 
-                        float(aoget_fits_keyword(hdr, 'pup3.SIDE'))] 
+                        float(aoget_fits_keyword(hdr, 'pup1.SIDE')), $
+                        float(aoget_fits_keyword(hdr, 'pup2.SIDE')), $
+                        float(aoget_fits_keyword(hdr, 'pup3.SIDE'))]
 	self._diffx = [ float(aoget_fits_keyword(hdr, 'pup0.DIFFX')), $
-                    float(aoget_fits_keyword(hdr, 'pup1.DIFFX')), $ 
-                    float(aoget_fits_keyword(hdr, 'pup2.DIFFX')), $ 
-                    float(aoget_fits_keyword(hdr, 'pup3.DIFFX'))] 
+                    float(aoget_fits_keyword(hdr, 'pup1.DIFFX')), $
+                    float(aoget_fits_keyword(hdr, 'pup2.DIFFX')), $
+                    float(aoget_fits_keyword(hdr, 'pup3.DIFFX'))]
 	self._diffy = [ float(aoget_fits_keyword(hdr, 'pup0.DIFFY')), $
-                    float(aoget_fits_keyword(hdr, 'pup1.DIFFY')), $ 
-                    float(aoget_fits_keyword(hdr, 'pup2.DIFFY')), $ 
-                    float(aoget_fits_keyword(hdr, 'pup3.DIFFY'))] 
+                    float(aoget_fits_keyword(hdr, 'pup1.DIFFY')), $
+                    float(aoget_fits_keyword(hdr, 'pup2.DIFFY')), $
+                    float(aoget_fits_keyword(hdr, 'pup3.DIFFY'))]
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOpupils', 'Represent WFS pupils') then return, 0
@@ -103,18 +103,20 @@ function AOpupils::Init, wfs_header, wunit
 	return, 1
 end
 
-pro aopupils::summary
+pro aopupils::summary, COMPREHENSIVE=COMPREHENSIVE
     print, string(format='(%"%-30s %d")','number of valid subapertures', self->nsub() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal radius of pupils [px]', self->radius() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal x-coord of centers [px]', self->cx() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal y-coord of centers [px]', self->cy() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured radius of pupils [px]', self->real_radius() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured x-coord of centers [px]', self->real_cx() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured y-coord of centers [px]', self->real_cy() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured sides between pupils centers [px]', self->real_side() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along x-axis [px]', self->diffx() )
-    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along y-axis [px]', self->diffy() )
     print, string(format='(%"%-30s %s")','pupils tracking number', self->pup_tracknum() )
+    if keyword_set(COMPREHENSIVE) then begin
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal radius of pupils [px]', self->radius() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal x-coord of centers [px]', self->cx() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','nominal y-coord of centers [px]', self->cy() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured radius of pupils [px]', self->real_radius() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured x-coord of centers [px]', self->real_cx() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured y-coord of centers [px]', self->real_cy() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','measured sides between pupils centers [px]', self->real_side() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along x-axis [px]', self->diffx() )
+	    print, string(format='(%"%-30s [%f,%f,%f,%f]")','pupils centers error along y-axis [px]', self->diffy() )
+	endif
 end
 
 function AOpupils::indpup
@@ -185,12 +187,12 @@ function AOpupils::isok, cause=cause
     if max(abs([mean(self->diffx()), mean(self->diffy())])) gt 0.2 then begin
         imok*=0B
         cause += ' - Pupils not on target'
-    endif  
+    endif
     return, imok
 end
 
 pro AOpupils::free
-  ;if ptr_valid(self._header) then ptr_free, self._header  
+  ;if ptr_valid(self._header) then ptr_free, self._header
   ;if ptr_valid(self._indpup) then ptr_free, self._indpup
 end
 

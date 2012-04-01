@@ -136,23 +136,23 @@ function AOwfs_status::slopes_null_fname
 	return, self._slopes_null_fname
 end
 
-pro AOwfs_status::summary
+pro AOwfs_status::summary, COMPREHENSIVE=COMPREHENSIVE
     print, string(format='(%"%-30s %s")','Unit number', self->wunit() )
-    print, string(format='(%"%-30s %f")','Frequency [Hz]', (self->ccd39())->framerate())
-    print, string(format='(%"%-30s %d")','Binning', (self->ccd39())->binning())
-    print, string(format='(%"%-30s %s")','Pup trackn', (self->pupils())->pup_tracknum() )
-    print, string(format='(%"%-30s %d")','Total num. of supabs', (self->pupils())->nsub())
     print, string(format='(%"%-30s %f")','Modulation', self->modulation() )
-    print, string(format='(%"%-30s %f")','Rerotator', self->rerotator() )
-    print, string(format='(%"%-30s %s")','FW1', (self->filtw1())->name() )
-    print, string(format='(%"%-30s %s")','FW2', (self->filtw2())->name() )
-    print, string(format='(%"%-30s %f  %f")','Camera lens', self->camera_lens() )
-    print, string(format='(%"%-30s %f  %f  %f")','Stages XYZ', self->stages() )
-    print, string(format='(%"%-30s %f")','Lamp', self->lamp_intensity() )
-    print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
-    print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
-    print, string(format='(%"%-30s %s")','SlopesNull fname', self->slopes_null_fname() )
-    if obj_valid(self->pupils()) then (self->pupils())->summary
+    if obj_valid(self->ccd39())  then  (self->ccd39())->summary, COMPREHENSIVE=COMPREHENSIVE
+    if obj_valid(self->pupils()) then (self->pupils())->summary, COMPREHENSIVE=COMPREHENSIVE
+    if obj_valid(self->filtw1()) then (self->filtw1())->summary, COMPREHENSIVE=COMPREHENSIVE
+    if obj_valid(self->filtw2()) then (self->filtw2())->summary, COMPREHENSIVE=COMPREHENSIVE
+
+    if keyword_set(COMPREHENSIVE) then begin
+	    print, string(format='(%"%-30s %f")','Rerotator', self->rerotator() )
+    	print, string(format='(%"%-30s %f  %f")','Camera lens', self->camera_lens() )
+    	print, string(format='(%"%-30s %f  %f  %f")','Stages XYZ', self->stages() )
+    	print, string(format='(%"%-30s %f")','Lamp', self->lamp_intensity() )
+    	print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
+    	print, string(format='(%"%-30s %f")','Cube stage', self->cube_stage() )
+   		print, string(format='(%"%-30s %s")','SlopesNull fname', self->slopes_null_fname() )
+   	endif
 end
 
 pro AOwfs_status::test

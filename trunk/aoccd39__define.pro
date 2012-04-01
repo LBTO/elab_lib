@@ -62,6 +62,16 @@ pro AOccd39::test
     d = self->dark_fname()
 end
 
+pro AOccd39::summary, COMPREHENSIVE=COMPREHENSIVE
+    print, string(format='(%"%-30s %d")','Binning', self->binning() )
+    print, string(format='(%"%-30s %f")','Frequency [Hz]', self->framerate() )
+	if keyword_set(COMPREHENSIVE) then begin
+    	print, string(format='(%"%-30s %f")','Readout speed [kpix/s]', self->readout_speed() )
+   		print, string(format='(%"%-30s %s")','CCD39 dark file', self->dark_fname() )
+   		print, string(format='(%"%-30s %s")','CCD39 status', self->status() )
+	endif
+end
+
 pro AOccd39::free
     ;if ptr_valid(self._header) then ptr_free, self._header
 end
