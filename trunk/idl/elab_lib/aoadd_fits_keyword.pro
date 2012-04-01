@@ -44,7 +44,8 @@ pro aoadd_fits_keyword, hdr, name, value, comment
     endcase
 
     if n_elements(comment) ne 0 then line += ' /' + comment
-    line += string(replicate(32b, 80-strlen(line))) 
-    hdr = [hdr[0:nentries-2],line, hdr[nentries-1]]
+    line += string(replicate(32b, 80-strlen(line)))
+    idx = where( strpos(hdr, 'END ') eq 0) 
+    hdr = [hdr[0:idx-1],line, hdr[idx:*]]
     return
 end
