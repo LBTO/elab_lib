@@ -4,7 +4,7 @@
 ; Much more restricted than sxaddpar, but support HIERARCH
 ;
 
-function aoadd_fits_keyword, hdr, name, value, comment
+pro aoadd_fits_keyword, hdr, name, value, comment
     
     nentries=n_elements(hdr)
     
@@ -45,5 +45,6 @@ function aoadd_fits_keyword, hdr, name, value, comment
 
     if n_elements(comment) ne 0 then line += ' /' + comment
     line += string(replicate(32b, 80-strlen(line))) 
-    return, [hdr[0:nentries-2],line, hdr[173]]
+    hdr = [hdr[0:nentries-2],line, hdr[nentries-1]]
+    return
 end
