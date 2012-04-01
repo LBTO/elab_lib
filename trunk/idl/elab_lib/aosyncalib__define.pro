@@ -29,20 +29,10 @@ function AOsyncalib::Init, im_tracknum, basis, syndata_dir=syndata_dir
 	self._exp_slmask = ptr_new(slmask)
 
 
-;	Telescope parameters:
-;======================================================================================
-	DpupM   = 8.222
-	self._DpupM = DpupM
-	oc		= 0.125			;This value was enlarged "by eye" from the official of 0.111
-							;to remove from syn IM the subapertures close to the OC subject
-							;to interpolation errors that caused spikes on the signals.
-	self._oc = oc
-
-
 ;	synthetic IM data:
 ;=======================================================================================
 	defsysv, '!FFTW_AVAILABLE', 0B
-	defsysv, '!FFTW_ARCETRI', 1B
+	if path_sep() eq '\' then defsysv, '!FFTW_ARCETRI', 0B else defsysv, '!FFTW_ARCETRI', 1B
 	init_parallel,0
 
 	binning = ((im_obj->wfs_status())->ccd39())->binning()
@@ -53,6 +43,10 @@ function AOsyncalib::Init, im_tracknum, basis, syndata_dir=syndata_dir
 
 	pyr = {pyr,					 	 $
 	Dpix				: 150L		,$ ; Telescope Pupil diameter (in pixels)
+	DpupM				: 8.222		,$ ; Telescope Diameter (m)
+	oc					: 0.125		,$ ; This value was enlarged "by eye" from the official of 0.111
+									   ;   to remove from syn IM the subapertures close to the OC subject
+									   ;   to interpolation errors that caused spikes on the signals.
 	n_sspp				: 30		,$ ; number of subapertures across the diameter of the pupil.
 	distanza_pup		: 36		,$ ; Separazione richiesta fra i centri di due pupille adiacenti (in pixels)
 	fov     			: 2.1		,$ ; WFS Field-of-view (in arcsec)
@@ -72,17 +66,23 @@ function AOsyncalib::Init, im_tracknum, basis, syndata_dir=syndata_dir
 
 	self._syn_pyr = ptr_new(pyr)
 
-	; CCD frame shifts:
-	;pups_shifts = [0.,0.]	; FLAO1
-	pups_shifts = [-0.5,0.]	; FLAO2
-
-	; Signal inversion [Sx,Sy] required for simulated signals in order to mimic the reflections
-	; introduced by the M3
-	;self._m3_sig_inv = [-1.,1.]	;FLAO1
-	self._m3_sig_inv = [1.,-1.]		;FLAO2
+	CASE (im_obj->wfs_status())->wunit() OF
+		'W1': begin		;W1 is installed in FLAO#2 (SX): left BACK bent-Gregorian focus!
+			pups_shifts = [-0.5,0.]
+			self._m3_sig_inv = [1.,-1.]
+		 end
+		'W2': begin		;W2 is installed in FLAO#1 (DX): right FRONT bent-Gregorian focus!
+			pups_shifts = [0.,0.]
+			self._m3_sig_inv = [-1.,1.]
+		 end
+		 else: begin
+		 	message, 'Wunit not recognized!', /info
+		 	return, 0
+		 end
+	ENDCASE
 
 	pyrm = init_pyr(pyr.Dpix, pyr.n_sspp, pyr.distanza_pup, pyr.ccd_size, $
-		fp_stop_diam = pyr.fov, binning=pyr.binning, DpupM = DpupM, lambda = pyr.lwfs, $
+		fp_stop_diam = pyr.fov, binning=pyr.binning, DpupM = pyr.DpupM, lambda = pyr.lwfs, $
 		shifts = pyr.shifts, pups_shifts=pups_shifts, verbose=1b)
 
 	self._syn_pyrm = ptr_new(pyrm)
@@ -159,7 +159,7 @@ pro AOsyncalib::visu_pups_on_ccd, amp_mod=amp_mod, steps_mod=steps_mod, pups_shi
 
 	pyrm   = self->syn_pyrm()
 	pyr   = self->syn_pyr()
-	mask1 = make_mask(pyr.Dpix, obs=self._oc)
+	mask1 = make_mask(pyr.Dpix, obs=pyr.oc)
 
 	; CCD frame (eventually tuning pups_shifts)
 	if n_elements(pups_shifts) eq 2 then pyrm.pups_shifts=pups_shifts
@@ -193,7 +193,8 @@ end
 
 ;	Synthetic IM calibration using a selected measured KL basis
 ;=======================================================================================
-function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, visu=visu
+function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, visu=visu $
+						, sigminmax=sigminmax, modamp=modamp, sigrms=sigrms
 	if not keyword_set(verbose) then verbose = 0b
 	if not keyword_set(visu) then visu = 0b
 	reflcoeff = 4L	;for measured intmats done with retro-reflector setup
@@ -214,7 +215,7 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	pyrpup = self->syn_pyrpup()
 	pyrm   = self->syn_pyrm()
 	pyr    = self->syn_pyr()
-	mask1 = make_mask(pyr.Dpix, obs=self._oc)
+	mask1 = make_mask(pyr.Dpix, obs=pyr.oc)
 	idx1 = where(mask1)
 
 	;Introduce shifts on the CCD frame
@@ -226,6 +227,7 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
 	klmode  = make_array(size=size(mask))
 	im1 = fltarr(nmodes,pyrpup.n_sspp*2L)
 	sigminmax = fltarr(nmodes,2)
+	sigrms = fltarr(nmodes,2)	;rms of Sx and Sy
 
 	for ii=0, nmodes-1 do begin
 		klmode[idx] = modemat[ii,*]
@@ -237,7 +239,10 @@ function AOsyncalib::syn_intmat, mymodes, anglerot, shiftval, verbose=verbose, v
     	slopes_neg = aso_pyr_v2(-modamp[ii]*klmode1, pyrm=pyrm, pyrpup=pyrpup, maskPup=mask1, ccd_dynamic_range=pyr.ccd_dynamic_range, $
                     	nphotons=1e6, amp_mod=pyr.amp_mod, steps_mod=pyr.steps_mod, verbose1=verbose, visu2=visu, windows=[0,1], dispfactor=4, ccdframe=frameNEG)
 
-		sigminmax[ii,*] = minmax((slopes_pos - slopes_neg)/2.)
+		sl_temp1 = (slopes_pos - slopes_neg)/2.
+		sigminmax[ii,*] = minmax(sl_temp1)
+		sigrms[ii,*] = [ rms(sl_temp1[0:pyrpup.n_sspp-1]), rms(sl_temp1[pyrpup.n_sspp:*]) ]
+
 		sl_temp = (slopes_pos - slopes_neg)/(2.*modamp[ii])
 
 		;Apply signal inversions
@@ -397,42 +402,53 @@ pro AOsyncalib::export_synmat, anglerot, shiftval, export_date=export_date, nmod
 	synmat_fname = filepath(root=self->syndata_dir(), synmat_fname)
 	if file_test(synmat_fname) then restore, synmat_fname, verbose=verbose else begin
 		mymodes = lindgen(max_nmodes)
-		matinter = self->syn_intmat(mymodes, anglerot, shiftval, verbose=verbose)
-		save, matinter, filename=synmat_fname, /compress
+		matinter = self->syn_intmat(mymodes, anglerot, shiftval, verbose=verbose, sigminmax=sigminmax $
+						, modamp=modamp, sigrms=sigrms )
+		pyrpup = self->syn_pyrpup()
+		pyrm   = self->syn_pyrm()
+		pyr    = self->syn_pyr()
+		save, matinter, sigminmax, modamp, sigrms, pyrpup, pyrm, pyr, filename=synmat_fname, /compress
 	endelse
 
 	;If requested, export a synthetic IM with a lower number of modes
-	if n_elements(nmodes) eq 0 then nmodes = max_nmodes
-	matinter = matinter[0:nmodes-1,*]
-	matinter = self->scramble_syn2exp(matinter)
+	if n_elements(nmodes) eq 0 then nmodes = [max_nmodes]
 
-	;Prepare fits to hold exported IM
-	if n_elements(export_date) eq 0 then begin
-		today_date = bin_date()
-		export_date = 	string(today_date[0],format='(i4)') 	+ $
-						string(today_date[1],format='(i02)')	+ $
-						string(today_date[2],format='(i02)')
-	endif
-	export_tracknum = export_date + '_' + string(nmodes, format='(i06)')
-	export_fname = 'Intmat_'+export_tracknum+'.fits'
-	exp_hdr = self._expim_obj->header()
-	mkhdr, hdr, matinter, /EXTEND
-  	sxaddpar, hdr, 'IM_TYPE', 'SYN', 'IM calib method'
-  	sxaddpar, hdr, 'EXP_IM', self._expim_obj->fname(), 'measured IM matched'
-  	sxaddpar, hdr, 'ANGLEROT', anglerot, 'ASM angle (degrees)'
-  	sxaddpar, hdr, 'X_SHIFT', shiftval[0], 'ASM x-shift (% of pupil size)'
-  	sxaddpar, hdr, 'Y_SHIFT', shiftval[1], 'ASM y-shift (% of pupil size)'
-	sxaddpar, hdr, 'FILETYPE', 'intmat'
-	sxaddpar, hdr, 'M2C', 		aoget_fits_keyword(exp_hdr, 'M2C')
-	sxaddpar, hdr, 'BINNING', 	aoget_fits_keyword(exp_hdr, 'BINNING')
-	sxaddpar, hdr, 'IM_MODES', 	nmodes
-	sxaddpar, hdr, 'PUPILS', 	aoget_fits_keyword(exp_hdr, 'PUPILS')
-	sxaddpar, hdr, 'INSTR', 	aoget_fits_keyword(exp_hdr, 'INSTR')
-	sxaddpar, hdr, 'SENSOR', 	aoget_fits_keyword(exp_hdr, 'SENSOR')
-	sxaddpar, hdr, 'W_UNIT', 	aoget_fits_keyword(exp_hdr, 'W_UNIT')
-	sxaddpar, hdr, 'LAMBDA_D', (self->syn_pyr()).amp_mod
-	writefits, filepath(root=self->syndata_dir(), export_fname), matinter, hdr
+	for jj=0, n_elements(nmodes)-1 do begin
+		matinter1 = matinter[0:nmodes[jj]-1,*]
+		matinter1 = self->scramble_syn2exp(matinter1)
 
+		;Prepare fits to hold exported IM
+		if n_elements(export_date) eq 0 then begin
+			today_date = bin_date()
+			export_date = 	string(today_date[0],format='(i4)') 	+ $
+							string(today_date[1],format='(i02)')	+ $
+							string(today_date[2],format='(i02)')
+		endif
+		export_tracknum = export_date + '_' + string(nmodes[jj], format='(i06)')
+		export_fname = 'Intmat_'+export_tracknum+'.fits'
+		exp_hdr = self._expim_obj->header()
+		mkhdr, hdr, matinter1, /EXTEND
+	  	sxaddpar, hdr, 'IM_TYPE', 'SYN', 'IM calib method'
+	  	sxaddpar, hdr, 'EXP_IM', self._expim_obj->fname(), 'measured IM matched'
+	  	sxaddpar, hdr, 'ANGLEROT', anglerot, 'ASM angle (degrees)'
+	  	sxaddpar, hdr, 'X_SHIFT', shiftval[0], 'ASM x-shift (% of pupil size)'
+	  	sxaddpar, hdr, 'Y_SHIFT', shiftval[1], 'ASM y-shift (% of pupil size)'
+	  	sxaddpar, hdr, 'X_SIGINV', self._m3_sig_inv[0], 'Signal inversion [Sx] caused by M3 reflection'
+	  	sxaddpar, hdr, 'Y_SIGINV', self._m3_sig_inv[1], 'Signal inversion [Sy] caused by M3 reflection'
+	  	sxaddpar, hdr, 'SYN_SAV', synmat_fname, '.sav file with synthetic IM calib data'
+		sxaddpar, hdr, 'FILETYPE', 'intmat'
+		sxaddpar, hdr, 'M2C', 		aoget_fits_keyword(exp_hdr, 'M2C')
+		sxaddpar, hdr, 'BINNING', 	aoget_fits_keyword(exp_hdr, 'BINNING')
+		sxaddpar, hdr, 'IM_MODES', 	nmodes[jj]
+		sxaddpar, hdr, 'PUPILS', 	aoget_fits_keyword(exp_hdr, 'PUPILS')
+		sxaddpar, hdr, 'INSTR', 	aoget_fits_keyword(exp_hdr, 'INSTR')
+		sxaddpar, hdr, 'SENSOR', 	aoget_fits_keyword(exp_hdr, 'SENSOR')
+		sxaddpar, hdr, 'W_UNIT', 	aoget_fits_keyword(exp_hdr, 'W_UNIT')
+		aoadd_fits_keyword, hdr, 'tt.LAMBDA_D', (self->syn_pyr()).amp_mod
+		aoadd_fits_keyword, hdr, 'ccd39.BINNING', aoget_fits_keyword(exp_hdr, 'ccd39.BINNING')
+		aoadd_fits_keyword, hdr, 'sc.PUPILS', aoget_fits_keyword(exp_hdr, 'sc.PUPILS')
+		writefits, filepath(root=self->syndata_dir(), export_fname), matinter1, hdr
+	endfor
 end
 
 ;function AOsyncalib::exp_sl2d, slopevec
@@ -512,8 +528,6 @@ end
 
 pro AOsyncalib__define
     struct = { AOsyncalib, $
-    	_DpupM			   : 0.		   , $
-    	_oc				   : 0.		   , $
         _modeShapes		   : obj_new() , $
         _expim_obj		   : obj_new() , $
         _im_tracknum	   : ""		   , $
@@ -524,7 +538,8 @@ pro AOsyncalib__define
         _syn_pyrpup		   : ptr_new() , $
         _syn_pyrpup_fname  : ""		   , $
         _syn_slmask		   : ptr_new() , $
-        _m3_sig_inv		   : [0.,0.]   , $
+        _m3_sig_inv		   : [0.,0.]   , $		; Signal inversion [Sx,Sy] required for simulated signals
+        										; in order to mimic the reflections introduced by the M3
         _syndata_dir	   : ""		     $
 	}
 end
