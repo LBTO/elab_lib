@@ -23,6 +23,8 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
                 nobj-1:    tags = tags[0:nobj-2]
                 else:      tags = [ tags[0:pos-1], tags[pos+1:*] ]
             endcase
+            ptr_free, self._tag_list
+            self._tag_list = ptr_new(tags)
             self._obj_list->Remove, pos=pos
         endif else begin
             obj = self._obj_list->Get(pos=pos)
