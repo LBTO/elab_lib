@@ -11,9 +11,9 @@ end
 
 function aomultiton_m2c::getobj, fname, recompute=recompute
     if fname eq "" then return, obj_new()
+    if (n_elements(*self._tag_list)-1) ne self._obj_list->Count() then message, 'FATAL ERROR'
 
-    tags = *self._tag_list
-    pos = where(tags eq fname, cnt)
+    pos = where(*self._tag_list eq fname, cnt)
 
     ; object is already in the list
     if cnt ne 0 then begin
@@ -27,6 +27,7 @@ function aomultiton_m2c::getobj, fname, recompute=recompute
             obj = obj_new('AOm2c', fname, recompute=recompute)
             if not obj_valid(obj) then begin
                 ; remove fname from the tag list
+                tags = *self._tag_list
                 ptr_free, self._tag_list
                 self._tag_list = ptr_new([tags[0:pos-1], tags[pos+1:*]])
                 return, obj_new()
@@ -41,6 +42,7 @@ function aomultiton_m2c::getobj, fname, recompute=recompute
     oo = obj_new('AOm2c', fname, recompute=recompute)
     if not obj_valid(oo) then return, obj_new()
 
+    tags = *self._tag_list
     ptr_free, self._tag_list
     self._tag_list = ptr_new([fname, tags])
     self._obj_list->add, oo, pos=0

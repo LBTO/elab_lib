@@ -7,9 +7,9 @@ end
 
 function aomultiton_modeshapes::getobj, fname
     if fname eq "" then return, obj_new()
+    if (n_elements(*self._tag_list)-1) ne self._obj_list->Count() then message, 'FATAL ERROR'
 
-    tags = *self._tag_list
-    pos = where(tags eq fname, cnt)
+    pos = where(*self._tag_list eq fname, cnt)
     if cnt gt 1 then message, 'Elablib error. 2 modes shapes with the same name saved in a aomultiton_modeshapes'
     if cnt ne 0 then begin
         obj = self._obj_list->Get(pos=pos)
@@ -23,6 +23,7 @@ function aomultiton_modeshapes::getobj, fname
         return, obj_new()
     endif
 
+    tags = *self._tag_list
     ptr_free, self._tag_list
     self._tag_list = ptr_new([fname, tags])
     self._obj_list->add, oo, pos=0
