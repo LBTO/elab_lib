@@ -51,8 +51,8 @@ function AOintmat_meas::Init
 	if file_test(acq_params_fn[0]) then begin
 		restore, acq_params_fn[0]
 		if n_elements(params) ne 0  then begin
-			rec_file  = params.recfile
-			gain_file = params.gainfile
+			if tag_exist(params,'recfile',/QUIET) then rec_file  = params.recfile
+			if tag_exist(params,'gainfile',/QUIET) then gain_file = params.gainfile
 		endif else begin
 			rec_file = ''
 			gain_file = ''
