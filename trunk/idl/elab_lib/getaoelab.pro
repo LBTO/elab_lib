@@ -8,6 +8,7 @@ end
 ;
 function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
     if tn eq "" then return, obj_new()
+    if (n_elements(*self._tag_list)-1) ne self._obj_list->Count() then message, 'FATAL ERROR'
 
     tags = *self._tag_list
     pos = where(tags eq tn, cnt)
@@ -37,6 +38,8 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
         return, obj_new()
     endif
     
+    ; read tags again. It may have been modified by re-entrant call
+    tags = *self._tag_list
     ptr_free, self._tag_list
     self._tag_list = ptr_new([tn, tags])
     self._obj_list->add, oo, pos=0 

@@ -7,9 +7,9 @@ end
 
 function aomultiton_im::getobj, fname
     if fname eq "" then return, obj_new()
-
-    tags = *self._tag_list
-    pos = where(tags eq fname, cnt)
+    if (n_elements(*self._tag_list)-1) ne self._obj_list->Count() then message, 'FATAL ERROR. CALL FQP'
+    
+    pos = where(*self._tag_list eq fname, cnt)
     if cnt ne 0 then begin
         obj = self._obj_list->Get(pos=pos)
         if not obj_valid(obj) then message, 'Elablib error. aointmat object not valid '+fname
@@ -19,6 +19,7 @@ function aomultiton_im::getobj, fname
     oo = obj_new('AOintmat', fname)
     if not obj_valid(oo) then return, obj_new()
 
+    tags = *self._tag_list
     ptr_free, self._tag_list
     self._tag_list = ptr_new([fname, tags])
     self._obj_list->add, oo, pos=0
