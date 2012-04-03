@@ -39,6 +39,11 @@ function AOelab::Init, tracknum, $
         file_chmod,  self._elabdir, /a_read, /a_write
     endif
 
+    ; Override object. must be first of the list (?)
+    override_fname = filepath(root=self._datadir,  'override_'+tracknum+'.sav')
+    self._override = obj_new('AOoverride', override_fname) 
+
+    ; tracknum object
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
 
     ; create adsec_status leaf
@@ -59,10 +64,11 @@ function AOelab::Init, tracknum, $
     if not obj_valid(self._wfs_status) then message, 'Warning: wfs object not available!', /info ;return, 0
 
 	; Global variables (e.g. telescope diameter and OC, ...)
-	ao_global_data_init, (self._wfs_status)->wunit()
-
-	; create telescope leaf
-	self._tel = obj_new('AOtel', self, wfs_status_file)
+	if obj_valid(self->wfs_status()) then begin
+        ao_global_data_init, (self._wfs_status)->wunit()
+	    ; create telescope leaf
+	    self._tel = obj_new('AOtel', self, wfs_status_file)
+    endif
 
 	; Operation mode: "RR"    : @SolarTower, or @Telescope with RR.
 	;				  "ONSKY" : @Telescope on-sky!
@@ -78,6 +84,9 @@ function AOelab::Init, tracknum, $
 			endelse
 		;endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
+    ; operation mode can be overridden
+    catch, err
+    if err ne 0 then catch, /cancel else self._operation_mode = (self->override())->overriden_value('operation_mode')
 
 
 	;Single or double reflection
@@ -301,6 +310,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._accel) then self->addleaf, self._accel, 'accel'
     if obj_valid(self._slopes_null) then self->addleaf, self._slopes_null, 'slopesnull'
     if obj_valid(self._modes_null) then self->addleaf, self._modes_null, 'modesnull'
+    if obj_valid(self._override) then self->addleaf, self._override, 'override'
 
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -330,9 +340,14 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "offloadmodes()", "reference to offload modes object (AOoffloadmodes)"
     self->addMethodHelp, "accel()", "reference to adsec accelerometer data object (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz) (AOaccel)"
     self->addMethodHelp, "slopesnull()", "reference to a slopesnull object (AOslopes)"
+    self->addMethodHelp, "modesnull()", "reference to a modesnull object (AOresidual_modes)"
+    self->addMethodHelp, "override()", "reference to a override object (AOoverride)"
+    self->addMethodHelp, "isOK(cause=cause)", "return 1 if diagnostic flags are OK. 0 otherwise"
+    self->addMethodHelp, "errorDescription()", "return the error description in case isOK return 0"
+    self->addMethodHelp, "closedloop()", "return 1 if loop is closed"
     self->addMethodHelp, "mag()", "equivalent star magnitude (R)"
     self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
-    self->addMethodHelp, "modalplot", "Plot the modal performance evaluation"
+    self->addMethodHelp, "modalplot, /overplot, color=color", "Plot the modal performance evaluation"
     self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
     self->addMethodHelp, "meas_type()", "Return the type of measurement: LOOP, NCPA (non-common path calibration), AG (autogain)"
     self->addMethodHelp, "psf", "quick psf display"
@@ -548,6 +563,7 @@ pro AOelab::fullsummary
     if obj_valid(self._accel) then if obj_hasmethod(self._accel, 'summary') then self._accel->summary
     if obj_valid(self._slopes_null) then if obj_hasmethod(self._slopes_null, 'summary') then self._slopes_null->summary
     if obj_valid(self._modes_null) then if obj_hasmethod(self._modes_null, 'summary') then self._modes_null->summary
+    if obj_valid(self._override) then if obj_hasmethod(self._override, 'summary') then self._override->summary
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -799,6 +815,10 @@ function AOelab::modes_null
     IF (OBJ_VALID(self._modes_null)) THEN return, self._modes_null else return, obj_new()
 end
 
+function AOelab::override
+    IF (OBJ_VALID(self._override)) THEN return, self._override else return, obj_new()
+end
+
 function AOelab::ex, cmd,  isvalid=isvalid
   	apex = string(39B)
 
@@ -889,6 +909,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._accel )) THEN  self._accel->free
     IF (OBJ_VALID(self._slopes_null)) THEN  self._slopes_null->free
     IF (OBJ_VALID(self._modes_null)) THEN  self._modes_null->free
+    IF (OBJ_VALID(self._override)) THEN  self._override->free
 end
 
 pro AOelab::Cleanup
@@ -920,6 +941,7 @@ pro AOelab::Cleanup
     obj_destroy, self._accel
     obj_destroy, self._slopes_null
     obj_destroy, self._modes_null
+    obj_destroy, self._override
     self->AOhelp::Cleanup
 end
 
@@ -960,6 +982,7 @@ pro AOelab__define
         _accel             : obj_new(), $
         _slopes_null       : obj_new(), $
         _modes_null        : obj_new(), $
+        _override          : obj_new(), $
         INHERITS AOhelp $
     }
 end

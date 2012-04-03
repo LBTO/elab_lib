@@ -391,6 +391,7 @@ pro aodataset::modalplot, _extra=ex
 	endcase
 	for ii=0, self->count()-1 do begin
 		ao = getaoelab(self->get(pos=ii))
+        if not obj_valid(ao) then continue
 		if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
 						ao->modalplot, /OVERPLOT, COLOR=cols[ii]
 	endfor
