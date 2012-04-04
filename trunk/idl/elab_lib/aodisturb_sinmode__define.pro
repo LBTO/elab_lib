@@ -8,6 +8,7 @@ function AOdisturb_sinmode::Init, root_obj
     hdr = self->header()
     self._nmodulatedmodes = long(get_fits_keyword(hdr, 'NMODES'))
     if self._nmodulatedmodes eq 0 then begin ; old format with just one frequency
+    	self._nmodulatedmodes = 1
 	    self._sin_freq = ptr_new(float(get_fits_keyword(hdr, 'FREQEFF')))
 	    self._sin_mode = ptr_new(long(get_fits_keyword(hdr, 'MODE')))
 	    self._mode_amp = ptr_new(float(get_fits_keyword(hdr, 'AMP')))
@@ -20,8 +21,8 @@ function AOdisturb_sinmode::Init, root_obj
             sinmode[i] = long(get_fits_keyword(hdr, 'MODE'+strtrim(i,2)))
             modeamp[i] = float(get_fits_keyword(hdr, 'AMP'+strtrim(i,2)))
         endfor
-	    self._sin_freq = ptr_new(sinfreq) 
-	    self._sin_mode = ptr_new(sinmode) 
+	    self._sin_freq = ptr_new(sinfreq)
+	    self._sin_mode = ptr_new(sinmode)
 	    self._mode_amp = ptr_new(modeamp)
     endelse
 
@@ -77,9 +78,9 @@ end
 pro AOdisturb_sinmode__define
     struct = { AOdisturb_sinmode, $
         _nmodulatedmodes		: 0L		, $		; [Hz]
-        _sin_mode               : ptr_new() , $     
+        _sin_mode               : ptr_new() , $
         _mode_amp               : ptr_new() , $     ; [m]
-        _sin_freq               : ptr_new() , $     ; [Hz] 
+        _sin_freq               : ptr_new() , $     ; [Hz]
         ;_sin_mode				: 0L		, $		;
 		;_mode_amp				: 0.		, $		; [m]
        ; _sin_freq				: 0.		, $		; [Hz]
