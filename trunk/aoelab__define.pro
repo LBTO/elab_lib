@@ -41,7 +41,7 @@ function AOelab::Init, tracknum, $
 
     ; Override object. must be first of the list (?)
     override_fname = filepath(root=self._datadir,  'override_'+tracknum+'.sav')
-    self._override = obj_new('AOoverride', override_fname) 
+    self._override = obj_new('AOoverride', override_fname)
 
     ; tracknum object
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
@@ -74,7 +74,7 @@ function AOelab::Init, tracknum, $
 	;				  "ONSKY" : @Telescope on-sky!
 	if obj_valid(self._tel) then begin
 		;if (self->tel())->el() lt 89. then self._operation_mode = "ONSKY" $
-		; ADI breaks next check! 
+		; ADI breaks next check!
         ;if not (finite( (self->tel())->rot_angle())) then self._operation_mode = "RR" else begin
 
 			if ((self->wfs_status())->cube_stage() lt -40.) then self._operation_mode = "ONSKY" else $
@@ -573,10 +573,10 @@ end
 pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
     if self->operation_mode() eq "RR" then begin
 		nmodes = (self->modalpositions())->nmodes()
-		clvar  = (self->modalpositions())->time_variance() * (1e9*self->reflcoef())^2.
+		clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
 		yrange = sqrt(minmax(clvar))
     	if obj_valid(self._disturb) then begin
-    		olvar  = (self->modaldisturb())->time_variance() * (1e9*self->reflcoef())^2.
+    		olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
     		yrange = sqrt(minmax([clvar,olvar]))
     	endif
         if not keyword_set(OVERPLOT) then  begin
@@ -588,8 +588,8 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 		if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
 	endif else begin
 ;		nmodes = (self->residual_modes())->nmodes()
-		clvar  = (self->residual_modes())->time_variance() * (1e9*self->reflcoef())^2.
-		olvar  = (self->olmodes())->time_variance() * (1e9*self->reflcoef())^2.
+		clvar  = (self->residual_modes())->time_variance() * ((self->residual_modes())->norm_factor())^2.
+		olvar  = (self->olmodes())->time_variance() * ((self->olmodes())->norm_factor())^2.
 		modes_idx = (self->modal_rec())->modes_idx()
 		clvar  = clvar[modes_idx]
 		olvar  = olvar[modes_idx]
@@ -619,12 +619,12 @@ pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 		endif
 		; corrected PSD
 		freq   = (self->modalpositions())->freq()
-		psd    = (self->modalpositions())->psd() * (1e9*self->reflcoef())^2.
+		psd    = (self->modalpositions())->psd() * ((self->modalpositions())->norm_factor())^2.
 		; disturbance PSD
 		if obj_valid(self._disturb) then $
 	  	if (self->disturb())->dist_freq() ne -1 then begin
 			olfreq = (self->modaldisturb())->freq()
-			olpsd  = (self->modaldisturb())->psd() * (1e9*self->reflcoef())^2.
+			olpsd  = (self->modaldisturb())->psd() * ((self->modaldisturb())->norm_factor())^2.
 			yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
 	  	endif else begin
 	  		message, 'disturbance frequency data not available', /info
@@ -638,11 +638,11 @@ pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 		endif
 		; corrected PSD
 		freq   = (self->residual_modes())->freq()
-		psd    = (self->residual_modes())->psd() * (1e9*self->reflcoef())^2.
+		psd    = (self->residual_modes())->psd() * ((self->residual_modes())->norm_factor())^2.
 		; OL rec PSD
 		if obj_valid(self._olmodes) then begin
 			olfreq = (self->olmodes())->freq()
-			olpsd  = (self->olmodes())->psd() * (1e9*self->reflcoef())^2.
+			olpsd  = (self->olmodes())->psd() * ((self->olmodes())->norm_factor())^2.
 			yrange=sqrt(minmax([olpsd[1:*,modenum],psd[1:*,modenum]]))
 	  	endif else begin
 	  		message, 'olmodes data not available', /info

@@ -76,7 +76,7 @@ pro AOolmodes::datiProducer
   if file_test(self._store_fname) then begin
     restore, self._store_fname
   endif else begin
-    rmodes = (self._root_obj->residual_modes())->modes()
+    rmodes = (self._root_obj->residual_modes())->mistmatch_factor() * (self._root_obj->residual_modes())->modes()
     imodes = (self._root_obj->modes())->modes()
     sz = size(rmodes,/dim)
     nframes = sz[0]
@@ -139,7 +139,7 @@ function AOolmodes::r0, lambda=lambda, PLOT=PLOT
   if self._r0 eq -1. then self->retrieve_r0
 
   if keyword_set(PLOT) then begin
-    olrms = sqrt(self->time_variance()) * 1e9 * self._root_obj->reflcoef()	;nm wf rms
+    olrms = sqrt(self->time_variance()) * self->norm_factor()	;nm wf rms
     nmodes = self->nmodes()
     modes_idx = (self._root_obj->modal_rec())->modes_idx()
     olrms = olrms[modes_idx]

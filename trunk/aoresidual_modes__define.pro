@@ -3,7 +3,17 @@
 ; Residual modes m=Rs
 ;
 ; modes are in meter rms, surface.
-; To convert to wavefront use self->reflcoef()
+; To convert to wavefront use self->norm_factor()
+;
+;	 R: reconstruction matrix
+;
+;	 s: slopes vector
+;
+;    alfa: gain factor (optical pyramid gain (TO BE IMPLEMENTED) and IM mismatch factor
+;
+; NOTE: since IMs were calibrated with retroreflector, and NOT divided by 2 to take into account
+;       of the double-pass, ONSKY residual modes are under-estimated by a factor 2.
+;       This factor is now taken into account below as self._mistmatch_factor
 ;
 ;-
 
@@ -26,10 +36,11 @@ function AOresidual_modes::Init, root_obj, slopes_obj, modal_rec_obj, store_labe
     self._root_obj      = root_obj
     self._slopes_obj    = slopes_obj
     self._modal_rec_obj = modal_rec_obj
+    self._mistmatch_factor = self._root_obj->operation_mode() eq 'RR' ? 1. : 2.
 
     ; initialize time series
     if not self->AOtime_series::Init((root_obj->frames_counter())->deltat(), fftwindow="hamming", nwindows=root_obj->n_periods()) then return,0
-	self._norm_factor   = 1e9 * self._root_obj->reflcoef()	;nm wf
+	self._norm_factor   = 1e9 * self._root_obj->reflcoef() * self._mistmatch_factor	;nm wf
 	self._spectra_units = textoidl('[nm-wf]')
 	self._plots_title = root_obj->tracknum()
 
@@ -54,7 +65,7 @@ pro AOresidual_modes::datiProducer
     endif else begin
         ; compute residual modes from slopes and modal rec
         t_rec = (self._modal_rec_obj->rec())[*, 0:self._modal_rec_obj->lastmode()]
-        modes =  t_rec ##  self._slopes_obj->slopes()
+        modes = t_rec ##  self._slopes_obj->slopes()
         save, modes, file=self._store_fname
     endelse
     self._modes = ptr_new(modes, /no_copy)
@@ -75,7 +86,7 @@ function AOresidual_modes::nmodes
 end
 
 pro AOresidual_modes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, overplot=overplot
-    coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6
+    coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6 * self._mistmatch_factor
     freq = self->freq(from=from_freq, to=to_freq)
     tip  = self->power(0, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
     tilt = self->power(1, from=from_freq, to=to_freq, /cum) * coeff2arcsec^2
@@ -118,6 +129,12 @@ pro AOresidual_modes::Cleanup
     self->AOhelp::Cleanup
 end
 
+
+function AOresidual_modes::mistmatch_factor
+	return, self._mistmatch_factor
+end
+
+
 pro AOresidual_modes__define
     struct = { AOresidual_modes, $
         _modes         : ptr_new(), $
@@ -125,6 +142,7 @@ pro AOresidual_modes__define
         _root_obj      : obj_new(), $
         _modal_rec_obj : obj_new(), $
         _slopes_obj    : obj_new(), $
+        _mistmatch_factor : 0.	  , $
         INHERITS    AOwf, $
         INHERITS    AOtime_series, $
         INHERITS    AOhelp $
