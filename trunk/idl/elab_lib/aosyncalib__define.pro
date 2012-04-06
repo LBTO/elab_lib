@@ -526,6 +526,24 @@ function AOsyncalib::syndata_dir
 	return, self._syndata_dir
 end
 
+pro AOsyncalib::free
+	ptr_free, self._exp_slmask
+	ptr_free, self._syn_pyr
+	ptr_free, self._syn_pyrm
+	ptr_free, self._syn_pyrpup
+	ptr_free, self._syn_slmask
+end
+
+pro AOsyncalib::Cleanup
+	obj_destroy, self._modeShapes
+	obj_destroy, self._expim_obj
+	ptr_free, self._exp_slmask
+	ptr_free, self._syn_pyr
+	ptr_free, self._syn_pyrm
+	ptr_free, self._syn_pyrpup
+	ptr_free, self._syn_slmask
+end
+
 pro AOsyncalib__define
     struct = { AOsyncalib, $
         _modeShapes		   : obj_new() , $
