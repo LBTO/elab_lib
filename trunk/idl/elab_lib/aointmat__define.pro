@@ -26,18 +26,18 @@ function AOintmat::Init, fname
 	im_type = strtrim(aoget_fits_keyword(header, 'IM_TYPE'))
     self._im_file_fitsheader = ptr_new(header, /no_copy)
 
-	; synthetic, on-sky calibration, or classical measured IM with RR?
+	; synthetic, sinusoidal calibration, or classical measured IM with RR?
 	CASE im_type  OF
 		'SYN' : begin
 				self._im_type = 'SYN'
 				;self->AOintmat_syn::Init()
 			end
-		'ONSKY_CALIB' : begin
-				self._im_type = 'ONSKY_CALIB'
+		'SINUS' : begin
+				self._im_type = 'SINUS'
 				message, 'onsky calib IM: not supported yet...', /info
 			end
 		else : begin
-				self._im_type = 'RR_CALIB'
+				self._im_type = 'CLASSIC'
 				if not self->AOintmat_meas::Init() then message, 'IM calib with RR: extended info not available', /info
 			end
 	ENDCASE
@@ -47,7 +47,7 @@ function AOintmat::Init, fname
     if not self->AOhelp::Init('AOintmat', 'Represent an interaction matrix (IM)') then return, 0
     self->addMethodHelp, "fname()",   	"fitsfile name (string)"
     self->addMethodHelp, "header()",  	"header of fitsfile (strarr)"
-    self->addMethodHelp, "im_type()",	"calibration method (RR, ONSKY, SYNTHETIC)"
+    self->addMethodHelp, "im_type()",	"calibration method (CLASSIC, SINUS, SYNTHETIC)"
     self->addMethodHelp, "basis()",		"modal basis calibrated"
     self->addMethodHelp, "im()", 		"interaction matrix"
     self->addMethodHelp, "sx([idx])", 	"x-slopes (idx: index to selected modes)"
@@ -61,7 +61,7 @@ function AOintmat::Init, fname
     self->addMethodHelp, "nslopes()", "number of non-null rows in IM"
     self->addMethodHelp, "slopes_idx()", "index vector of non-null rows in IM"
     self->addMethodHelp, "wfs_status()", "reference to wfs_status object"
-    if self._im_type eq 'RR_CALIB' then self->AOintmat_meas::addHelp, self
+    if self._im_type eq 'CLASSIC' then self->AOintmat_meas::addHelp, self
 
     return, 1
 end
