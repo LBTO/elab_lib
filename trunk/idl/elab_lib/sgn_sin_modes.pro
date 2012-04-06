@@ -15,7 +15,8 @@
 ;          does not give the correct sign of subaperture amplitude. To set the correct sign
 ;          do that:
 ;          sens_amp_mat[idx] *= -1
-
+;		   sens_amp_mat *= delay/abs(delay)
+;
 ;    delay: Estimate of the phase delay (rad)
 ;+
 
@@ -61,6 +62,7 @@ function sgn_sin_modes, delta_mat, VISU=VISU, WIN_ID=win_id, N_TERMS_FIT=n_terms
     oplot, [!PI/2,!PI/2], [0,max(hist)*2], linestyle=2
     oplot, [-!PI/2,-!PI/2], [0,max(hist)*2], linestyle=2
     oplot, cbinx, ff[0]*exp(-((cbinx-ff[1])/ff[2])^2/2)+ff[3]+ff[4]*cbinx+ff[5]*cbinx^2, COLOR=255L, thick=1.5
+    wait,2.0
   endif
 
   idx = where(abs(delta_mat-delay) le !DPI/2, count, comp=idx_comp)
