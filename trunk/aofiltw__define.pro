@@ -44,7 +44,103 @@ end
 ;-
 pro AOfiltw::filtw_data, wunit, fw_number
 
-  if strmid(wunit,0,1) eq 'W' then begin	;LBT
+  if wunit eq 'W1' then begin	;LBT W1 (FLAO2) 
+	CASE fw_number OF
+
+;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;		      the TRANSMITTED light goes towards the CCD39
+	'1': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'Dichroic 600-1000 nm', $
+									  "R"	,0.05				, $
+									  "T"	,0.95				, $
+									  "CW"	,800.				, $
+									  "BW"	,400.				)
+
+			1: data_struct = CREATE_STRUCT("name", 'Dichroic 700-1000 nm', $
+									  "R"	,0.05				, $
+									  "T"	,0.95				, $
+									  "CW"	,850.				, $
+									  "BW"	,300.				)
+
+			2: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'	, $
+									  "R"	,0.50				, $
+									  "T"	,0.50				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!values.F_INFINITY	)
+
+			3: data_struct = CREATE_STRUCT("name", 'R = 90%, T= 10%'	, $
+									  "R"	,0.90				, $
+									  "T"	,0.10				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'Silver mirror (R=100%)'	, $
+									  "R"	,1.0				, $
+									  "T"	,0.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			5: data_struct = CREATE_STRUCT("name", 'R = 0.4%, T = 99.6%'	, $
+									  "R"	,0.004				, $
+									  "T"	,0.996				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+
+		 ENDCASE
+
+	'2': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			1: data_struct = CREATE_STRUCT("name", 'FB850-10'	, $
+									  "R"	,0.50				, $
+									  "T"	,0.50				, $
+									  "CW"	,850. 				, $
+									  "BW"	,10.	)
+
+			2: data_struct = CREATE_STRUCT("name", 'FB900-10'	, $
+									  "R"	,0.50				, $
+									  "T"	,0.50				, $
+									  "CW"	,900. 				, $
+									  "BW"	,10.	)
+
+			3: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'FB700-10'	, $
+									  "R"	,0.50				, $
+									  "T"	,0.50				, $
+									  "CW"	,700. 				, $
+									  "BW"	,10.	)
+
+			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+		 ENDCASE
+	ENDCASE
+    endif else if wunit eq 'W2' then begin	;LBT W2 (FLAO1) 
 	CASE fw_number OF
 
 ;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
@@ -141,7 +237,7 @@ pro AOfiltw::filtw_data, wunit, fw_number
 		 ENDCASE
 	ENDCASE
 
-  endif else if wunit eq 'MAG' then begin
+    endif else if wunit eq 'MAG' then begin
 
 	CASE fw_number OF
 
