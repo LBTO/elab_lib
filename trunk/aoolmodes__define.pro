@@ -8,6 +8,11 @@ function AOolmodes::Init, root_obj
 
   if root_obj->operation_mode() ne 'ONSKY' then return,0
 
+  if not obj_valid(root_obj->frames_counter()) then begin
+    message, 'OLmodes cannot be reconstructed: frames counter not available.',/info
+    return, 0
+  endif
+
   self._totdelay   = 2L	;Assuming a total of 2 frames delay
   self._decimation = (root_obj->frames_counter())->decimation()
   self._nnMin  =  4L
