@@ -82,6 +82,22 @@ function AOTV::exptime
 	return, self._exptime
 end
 
+;
+; Override AOframe::rawimage because CCD47 is saved with dark subtracted
+;
+function AOTV::rawImage, dark_correct=dark_correct, badpixel_correct=badpixel_correct, linenoise_correct=linenoise_correct
+    psf = float(readfits(self->fname(), header, /SILENT))
+    psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
+    psf_le += self->dark_image() ;; ADD DARK IMAGE TO GET REAL RAW IMAGE
+    if keyword_set(dark_correct) then $
+        if self._dark_fname ne "" then           psf_le -= self->dark_image()         ; subtract dark
+    if keyword_set(badpixel_correct) then $
+        if obj_valid(self._badpixelmap_obj) then psf_le = self->maneggiaFrame(psf_le) ; trigrid bad pixels
+    if keyword_set(linenoise_correct) then $
+		if self._object_size ne 0 then           psf_le = self->pulisceFrame(psf_le)  ; remove line noise
+    return, psf_le
+end
+
 
 pro AOTV__define
     struct = { AOTV					, $
