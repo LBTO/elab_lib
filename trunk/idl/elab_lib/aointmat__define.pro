@@ -34,7 +34,7 @@ function AOintmat::Init, fname
 			end
 		'SINUS' : begin
 				self._im_type = 'SINUS'
-				message, 'onsky calib IM: not supported yet...', /info
+				if not self->AOintmat_sinus::Init() then message, 'sinus IM calib: extended info not available', /info
 			end
 		else : begin
 				self._im_type = 'CLASSIC'
@@ -62,6 +62,7 @@ function AOintmat::Init, fname
     self->addMethodHelp, "slopes_idx()", "index vector of non-null rows in IM"
     self->addMethodHelp, "wfs_status()", "reference to wfs_status object"
     if self._im_type eq 'CLASSIC' then self->AOintmat_meas::addHelp, self
+	if self._im_type eq 'SINUS' then self->AOintmat_sinus::addHelp, self
 
     return, 1
 end
@@ -274,6 +275,7 @@ pro AOintmat__define
         _sy2d_cube						  : ptr_new()   , $
         _s2d_mask						  : ptr_new()	, $
 		INHERITS AOintmat_meas							, $
+		INHERITS AOintmat_sinus							, $
         INHERITS AOhelp 								  $
     }
 end
