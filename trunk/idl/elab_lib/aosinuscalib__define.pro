@@ -158,6 +158,8 @@ pro AOsinuscalib::demodulate_im, VISU=VISU
 	; Find the CL modal amplitudes, the signal amplitudes, and estimate delay between c(t) and s(t)
 	;-----------------------------------------------------------------------------------------------
 	for ii=0, self._nmeas-1 do begin
+  		if ii gt 0 then $
+  			if self->trn(ii) ne self->trn(ii-1) then ao->free
 		ao = getaoelab(self->trn(ii))
 		coeff  = reform(((ao->modalpositions())->modalpositions())[*,self->modes(ii)])
 		slopes = (ao->slopes())->slopes()
@@ -172,9 +174,8 @@ pro AOsinuscalib::demodulate_im, VISU=VISU
 		AA_mat[ii] = AA
   		BB_mat[*,ii]=BB
   		delta_mat[*,ii] = delta
-  		if self->trn(ii+1) ne self->trn(ii) then ao->free
 	endfor
-
+	ao->free
 
 	; Find the sign of demodulated signals (modes with same sin frequency analyzed together)
 	;------------------------------------------------------------------------------------------
@@ -487,6 +488,7 @@ pro AOsinuscalib::Cleanup
 	ptr_free, self._delay
 	ptr_free, self._sin_intmat
 	self->AOdataset::Cleanup
+    self->AOhelp::Cleanup
 end
 
 
