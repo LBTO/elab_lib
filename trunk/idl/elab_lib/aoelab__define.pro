@@ -47,16 +47,9 @@ function AOelab::Init, tracknum, $
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
 
     ; create adsec_status leaf
-    tmp = filepath(root=self._datadir, 'adsec.sav')
-    if file_test(tmp) eq 0 then begin
-    	message, 'Cannot find adsec_status file: '+tmp, /info
-		message, 'Warning: adsec_status object not available!', /info
-    	;return,0
-    endif else begin
-		restore, tmp ; restore status
-		self._adsec_status = obj_new('AOadsec_status', self, status)
-		if not obj_valid(self._adsec_status) then message, 'Warning: adsec_status object not available!', /info ;return, 0
-    endelse
+    adsec_status_file = filepath(root=self._datadir, 'adsec.sav')
+	self._adsec_status = obj_new('AOadsec_status', self, adsec_status_file)
+	if not obj_valid(self._adsec_status) then message, 'Warning: adsec_status object not available!', /info ;return, 0
 
     ; create wfs_status leaf
     wfs_status_file = filepath(root=self._datadir, 'wfs.fits')
@@ -324,7 +317,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "residual_modes()", "reference to residual modes object (AOresidual_modes)"
     self->addMethodHelp, "modes()", "reference to integrated modes object (AOmodes)"
     self->addMethodHelp, "olmodes()", "reference to open loop modes object (AOolmodes)"
-    self->addMethodHelp, "commands()", "reference to commands object (AOcommands)"
+    self->addMethodHelp, "commands()", "reference to deltacommands object (AOcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
     self->addMethodHelp, "pisces()", "reference to PISCES object (AOscientificimage)"
@@ -884,6 +877,7 @@ pro AOelab::test
 end
 
 pro AOelab::free
+    IF (OBJ_VALID(self._adsec_status )) THEN  self._adsec_status->free
     IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
     IF (OBJ_VALID(self._control )) THEN  self._control->free
     IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free
@@ -986,6 +980,7 @@ pro AOelab__define
         INHERITS AOhelp $
     }
 end
+
 
 
 

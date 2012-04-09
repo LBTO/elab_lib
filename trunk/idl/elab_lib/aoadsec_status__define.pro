@@ -6,10 +6,21 @@
 
 
 
-function AOadsec_status::Init, root_obj, adsec_status_struct
+function AOadsec_status::Init, root_obj, adsec_fname   ; adsec_status_struct
+    
+    if file_test(adsec_fname) eq 0 then begin
+    	message, 'Cannot find adsec_status file: '+adsec_fname+'. adsec_status object not available!' , /info
+    	return,0
+    endif
+
+    savObj = obj_new('IDL_Savefile', adsec_fname)
+    savObj->restore, 'status'
+    obj_destroy, savObj
+
+    ;restore, adsec_fname ; contains status, [accel, data, mygr, myadsec, myadsec_shell, mysc]
 
     ; convert filepaths /usr/local/adopt/calib/left/adsec/*  in adsec_calib/*
-    tmp_struct = adsec_status_struct
+    tmp_struct = status
     self->ConvertFilePath, tmp_struct
     self._fsm_state           = tmp_struct.fsm_state
     self._b0_a_file           = tmp_struct.b0_a
@@ -37,27 +48,32 @@ function AOadsec_status::Init, root_obj, adsec_status_struct
 
 
   ;Search for struct containing information on adsec (used mainly for display of positions)
-	files = filepath("adsec_struct_*.sav", root_dir=ao_elabdir())
-	all_files = file_search(files, count=nfiles)
-	if nfiles gt 0 then begin
-		thisJulday = (root_obj->obj_tracknum())->julday()
-		all_files_julday = dblarr(nfiles)
-		for ii=0, nfiles-1 do begin
-			file_date = strmid(file_basename(all_files[ii]), 13, 8)
-			y = fix(strmid(file_date, 0, 4))
-			m = fix(strmid(file_date, 4, 2))
-			d = fix(strmid(file_date, 6, 2))
-			all_files_julday[ii] = julday(m,d,y,0,0,0)
-		endfor
-		diffJulday = thisJulday - all_files_julday
-		idx = where(diffJulday  ge 0d, count)
-                if count gt 0 then begin
-		   idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
-		   self._adsec_struct_file = all_files[idx1]
-                endif else self._adsec_struct_file = ''
-	endif
-  ; con il filename corrispondente (e.g. 'adsec_structs_20100101.sav') lo passiamo al multiton che ti rende la referenza a quell'oggetto
-  self._adsec_structs = getadsecstructs(self._adsec_struct_file)
+;  	files = filepath("adsec_struct_*.sav", root_dir=ao_elabdir())
+;   	all_files = file_search(files, count=nfiles)
+;	if nfiles gt 0 then begin
+;		thisJulday = (root_obj->obj_tracknum())->julday()
+;		all_files_julday = dblarr(nfiles)
+;		for ii=0, nfiles-1 do begin
+;			file_date = strmid(file_basename(all_files[ii]), 13, 8)
+;			y = fix(strmid(file_date, 0, 4))
+;			m = fix(strmid(file_date, 4, 2))
+;			d = fix(strmid(file_date, 6, 2))
+;			all_files_julday[ii] = julday(m,d,y,0,0,0)
+;		endfor
+;		diffJulday = thisJulday - all_files_julday
+;		idx = where(diffJulday  ge 0d, count)
+;                if count gt 0 then begin
+;		   idx1 = idx[where( diffJulday[idx] eq min(diffJulday[idx]))]
+;		   self._adsec_struct_file = all_files[idx1]
+;                endif else self._adsec_struct_file = ''
+;	endif
+    ; con il filename corrispondente (e.g. 'adsec_structs_20100101.sav') lo passiamo al multiton che ti rende la referenza a quell'oggetto
+;   self._adsec_structs = getadsecstructs(self._adsec_struct_file)
+;   NOTE if getadsecstructs is re-used, please remove it from the cleanup and free methods below
+   
+    ; at 20120408 adsec.sav contains also mygr, myadsec, myadsec_shell, mysc
+    self._adsec_struct_file = adsec_fname
+    self._adsec_structs = obj_new('AOadsec_struct', self._adsec_struct_file)
 
 
     ; initialize help object and add methods and leafs
@@ -228,8 +244,12 @@ function AOadsec_status::act_coordinates
   return, self._adsec_structs->act_coordinates()
 end
 
+pro AOadsec_status::free
+    if obj_valid(self._adsec_structs) then self._adsec_structs->free
+end
 
 pro AOadsec_status::Cleanup
+    obj_destroy, self._adsec_structs
     self->AOhelp::Cleanup
 end
 
