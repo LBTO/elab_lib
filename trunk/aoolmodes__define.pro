@@ -366,7 +366,8 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
   return, model
 end
 
-function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
+function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep, teldir=teldir
+  ; teldir return the angle in the telescope coordinates
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
   IF not keyword_set(nfr) THEN nfr=5
@@ -381,7 +382,8 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
 
   idx_from = closest(from_freq, self->freq())
   idx_to   = closest(to_freq, self->freq())
-
+  
+  ; return vibrations frequency and power
   peaks=self->findpeaks([0,1], from_freq=from_freq, to_freq=to_freq)
 
   frtemp=[peaks.(0).fr,peaks.(1).fr]
@@ -392,6 +394,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
   cc = [-1,255.,255.*256,255.*256*256,255.*256*100,255.*100]
 
   while flag eq 0 do begin
+    ; joins vibrations with similar frequency
     idx=where(abs(frtemp - frtemp[j]) lt 0.6)
     if total(idx) ne -1 then begin
       for k=0,n_elements(idx)-1 do begin
@@ -428,10 +431,12 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       window, /free
     for ijk = 0, nnn-1 do begin
       if ijk eq 0 then pw=pwtemp else pw[idxmax(ijk-1)]=0
+      ; sorts the vibrations
       maxr(ijk) = max(pw,idxmaxtemp)
       idxmax(ijk) = idxmaxtemp
       fvibmax(ijk) = frtemp[idxmax(ijk)]
       pow(ijk) = pwtemp[idxmax(ijk)]
+      ; isolates the frequency of the ijk-th vibration
       a1t=fft((self->modes())[*,0])
       a2t=fft((self->modes())[*,1])
       p=self->niter()*(self._root_obj->frames_counter())->deltat()
@@ -443,12 +448,16 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       a2t[0:p*(fvibmax(ijk)-fstep)-1]=0
       a2t[p*(fvibmax(ijk)+fstep):p*(1./(self._root_obj->frames_counter())->deltat()-fvibmax(ijk)-fstep)-1]=0
       a2t[p*(1./(self._root_obj->frames_counter())->deltat()-fvibmax(ijk)+fstep):*]=0
+      ; generates the signal with only the frequency of the ijk-th vibration 
       rm1[*,ijk]=fft(a1t,1)
       rm2[*,ijk]=fft(a2t,1)
+      ; linear fit
       ab1 = linfit(rm1[*,ijk],rm2[*,ijk])
       ab2 = linfit(rm2[*,ijk],rm1[*,ijk])
+      ; errors variance of the linear fit
       cor1 = variance( rm2[*,ijk]-ab1[1]*rm1[*,ijk]-ab1[0] )
       cor2 = variance( rm1[*,ijk]-ab2[1]*rm2[*,ijk]-ab2[0] )
+      ; takes the best values
       if cor1 lt cor2 then begin
         cor[ijk]=cor1
         ab[*,ijk]=ab1
@@ -483,6 +492,13 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     if plot eq 1 then $
       legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
     angle=( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*180/!pi
+    ; if key then return the angle in the telescope coordinates
+    if keyword_set(teldir) then begin
+    	ttangle=(self._root_obj->control())->ttdirections()
+    	if (ttangle[1] lt ttangle[0]+95) and (ttangle[1] gt ttangle[0]+85) then stt=1 else stt=-1
+ 	att = mean([ttangle[0],ttangle[1]-stt*90.])
+    	angle=att+stt*angle
+    endif
   endif else begin
     frvib=-1
     pow=-1
