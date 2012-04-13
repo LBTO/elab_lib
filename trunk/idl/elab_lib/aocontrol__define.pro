@@ -202,12 +202,17 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   if not keyword_set(verbose) then verbose = 0
 
   if n_elements(self->m2c()) gt 1 then begin
-  	surf1=fltarr(3,672)
+  	; creates two surfaces, the second one have only the 'good' actuators
+	surf1=fltarr(3,672)
+	; (self->m2c())[0,*] is a tip in actuators' space
   	surf1[0,*]=(self->m2c())[0,*]
+	; actuators coordinates
   	surf1[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
   	surf1a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
   	surf1a=surf1[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
-  	fit_plane, surf1a, a=a1, b=b1, c=c1, plane=plane1, num=100.
+  	; a, b, c is the coefficients of the plane in x y z
+	fit_plane, surf1a, a=a1, b=b1, c=c1, plane=plane1, num=100.
+	; the first coefficient is the rotation angle [rad]
   	tip_ang=a1
   	if verbose then begin
   	  print, a1, b1, c1
@@ -229,12 +234,17 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
   	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
   	endif
+	; creates two surfaces, the second one have only the 'good' actuators
   	surf2=fltarr(3,672)
+	; (self->m2c())[0,*] is a tilt in actuators' space
   	surf2[0,*]=(self->m2c())[1,*]
+	; actuators coordinates
   	surf2[1:2,*]=(self._root_obj->adsec_status())->act_coordinates()
   	surf2a=fltarr(3,n_elements(((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL))
   	surf2a=surf2[*,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]
+  	; a, b, c is the coefficients of the plane in x y z
   	fit_plane, surf2a, a=a2, b=b2, c=c2, plane=plane2, num=100.
+	; the first coefficient is the rotation angle [rad]
   	tilt_ang=a2
   	if verbose then begin
   	  print, a2, b2, c2
