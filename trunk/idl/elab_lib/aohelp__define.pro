@@ -22,7 +22,7 @@ function AOhelp::fmthelp, syntax, descr, indent, style=style, root=root
     case usestyle of
         'leaf'   : begin & spacer='***' & col2pos=50  & end
         'method' : begin & spacer='---' & col2pos=60  & end
-    endcase 
+    endcase
     if keyword_set(root) then begin
 	if root eq 'ee' and self->howDoTheyCallMe() eq 'ee' then cmd1 = self->howDoTheyCallMe()+"->"+syntax else $
         cmd1="("+root+"->"+self->howDoTheyCallMe()+")->"+syntax
@@ -67,7 +67,7 @@ pro AOhelp::info
 end
 
 pro AOhelp::help, keyword, indent=indent
-    
+
     if n_params() eq 1 and (test_type(keyword, /string) eq 0 ) then begin
         lista = self->cmdlist()
         matched = where(stregex(strlowcase(lista), strlowcase(keyword), /bool) eq 1, cnt)
@@ -76,7 +76,7 @@ pro AOhelp::help, keyword, indent=indent
     endif
 
     if n_elements(indent) eq 0 then indent=1
-    
+
     ;cmd1=strjoin([ '*** ', self._objname,' ***'])
     ;cmd2=strjoin( [": ", self._objdescr])
     ;cmd = strjoin(replicate(" ", 130))
@@ -88,7 +88,7 @@ pro AOhelp::help, keyword, indent=indent
     if obj_valid(self._methods_help) then begin
         for i=0L, self._methods_help->Count()-1 do begin
             meth_help = self._methods_help->Get(pos=i)
-            self->AOhelp::printhelp, meth_help->syntax(), meth_help->descr(), indent 
+            self->AOhelp::printhelp, meth_help->syntax(), meth_help->descr(), indent
         endfor
     endif
 
@@ -101,7 +101,7 @@ pro AOhelp::help, keyword, indent=indent
 end
 
 pro AOhelp::addMethodHelp, syntax, description
-    tmp = obj_new('AOmethodhelp', syntax, description) 
+    tmp = obj_new('AOmethodhelp', syntax, description)
     self._methods_help->add, tmp
 end
 
@@ -113,7 +113,7 @@ end
 
 pro AOhelp::Cleanup
     ; IMPORTANT: remove leafs from container before destroying it, to avoid destroying objects!!
-    self._leafs->remove, /all
+    if obj_valid(self._leafs) then self._leafs->remove, /all
     obj_destroy, self._leafs
     obj_destroy, self._methods_help
 end
