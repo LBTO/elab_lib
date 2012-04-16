@@ -1,6 +1,7 @@
 ;+
 ;
-; Residual modes m=Rs
+; Residual modes: Measurement of residual wf in the pupil projected on the control modal basis.
+; m = alfa * R * s
 ;
 ; modes are in meter rms, surface.
 ; To convert to wavefront use self->norm_factor()
@@ -137,11 +138,12 @@ end
 
 pro AOresidual_modes__define
     struct = { AOresidual_modes, $
-        _modes         : ptr_new(), $
-        _store_fname   : "" ,       $
-        _root_obj      : obj_new(), $
-        _modal_rec_obj : obj_new(), $
-        _slopes_obj    : obj_new(), $
+        _modes           : ptr_new(), $
+        _store_fname     : "" 	  , $
+        _root_obj        : obj_new(), $
+        _modal_rec_obj   : obj_new(), $
+        _slopes_obj      : obj_new(), $
+        _mistmach_factor : 0.	  , $
         _mistmatch_factor : 0.	  , $
         INHERITS    AOwf, $
         INHERITS    AOtime_series, $
