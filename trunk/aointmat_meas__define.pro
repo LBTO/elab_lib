@@ -48,19 +48,15 @@ function AOintmat_meas::Init
 	;ACQUISITION OF INTERACTION MATRIX IN CLOSED-LOOP ??
 	;--------------------------------------------------------------------------
 
+	rec_file  = ''
+	gain_file = ''
 	if file_test(acq_params_fn[0]) then begin
 		restore, acq_params_fn[0]
 		if n_elements(params) ne 0  then begin
 			if tag_exist(params,'recfile') then rec_file  = params.recfile
 			if tag_exist(params,'gainfile') then gain_file = params.gainfile
-		endif else begin
-			rec_file = ''
-			gain_file = ''
-		endelse
-	endif else begin
-		rec_file  = ''
-		gain_file = ''
-	endelse
+		endif
+	endif
 
 	if rec_file ne '' then begin
 		self._clcalib = 1B
