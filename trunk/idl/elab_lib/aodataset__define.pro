@@ -3,10 +3,11 @@
 ;
 ; KEYWORD
 ;    lastminute   analyze tracknums acquired in the last lastminute minutes
+;    check        check that tracknum are valid acquisitions and not something else (like gain opt. data, etc)
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
 
@@ -61,6 +62,10 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
+        	    if keyword_set(check) then begin
+        	        tmp = getaoelab(tracknums[i])
+        	        if not obj_valid(tmp) then continue
+                endif
             	self->add, tracknums[i]
         	endif
         	obj_destroy, o_track
@@ -69,6 +74,10 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 		; check that the values are string representing tracknums
 		for ii=0, n_elements(tracknumlist)-1 do begin
 			if not stregex(tracknumlist[ii], '^[0-9]{8}_[0-9]{6}$', /bool) then continue
+			if keyword_set(check) then begin
+			    tmp = getaoelab(tracknumlist[ii])
+			    if not obj_valid(tmp) then continue
+			    endif
 			self->add, tracknumlist[ii]
 		endfor
 	endelse
