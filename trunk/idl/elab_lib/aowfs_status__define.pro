@@ -120,6 +120,18 @@ function AOwfs_status::stages
 	return, self._stages
 end
 
+function AOwfs_status::stagex
+	return, self._stages[0]
+end
+
+function AOwfs_status::stagey
+	return, self._stages[1]
+end
+
+function AOwfs_status::stagez
+	return, self._stages[2]
+end
+
 function AOwfs_status::lamp_intensity
 	return, self._lamp
 end
