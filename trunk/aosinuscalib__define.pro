@@ -4,9 +4,9 @@
 ;
 ;-
 
-function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_tracknum=to_tracknum, recompute=recompute
+function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_tracknum=to_tracknum, recompute=recompute, check=check
 
-	if not self->AOdataset::Init(tracknumlist, from=from_tracknum, to=to_tracknum, recompute=recompute) then return,0
+	if not self->AOdataset::Init(tracknumlist, from=from_tracknum, to=to_tracknum, recompute=recompute, check=check) then return,0
 	set1 = self->where('disturb.type', 'ne', 'sinusmode')
 	if obj_valid(set1) then self->removeTracknum, set1->tracknums()
 
@@ -61,7 +61,7 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
     self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
     self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
     self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
-    self->addMethodHelp, "compare_sigs, mode"	 , "for selected mode, compares demodulated and reference signals"
+    self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
     self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
 ;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
     self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
@@ -147,7 +147,7 @@ end
 ;+
 ; DEMODULATE THE SIGNALS!
 ;-
-pro AOsinuscalib::demodulate_im, VISU=VISU
+pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 
 	AA_mat = fltarr(self._nmeas)
 	BB_mat = fltarr(self._nslopes, self._nmeas)
@@ -171,6 +171,7 @@ pro AOsinuscalib::demodulate_im, VISU=VISU
 		demodulate_signals, coeff, slopes, self->req_freq(ii), fs, AA, BB, delta, VISU=VISU, WIN_ID=10, $
 			xtitle='delay between c(t) and s(t) [degrees]', $
 			title='mode'+strtrim(self->modes(ii),2)+', '+ strtrim(string(self->req_freq(ii),format='(f7.2)'),2)+'Hz'
+        if n_elements(slowly) eq 1 then wait, slowly 
 		AA_mat[ii] = AA
   		BB_mat[*,ii]=BB
   		delta_mat[*,ii] = delta
@@ -346,13 +347,14 @@ pro AOsinuscalib::visu_specs, idx
 end
 
 
-pro AOsinuscalib::compare_sigs, mode
+pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out
 	if n_elements(mode) ne 1 then begin
 		message, 'SINTAXIS: ee->compare_sigs, mode.  (One mode at a time)',/info
 		return
 	endif
-	refsx = reform((self->imobj())->sx(mode))
-	refsy = reform((self->imobj())->sy(mode))
+	if not keyword_set(REFMODE) then REFMODE = mode
+	refsx = reform((self->imobj())->sx(REFMODE))
+	refsy = reform((self->imobj())->sy(REFMODE))
 	sinsx = reform(self->sx(mode))
 	sinsy = reform(self->sy(mode))
 
@@ -385,7 +387,7 @@ pro AOsinuscalib::compare_sigs, mode
 	sl_2d = [s2d_tmpA,s2d_tmpB]
 	window,1, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='sinusoidal IM'
-
+    slo_out=sl_2d
 	s2d = fltarr(fr_sz,fr_sz)
 	s2d[indpup[*,mypup]] = refsx - sinsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
