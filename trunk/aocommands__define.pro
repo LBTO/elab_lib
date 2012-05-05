@@ -33,12 +33,12 @@ function AOcommands::Init, root_obj, commands_file, fc_obj
     ;self->AOtime_series::Compute
 
     ; initialize help object and add methods and leafs
-    if not self->AOhelp::Init('AOcommands', 'Represent commands') then return, 0
-    self->addMethodHelp, "fname()", "commandsfile name (string)"
-    self->addMethodHelp, "header()", "header of commandsfile (strarr)"
-    self->addMethodHelp, "commands()", "commands matrix [ncommands,niter]"
+    if not self->AOhelp::Init('AOcommands', 'Represent deltacommands') then return, 0
+    self->addMethodHelp, "fname()", "deltacommands file name (string)"
+    self->addMethodHelp, "header()", "header of deltacommands file (strarr)"
+    self->addMethodHelp, "commands()", "deltacommands matrix [ncommands,niter]"
     self->addMethodHelp, "ncommands()", "number of commands"
-    self->addMethodHelp, "display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos", "Displays commands in 2D [m]'
+    self->addMethodHelp, "display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos", "Displays commands in 2D [m]"
     self->AOtime_series::addHelp, self
     return, 1
 end
