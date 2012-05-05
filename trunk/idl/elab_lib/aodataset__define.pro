@@ -85,6 +85,15 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
     if keyword_set(recompute) then begin
         for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
     endif
+
+    if not self->AOhelp::Init('AOdataset', 'Represent a list of AO measurements') then return, 0
+    self->addMethodHelp, "tracknums()", "returns an array  of tracknums"
+    self->addMethodHelp, "tracknums_str", "print the list of tracknums as a string"
+    self->addMethodHelp, "RemoveTracknum, tracknums", "remove the array of tracknums from this set"
+    self->addMethodHelp, "value(cmd)", "evaluates 'cmd' for all tracknums and returns an array of results"
+    self->addMethodHelp, "where(cmd, operand, value)", "return an index of dataset items that match cmd+operand+value"
+    self->addMethodHelp, "modalplot", "overall modalplot of the dataset"
+    self->addMethodHelp, "autogains", "returns an array of tracknums which are of type autogains"
     return, 1
 end
 
@@ -408,6 +417,7 @@ function aodataset::Remove, idx
 end
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Graphical methods for datasets
 
@@ -487,11 +497,17 @@ pro aodataset::plot, X_VAR, Y_VAR, HISTO_VAR=HISTO_VAR, GROUP_VAR=GROUP_VAR $
 
 end
 
+function aodataset::autogains
+    if self->Count() eq 0 then return, -1
+    return, (self->tracknums())[ where( self->value('meas_type') eq 'AG')]
+end
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOdataset::Cleanup
     ptr_free, self._values
+    self->AOhelp::Cleanup
 end
 
 
@@ -500,7 +516,8 @@ pro AOdataset__define
         _root_dir           : "", $
         _values         : ptr_new() , $
         _nelems         : 0L, $
-        _allocated_size : 0L  $
+        _allocated_size : 0L, $
+        INHERITS    AOhelp $
          ;inherits  AOlist $
     }
 end

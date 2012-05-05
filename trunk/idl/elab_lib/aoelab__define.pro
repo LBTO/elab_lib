@@ -25,7 +25,8 @@ function AOelab::Init, tracknum, $
 	temp = FILE_SEARCH(FILEPATH(root=self._datadir, 'gains_step*.fits'), COUNT=ngainfiles)
 	if ngainfiles ne 0 then begin
 		print, 'gain optimization data: Data_'+tracknum
-		return, 0
+        self._meas_type = 'AG'
+		return, 1
 	endif
 
     ; create elab dir and set permission / owner
