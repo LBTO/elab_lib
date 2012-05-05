@@ -93,6 +93,29 @@ function AOdataset::tracknums
     return, self->get()
 end
 
+;Print, the list of tracknums as a string
+pro AOdataset::tracknums_str
+	tr = self->tracknums()
+	ntr_per_col = 10
+	str = "["
+	cc=0
+	for ii=0, n_elements(tr)-1 do begin
+		if ii ne n_elements(tr)-1 then begin
+			if cc lt ntr_per_col then begin
+				str += ("'"+tr[ii]+"', ")
+				cc+=1
+			endif else begin
+				str += ("'"+tr[ii]+"',$")
+				cc=0
+				print, str
+				str = ""
+			endelse
+		endif else begin
+			str += ("'"+tr[ii]+"']")
+			print, str
+		endelse
+	endfor
+end
 
 ;
 ; return a set union of this and of the passed one
