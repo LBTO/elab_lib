@@ -39,7 +39,7 @@ function AOpositions::Init, root_obj, positions_file, fc_obj
     self->addMethodHelp, "positions()", "positions matrix [npositions,niter]"
     self->addMethodHelp, "npositions()", "number of positions"
     self->addMethodHelp, "flatpositions()", "positions of flat shape"
-    self->addMethodHelp, "display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos", "Displays positions in 2D [m]'
+    self->addMethodHelp, "display, iter_idx=iter_idx, _extra=ex, wait=wait, thispos=thispos", "Displays positions in 2D [m]"
     self->AOtime_series::addHelp, self
     return, 1
 end
