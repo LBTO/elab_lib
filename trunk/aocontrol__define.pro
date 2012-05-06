@@ -144,7 +144,10 @@ function AOcontrol::gain
     		savObj->restore, 'g_gain'
 	  		obj_destroy, savObj
     	    g_gain = reform(g_gain)
-    	endif else g_gain = readfits(ao_datadir()+path_sep()+self->gain_fname(), header, /SILENT)
+    	endif else begin
+    		g_gain = readfits(ao_datadir()+path_sep()+self->gain_fname(), header, /SILENT)
+	  		obj_destroy, savObj
+		endelse
 
 	    if obj_valid(self._root_obj->modal_rec()) then begin
 	    	modes_idx = (self._root_obj->modal_rec())->modes_idx()
