@@ -3,13 +3,14 @@
 ;
 ;-
 
-function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, c_fname, gain_fname
+function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, c_fname, gain_fname, adsec_sav_fname
     self._root_obj = root_obj
     self._b0_a_fname = b0_a_fname
     self._a_delay_fname = a_delay_fname
     self._b_delay_a_fname = b_delay_a_fname
     self._c_fname  = c_fname
     self._gain_fname  = gain_fname
+    self._adsec_sav_fname = adsec_sav_fname
 
 	if self->b0_a_fname() ne "" then begin
     	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT, errmsg=errmsg)
@@ -55,12 +56,14 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self->addMethodHelp, "gain()", "gain vector"
     self->addMethodHelp, "maxgain()", "max of gain vector"
     self->addMethodHelp, "mingain()", "min of gain vector"
-    self->addMethodHelp, "zerogain()", "zero gain means open loop"
-    self->addMethodHelp, "gainvalues()",     "return the distinct values of the gain vector"
-    self->addMethodHelp, "modegain(idx)",     "return the gain of the selected modes"
+    self->addMethodHelp, "zerogain()", "zero gain means open loop (boolean)"
+    self->addMethodHelp, "group_gains()",     "return the distinct values of the gain vector"
+    self->addMethodHelp, "group_first_mode()", "return the indexes of first mode in each group"
+    self->addMethodHelp, "ngaingroups()", "return the number of modal groups"
     self->addMethodHelp, "ttgain()",     "return the tip-tilt gain"
-    self->addMethodHelp, "mogain(modes=modes)",     "return the medium-order gain, or -1 if not present"
-    self->addMethodHelp, "hogain(modes=modes)",     "return the high-order gain, or -1 if not present"
+    self->addMethodHelp, "mogain()",     "return the medium-order gain (2nd group), or -1 if not present"
+    self->addMethodHelp, "hogain()",     "return the high-order gain (3rd group), or -1 if not present"
+    self->addMethodHelp, "zeroed_modes()", "return the indexes of modes forced to zero gain"
     ;self->addMethodHelp, "nmodes()", "number of non-null row in b0_a matrix"
     ;self->addMethodHelp, "modes_idx()", "index vector of non-null row in b0_a matrix"
     ;self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
@@ -133,10 +136,23 @@ end
 
 function AOcontrol::gain
     if not ptr_valid(self._gain) then begin
-        gain_v = readfits(ao_datadir()+path_sep()+self->gain_fname(), header, /SILENT)
-        if obj_valid(self._root_obj->modal_rec()) then gain_v = gain_v[(self._root_obj->modal_rec())->modes_idx()]
-        if max(gain_v)-min(gain_v) eq 0. then gain_v = gain_v[0]
-        self._gain = ptr_new(gain_v, /no_copy)
+
+    	; Gain vector is saved within adsec.sav of each TN (starting from 20120424_192237 on SX, DX TBD).
+		; If not found, load gain vector from traditional location if not found in adsec.sav
+    	savObj = obj_new('IDL_Savefile', self._adsec_sav_fname)
+    	if total(strmatch(savObj->names(), 'g_gain')) eq 1 then begin
+    		savObj->restore, 'g_gain'
+	  		obj_destroy, savObj
+    	    g_gain = reform(g_gain)
+    	endif else g_gain = readfits(ao_datadir()+path_sep()+self->gain_fname(), header, /SILENT)
+
+	    if obj_valid(self._root_obj->modal_rec()) then begin
+	    	modes_idx = (self._root_obj->modal_rec())->modes_idx()
+	    	g_gain = g_gain[0:max(modes_idx)]
+	    endif
+
+	    ;if max(g_gain)-min(g_gain) eq 0. then g_gain = g_gain[0]
+        self._gain = ptr_new(g_gain, /no_copy)
     endif
     return, *self._gain
 end
@@ -150,38 +166,67 @@ function AOcontrol::mingain
 end
 
 function AOcontrol::zerogain
-    if ( min(self->gain()) eq 0 ) and ( max(self->gain()) eq 0 )then return,1 else return, 0
-end
-
-function AOcontrol::gainvalues
-    g = self->gain()
-    return, reverse(g[rem_dup(g)])
-end
-
-function AOcontrol::modegain, idx
-    return, (self->gain())[idx]
+    if total(self->gain()) eq 0. then return,1 else return, 0
 end
 
 function AOcontrol::ttgain
-    return, self->modegain(0)
+    return, (self->gain())[0]
 end
 
-function AOcontrol::mogain, modes=modes
-    if n_elements(self->gainvalues() gt 1) then begin
-        g= (self->gainvalues())[1]
-        modes = where(self->gain() eq g)
-        return, g
-    endif
-    return, -1
+pro AOcontrol::modalgain_groups
+    g = self->gain()
+    nonzero_idx = where(g ne 0, comp=zero_idx, count)
+	self._zeroed_modes = ptr_new([zero_idx])
+
+    if count eq 0 then begin
+		gg = [0.]
+		ml = [0.]
+    endif else begin
+	    gg = g[nonzero_idx]
+	    idx_gg = rem_dup(gg)
+	    idx_gg = idx_gg[sort(idx_gg)]	;order w.r.t. to the mode number
+	   	ngains = n_elements(idx_gg)
+
+	   	if ngains gt 1 then begin
+			ggidx = where(gg-shift(gg,1) ne 0)
+	       	gg = gg[ggidx]
+	       	ml = nonzero_idx[ggidx]
+	    endif else begin
+	    	gg = [gg[0]]
+	    	ml = [0.]
+	    endelse
+    endelse
+
+	self._group_gain = ptr_new(gg)
+	self._group_first_mode = ptr_new(ml)
 end
 
-function AOcontrol::hogain, modes=modes
-    if n_elements(self->gainvalues() gt 2) then begin
-        g = (self->gainvalues())[2]
-        modes = where(self->gain() eq g)
-        return, g
-    endif
-    return, -1
+function AOcontrol::group_gains
+	if not ptr_valid(self._group_gain) then self->modalgain_groups
+	return, *self._group_gain
+end
+
+function AOcontrol::group_first_mode
+	if not ptr_valid(self._group_first_mode) then self->modalgain_groups
+	return, *self._group_first_mode
+end
+
+function AOcontrol::zeroed_modes
+	if not ptr_valid(self._zeroed_modes) then self->modalgain_groups
+	return, *self._zeroed_modes
+end
+
+function AOcontrol::ngaingroups
+	gg = self->group_gains()
+	return, n_elements(gg)
+end
+
+function AOcontrol::mogain
+    if self->ngaingroups() ge 2 then return, (self->group_gains())[1] else return, -1
+end
+
+function AOcontrol::hogain
+    if self->ngaingroups() ge 3 then return, (self->group_gains())[2] else return, -1
 end
 
 ; number of non-null rows in b0_a matrix
@@ -309,20 +354,27 @@ end
 pro AOcontrol::free
     if ptr_valid(self._modes_idx ) then ptr_free, self._modes_idx
     if ptr_valid(self._gain) then ptr_free, self._gain
+    if ptr_valid(self._zeroed_modes) then ptr_free, self._zeroed_modes
+    if ptr_valid(self._group_gain) then ptr_free, self._group_gain
+    if ptr_valid(self._group_first_mode) then ptr_free, self._group_first_mode
 end
 
 pro AOcontrol::Cleanup
-    ptr_free, self._b0_a_fitsheader
-    ptr_free, self._c_fitsheader
-    ptr_free, self._gain_fitsheader
-    ptr_free, self._modes_idx
-    ptr_free, self._gain
+    if ptr_valid(self._b0_a_fitsheader) then ptr_free, self._b0_a_fitsheader
+    if ptr_valid(self._c_fitsheader) 	then ptr_free, self._c_fitsheader
+    if ptr_valid(self._gain_fitsheader) then ptr_free, self._gain_fitsheader
+    if ptr_valid(self._modes_idx) 		then ptr_free, self._modes_idx
+    if ptr_valid(self._gain) 			then ptr_free, self._gain
+    if ptr_valid(self._zeroed_modes) 	then ptr_free, self._zeroed_modes
+    if ptr_valid(self._group_gain) 		then ptr_free, self._group_gain
+    if ptr_valid(self._group_first_mode) then ptr_free, self._group_first_mode
     self->AOhelp::Cleanup
 end
 
 pro AOcontrol__define
     struct = { AOcontrol, $
         _root_obj                 : obj_new(), $
+        _adsec_sav_fname		  : "", $
         _b0_a_fname               : "", $
         _a_delay_fname            : "", $
         _b_delay_a_fname          : "", $
@@ -332,13 +384,15 @@ pro AOcontrol__define
         _b0_a_fitsheader         : ptr_new(), $
         _c_fitsheader            : ptr_new(), $
         _gain_fitsheader         : ptr_new(), $
-        _nmodes                  : 0L, $
+        _nmodes                  : 0L		, $
         _modes_idx               : ptr_new(), $
         _gain                    : ptr_new(), $
+        _zeroed_modes			 : ptr_new(), $
+        _group_gain				 : ptr_new(), $
+        _group_first_mode		 : ptr_new(), $
         _kalman                  : 0B, $
         _intmat_fname            : "", $
         INHERITS AOhelp $
-
     }
 end
 
