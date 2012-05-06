@@ -26,7 +26,6 @@ function AOelab::Init, tracknum, $
 	if ngainfiles ne 0 then begin
 		print, 'gain optimization data: Data_'+tracknum
         self._meas_type = 'AG'
-		return, 1
 	endif
 
     ; create elab dir and set permission / owner
@@ -46,6 +45,8 @@ function AOelab::Init, tracknum, $
 
     ; tracknum object
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
+
+    if self._meas_type eq 'AG' then return,1
 
     ; create adsec_status leaf
     adsec_status_file = filepath(root=self._datadir, 'adsec.sav')
