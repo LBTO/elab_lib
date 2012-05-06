@@ -64,6 +64,8 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self->addMethodHelp, "antidrift_values()", "AntiDrift correction history (float)"
     self->addMethodHelp, "antidrift_status()", "Returns 1 if AntiDrift is activated, 0 otherwise (integer)"
     self->addMethodHelp, "ron()", "Estimate of Read-Out Noise"
+    self->addMethodHelp, "center_separation()", 'Estimates 4 center separations (float)"
+    self->addMethodHelp, "mean_center_separation()", 'Mean of 4 center separations (float)"
     self->addMethodHelp, "replay, wait=wait, zoom=zoom", "Replay the CCD frames"
     return, 1
 end
@@ -269,6 +271,25 @@ function AOframes::ron
 end
 
 
+;+
+; ESTIMATES FOUR CENTER SEPARATIONS
+;-
+pro AOframes::calc_center_separation
+	f = self->frames(/dark)
+	fm = total(f,3) / n_elements(f[0,0,*])
+	distanza_centri, fm, m, w, dl, md, /SPLIT, TH1=0.3, TH2=0.3, /QUIET
+ 	self._center_separation = w
+end
+
+function AOframes::center_separation
+	if total(self._center_separation) eq 0 then self->calc_center_separation
+	return, self._center_separation
+end
+
+function AOframes::mean_center_separation
+	return, mean(self->center_separation())
+end
+
 ;Replay the ccd frames
 pro AOframes::replay, wait=wait, zoom=zoom
 	if n_elements(wait) eq 0 then wait=0.01
@@ -325,6 +346,7 @@ pro AOframes__define
         _antidrift_status  : 0			, $
         _rondata_fname	   : ""			, $
         _ron			   : 0.0		, $
+        _center_separation : fltarr(4)  , $
         INHERITS AOhelp 				  $
     }
 end
