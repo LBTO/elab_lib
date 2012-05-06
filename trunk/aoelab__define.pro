@@ -108,15 +108,16 @@ function AOelab::Init, tracknum, $
 
     ; create control filter leaf
     if not obj_valid(self._adsec_status) then begin
-	message, 'Warning: control object not available!' , /info
+		message, 'Warning: control object not available!' , /info
     endif else begin
-	self._control = obj_new('AOcontrol', self, $
-	    self._adsec_status->b0_a_file(), $
-	    self._adsec_status->a_delay_file(), $
-	    self._adsec_status->b_delay_a_file(), $
-	    self._adsec_status->c_file(), $
-	    self._adsec_status->g_gain_a_file() $
-        )
+		self._control = obj_new('AOcontrol', self, $
+		    self._adsec_status->b0_a_file(), $
+		    self._adsec_status->a_delay_file(), $
+		    self._adsec_status->b_delay_a_file(), $
+		    self._adsec_status->c_file(), $
+		    self._adsec_status->g_gain_a_file(), $
+		    self._adsec_status->adsec_struct_file() $
+	        )
     endelse
 
     ; create frames counter leaf
