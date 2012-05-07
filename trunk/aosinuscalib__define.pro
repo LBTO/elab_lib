@@ -54,17 +54,17 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
 	self._nmeas		= n_elements(tracknums)
 	self._global_sign = 1.
 
-    ; initialize help object and add methods and leafs
-    if not self->AOhelp::Init('AOsinuscalib', 	'Represent a dataset of sinusoidal IM calibration') then return, 0
-    self->addMethodHelp, "summary"	 			 , "summary of parameters (modes, frequencies, amplitudes...)"
-    self->addMethodHelp, "sin_intmat([/VISU])"	 , "sinusoidal IM (float)"
-    self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
-    self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
-    self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
-    self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
-    self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
-;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
-    self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
+;    ; initialize help object and add methods and leafs
+;    if not self->AOhelp::Init('AOsinuscalib', 	'Represent a dataset of sinusoidal IM calibration') then return, 0
+;    self->addMethodHelp, "summary"	 			 , "summary of parameters (modes, frequencies, amplitudes...)"
+;    self->addMethodHelp, "sin_intmat([/VISU])"	 , "sinusoidal IM (float)"
+;    self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
+;    self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
+;    self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
+;    self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
+;    self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
+;;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
+;    self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
 
 	return,1
 end
@@ -171,7 +171,7 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 		demodulate_signals, coeff, slopes, self->req_freq(ii), fs, AA, BB, delta, VISU=VISU, WIN_ID=10, $
 			xtitle='delay between c(t) and s(t) [degrees]', $
 			title='mode'+strtrim(self->modes(ii),2)+', '+ strtrim(string(self->req_freq(ii),format='(f7.2)'),2)+'Hz'
-        if n_elements(slowly) eq 1 then wait, slowly 
+        if n_elements(slowly) eq 1 then wait, slowly
 		AA_mat[ii] = AA
   		BB_mat[*,ii]=BB
   		delta_mat[*,ii] = delta
@@ -514,8 +514,8 @@ pro AOsinuscalib__define
 		_delay				: ptr_new() , $
 		_sin_intmat			: ptr_new() , $
 		_operation_mode		: ""		, $
-		INHERITS AOdataset				, $
-        INHERITS AOhelp 				  $
+		INHERITS AOdataset				$;, $
+;        INHERITS AOhelp 				  $
 	}
 end
 
