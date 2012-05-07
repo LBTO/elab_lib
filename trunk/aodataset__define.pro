@@ -3,11 +3,12 @@
 ;
 ; KEYWORD
 ;    lastminute   analyze tracknums acquired in the last lastminute minutes
-;    check        check that tracknum are valid acquisitions and not something else (like gain opt. data, etc)
+;    check        check that tracknums contain valid data and reject improper saved data
+;    all           include autogain directories. Default is to skip all of those
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check, all = all
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
 
@@ -65,7 +66,8 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
         	    if keyword_set(check) then begin
         	        tmp = getaoelab(tracknums[i])
         	        if not obj_valid(tmp) then continue
-                endif
+        	    endif
+        	    if not keyword_set(all) then if tmp->meas_type() ne 'LOOP' then continue
             	self->add, tracknums[i]
         	endif
         	obj_destroy, o_track
@@ -77,7 +79,8 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 			if keyword_set(check) then begin
 			    tmp = getaoelab(tracknumlist[ii])
 			    if not obj_valid(tmp) then continue
-			    endif
+			endif
+			if not keyword_set(all) then if tmp->meas_type() ne 'LOOP' then continue
 			self->add, tracknumlist[ii]
 		endfor
 	endelse
