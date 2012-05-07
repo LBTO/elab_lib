@@ -55,16 +55,15 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
 	self._global_sign = 1.
 
 ;    ; initialize help object and add methods and leafs
-;    if not self->AOhelp::Init('AOsinuscalib', 	'Represent a dataset of sinusoidal IM calibration') then return, 0
-;    self->addMethodHelp, "summary"	 			 , "summary of parameters (modes, frequencies, amplitudes...)"
-;    self->addMethodHelp, "sin_intmat([/VISU])"	 , "sinusoidal IM (float)"
-;    self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
-;    self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
-;    self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
-;    self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
-;    self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
-;;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
-;    self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
+    self->addMethodHelp, "summary"	 			 , "summary of parameters (modes, frequencies, amplitudes...)"
+    self->addMethodHelp, "sin_intmat([/VISU])"	 , "sinusoidal IM (float)"
+    self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
+    self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
+    self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
+    self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
+    self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
+;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
+    self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
 
 	return,1
 end
@@ -490,7 +489,6 @@ pro AOsinuscalib::Cleanup
 	ptr_free, self._delay
 	ptr_free, self._sin_intmat
 	self->AOdataset::Cleanup
-    self->AOhelp::Cleanup
 end
 
 
@@ -515,7 +513,6 @@ pro AOsinuscalib__define
 		_sin_intmat			: ptr_new() , $
 		_operation_mode		: ""		, $
 		INHERITS AOdataset				$;, $
-;        INHERITS AOhelp 				  $
 	}
 end
 
