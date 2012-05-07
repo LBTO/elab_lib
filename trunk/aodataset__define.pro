@@ -520,7 +520,12 @@ pro aodataset::aohelp, metodo, idx=idx
 	ao->help, metodo
 end
 
+pro AOdataset::recompute
+    for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
+end
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 pro AOdataset::Cleanup
     ptr_free, self._values
