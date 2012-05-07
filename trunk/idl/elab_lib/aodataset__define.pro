@@ -322,7 +322,9 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbo
         	if n_elements(operand) ne 0 and n_elements(reference_value) ne 0 then begin
             	case operand of
                 	'lt': if not (value lt reference_value) then isvalid[i]=0
+                	'le': if not (value le reference_value) then isvalid[i]=0
                 	'gt': if not (value gt reference_value) then isvalid[i]=0
+                	'ge': if not (value ge reference_value) then isvalid[i]=0
                 	'eq': if not (value eq reference_value) then isvalid[i]=0
                 	'ne': if not (value ne reference_value) then isvalid[i]=0
                 	'between': if not ( (value ge reference_value[0]) and (value le reference_value[1]) ) then isvalid[i]=0
@@ -334,6 +336,10 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbo
                         		isvalid[i]=0
                     		endelse
                     	end
+                    else : begin
+                    		message, 'operand not recognized',/info
+                    		return, obj_new()
+                    	   end
             	endcase
         	endif
 
