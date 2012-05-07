@@ -140,7 +140,7 @@ function AOcontrol::gain
     	; Gain vector is saved within adsec.sav of each TN (starting from 20120424_192237 on SX, DX TBD).
 		; If not found, load gain vector from traditional location if not found in adsec.sav
     	savObj = obj_new('IDL_Savefile', self._adsec_sav_fname)
-    	if total(strmatch(savObj->names(), 'g_gain')) eq 1 then begin
+    	if total(strmatch(savObj->names(), 'g_gain',/fold)) eq 1 then begin
     		savObj->restore, 'g_gain'
 	  		obj_destroy, savObj
     	    g_gain = reform(g_gain)
