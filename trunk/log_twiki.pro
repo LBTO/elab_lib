@@ -28,15 +28,6 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
 
         instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
 
-		gaintemp = fltarr(672)
-        if obj_valid(ee->control()) then begin
-        	gg = (ee->control())->gain()
-        	ngains = n_elements(rem_dup(gg))
-			if ngains gt 1 then begin
-				ggidx = where(gg-shift(gg,1) ne 0)
-        		if ggidx[0] ne -1 then gaintemp[0] = gg[ggidx]
-        	endif else gaintemp[0]=gg[0]
-        endif
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of
         ;        1070: band = 'J'
@@ -73,7 +64,9 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->ccd39())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
             obj_valid(ee->wfs_status()) ?  round(((ee->wfs_status())->ccd39())->framerate()) : -1, $
-            gaintemp[0], gaintemp[1] , gaintemp[2], $
+            obj_valid(ee->control()) ? (ee->control())->ttgain() : -1 , $
+            obj_valid(ee->control()) ? (ee->control())->mogain() : -1 , $
+            obj_valid(ee->control()) ? (ee->control())->hogain() : -1 , $
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
