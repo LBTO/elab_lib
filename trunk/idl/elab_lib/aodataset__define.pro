@@ -92,11 +92,14 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
     if not self->AOhelp::Init('AOdataset', 'Represent a list of AO measurements') then return, 0
     self->addMethodHelp, "tracknums()", "returns an array  of tracknums"
     self->addMethodHelp, "tracknums_str", "print the list of tracknums as a string"
+    self->addMethodHelp, "count()", "number of TNs in dataset"
     self->addMethodHelp, "RemoveTracknum, tracknums", "remove the array of tracknums from this set"
     self->addMethodHelp, "value(cmd)", "evaluates 'cmd' for all tracknums and returns an array of results"
     self->addMethodHelp, "where(cmd, operand, value)", "return an index of dataset items that match cmd+operand+value"
     self->addMethodHelp, "modalplot", "overall modalplot of the dataset"
+    self->addMethodHelp, "plot, varX, varY", "Plot procedure: use value() syntaxis for varX and varY"
     self->addMethodHelp, "autogains", "returns an array of tracknums which are of type autogains"
+    self->addMethodHelp, "aohelp, str, idx=idx", "Call help method of first (idx=0) AOelab member of dataset"
     return, 1
 end
 
@@ -511,6 +514,11 @@ function aodataset::autogains
     return, (self->tracknums())[ where( self->value('meas_type') eq 'AG')]
 end
 
+pro aodataset::aohelp, metodo, idx=idx
+	if n_elements(idx) eq 0 then idx=0
+	ao = getaoelab(self->get(pos=idx))
+	ao->help, metodo
+end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
