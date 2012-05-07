@@ -28,6 +28,9 @@ function AOelab::Init, tracknum, $
         self._meas_type = 'AG'
 	endif
 
+    if self._meas_type eq 'AG' then return,0
+
+
     ; create elab dir and set permission / owner
     tmp_dir = filepath(root=ao_elabdir(), sub=[date], '')
     if file_test(tmp_dir, /dir) eq 0 then begin
@@ -45,8 +48,6 @@ function AOelab::Init, tracknum, $
 
     ; tracknum object
     self._obj_tracknum = obj_new('AOtracknum', tracknum)
-
-    if self._meas_type eq 'AG' then return,1
 
     ; create adsec_status leaf
     adsec_status_file = filepath(root=self._datadir, 'adsec.sav')
@@ -313,7 +314,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "adsec_status()", "reference to adsec status object (AOadsec_status)"
     self->addMethodHelp, "wfs_status()", "reference to wfs status object (AOwfs_status)"
     self->addMethodHelp, "tel()", "reference to telescope object (AOtel_status)"
-    self->addMethodHelp, "sanity_check()", "reference to loop sanity check (AOsanitycheck)"
+    self->addMethodHelp, "sanitycheck()", "reference to loop sanity check (AOsanitycheck)"
     self->addMethodHelp, "control()", "reference to control filter object (AOcontrol)"
     self->addMethodHelp, "frames_counter()", "reference to frames counter object (AOframes_counter)"
     self->addMethodHelp, "slopes()", "reference to slopes object (AOslopes)"
