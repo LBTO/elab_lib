@@ -63,7 +63,7 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
-        	    if keyword_set(check) then begin
+        	    if keyword_set(check) or not keyword_set(all) then begin
         	        tmp = getaoelab(tracknums[i])
         	        if not obj_valid(tmp) then continue
         	    endif
@@ -76,7 +76,7 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 		; check that the values are string representing tracknums
 		for ii=0, n_elements(tracknumlist)-1 do begin
 			if not stregex(tracknumlist[ii], '^[0-9]{8}_[0-9]{6}$', /bool) then continue
-			if keyword_set(check) then begin
+			if keyword_set(check) or not keyword_set(all) then begin
 			    tmp = getaoelab(tracknumlist[ii])
 			    if not obj_valid(tmp) then continue
 			endif
