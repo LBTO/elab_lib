@@ -203,8 +203,11 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 	nel = n_elements(objref)
     isvalid = bytarr(nel)
     error = 0
+    start = systime(/sec)
 
 	for i=0L, nel-1 do begin
+           now = systime(/sec)
+
 		catch, error
 		if error eq 0 then tmpobj=getaoelab(objref[i]) else begin
             catch, /cancel
@@ -216,6 +219,8 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
             if keyword_set(verbose) then print, objref[i] + ' skipped.'
             continue
         endif
+        if now-start gt 2 then print, format='($, %"%s, %d%% done\r")',tmpobj->tracknum(), fix(i*100.0/nel)
+        close,/all ; Every now and then a logical file unit remains open!
 		if keyword_set(verbose) then print, 'Inspecting :'+tmpobj->tracknum()
 		catch, error
 		if error eq 0 then begin
@@ -234,6 +239,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
        	endelse
        	catch, /cancel
 	endfor
+        if now-start gt 2 then print, format='($, %"                          \r")'
 
 	;;;; If data has different characteristics (dimensions, type, etc) return a pointer.
 	;;;; Otherwise, return a data array.
