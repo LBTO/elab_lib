@@ -171,7 +171,7 @@ function AOelab::Init, tracknum, $
     endif else message, 'Wfs object not available: disturb object not initialized!', /info
 
 	; effective number of independent realizations in the real-time data acquired.
-	if obj_valid(self._disturb) then $
+	if obj_valid(self._disturb) and obj_valid(self._frames_counter) then $
 		self._n_periods = self._frames_counter->nframes() / self._disturb->ind_realizations() else $
 		self._n_periods = 1L
 	if self._n_periods eq 0 then self._n_periods = 1L
