@@ -165,7 +165,7 @@ function AOelab::Init, tracknum, $
     disturb_sync = long(aoget_fits_keyword((self->wfs_status())->header(), "sc.DISTURBANCE"))
     if disturb_sync gt 0 then begin
         ;self._disturb = getdisturb( (self->adsec_status())->disturb_file(), recompute=self._recompute )
-        self._disturb = obj_new('AOdisturb', self, (self->adsec_status())->disturb_file(), recompute=self._recompute )
+        if obj_valid(self->adsec_status()) then self._disturb = obj_new('AOdisturb', self, (self->adsec_status())->disturb_file(), recompute=self._recompute )
         self._modaldisturb = obj_new('AOmodaldisturb', self)
     endif
     endif else message, 'Wfs object not available: disturb object not initialized!', /info
