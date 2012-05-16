@@ -149,7 +149,7 @@ function AOframes::dark, dark_ok=dark_ok
 	dark_fname = (*self._wfs_status->ccd39())->dark_fname()
 
 	if not file_test(dark_fname) then begin
-		message, 'CCD39 dark file not found', /info
+		message, 'CCD39 dark file not found: '+dark_fname, /info
 		dark_ok = 0B
 		return, -1
 	endif
@@ -177,14 +177,14 @@ end
 ; RESTORES THE FRAMES DATA
 ;-
 function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
-	fr = float(readfits(self._filename, /SILENT))
-	if n_elements(fr) eq 1 then return,-1
 	if keyword_set(DARK_SUBTRACTED) then begin
 ;		dark = (*self._wfs_status->ccd39())->dark()
 		dark = self->dark(dark_ok=dark_ok)
 		if not dark_ok then return,-1
-		for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark
-	endif
+        endif
+	fr = float(readfits(self._filename, /SILENT))
+	if n_elements(fr) eq 1 then return,-1
+	if keyword_set(DARK_SUBTRACTED) then for ii=0L, self->nframes()-1 do fr[*,*,ii] = fr[*,*,ii] - dark
 	return, fr
 end
 
@@ -279,25 +279,39 @@ end
 ;+
 ; ESTIMATES FOUR CENTER SEPARATIONS
 ;-
-pro AOframes::calc_center_separation
+pro AOframes::calc_pupils
 	if file_test(self._pupils_fname) then begin
 		restore, self._pupils_fname
 	endif else begin
 		f = self->frames(/dark)
+                if n_elements(f) eq 1 then begin
+		    message, 'Cannot calculate pupils'
+                    return
+                endif
 		fm = total(f,3) / n_elements(f[0,0,*])
 		distanza_centri, fm, m, w, dl, md, /SPLIT, TH1=0.3, TH2=0.3, /QUIET
 		save, m, w, dl, md, filename=self._pupils_fname
         endelse
 	self._center_separation = w
+        self._pup_diameter = md
 end
 
 function AOframes::center_separation
-	if total(self._center_separation) eq 0 then self->calc_center_separation
+	if total(self._center_separation) eq 0 then self->calc_pupils
 	return, self._center_separation
+end
+
+function AOframes::pup_diameter
+	if total(self._pup_diameter) eq 0 then self->calc_pupils
+	return, self._pup_diameter
 end
 
 function AOframes::mean_center_separation
 	return, mean(self->center_separation())
+end
+
+function AOframes::mean_pup_diameter
+	return, mean(self->pup_diameter())
 end
 
 ;Replay the ccd frames
@@ -358,6 +372,7 @@ pro AOframes__define
         _pupils_fname	   : ""			, $
         _ron			   : 0.0		, $
         _center_separation : fltarr(4)  , $
+        _pup_diameter      : fltarr(4)  , $
         INHERITS AOhelp 				  $
     }
 end
