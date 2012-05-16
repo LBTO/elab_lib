@@ -76,6 +76,7 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
     ;dark = self->find_dark_from_tn(thisJulday, dark_subdir, exptime, filter_tag, frame_w, frame_h, ra, dec, stages_x, stages_y, err_msg=dark_err_msg)
 ;stop
 	;Dark Frame:
+    if obj_valid(root_obj->wfs_status()) then begin
     dark_subdir = ['wfs_calib_'+(root_obj->wfs_status())->wunit(),'pisces','backgrounds','bin1']
     if (n_elements(dark_fname) eq 0) then begin
     	if valid_exptime and valid_filt_number then begin
@@ -100,8 +101,10 @@ function aopisces::Init, root_obj, psf_fname, dark_fname
         endif
 	endelse
 
+
 	;Badpixelmap filename:
 	badpixelmap_fname = filepath(root=ao_datadir(), sub=dark_subdir, 'badpixelmap.sav')
+    endif
 
     store_radix = filepath(root=root_obj->elabdir(), 'pisces')
 
