@@ -298,11 +298,12 @@ end
 ;
 ; KEYWORDS
 ;   ptrdata    (output) array of pointers to values matching the condition
+;   index        if set, return an index array instead of a new dataset
 ;
-; return index of dataset items that matches the condition operand+reference_value
+; return a dataset of items that matches the condition operand+reference_value
 ;
 ;
-function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbose=verbose
+function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbose=verbose, index=index
 
     objref = self->Get(/all)
     nel = self->Count()
@@ -372,6 +373,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbo
     endfor
 
     valid = where(isvalid eq 1, cntvalid)
+    if keyword_set(index) then return,valid
     if arg_present(ptrdata) then ptrdata = cntvalid eq 0 ? ptr_new() : v[valid]
 	if cntvalid eq 0 then return, obj_new()
 
