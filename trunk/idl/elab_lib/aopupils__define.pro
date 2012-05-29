@@ -24,13 +24,13 @@ function AOpupils::Init, wfs_header, wunit
     for i=1,4 do begin
         fname=filepath(root=pups_path, 'pup'+strtrim(string(i),2)+'.fits')
 	    if not file_test(fname) then begin
-            message, 'File not found:'+fname
+            message, 'File not found:'+fname, /INFO
             return, 0
         endif
     endfor
     fname=filepath(root=pups_path, 'pupdata.txt')
 	if not file_test(fname) then begin
-        message, 'File not found:'+fname
+        message, 'File not found:'+fname, /INFO
         return, 0
     endif
 
@@ -89,6 +89,8 @@ function AOpupils::Init, wfs_header, wunit
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOpupils', 'Represent WFS pupils') then return, 0
     self->addMethodHelp, "indpup()", "pupil indexes  (lonarr)"
+    self->addMethodHelp, "single_mask()", "returns the 2d mask of a single pupil"
+    self->addMethodHelp, "complete_mask()", "returns the full 4-pupils mask"
     self->addMethodHelp, "nsub()", "number of valid subapertures (long)"
     self->addMethodHelp, "radius()", "nominal radius of pupils (long[4])"
     self->addMethodHelp, "cx()", "nominal x-coord of pupils centers (long[4])"
@@ -121,6 +123,24 @@ end
 
 function AOpupils::indpup
 	return, *(self._indpup)
+end
+
+function AOpupils::single_mask
+        hdr = *(self._header)
+        bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        npix = 80/bin
+	frame = intarr(npix, npix)
+        frame[ (self->indpup())[*,2]] =1
+	return, frame[0:npix/2-1, 0:npix/2-1]
+end
+
+function AOpupils::complete_mask
+        hdr = *(self._header)
+        bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        npix = 80/bin
+	frame = intarr(npix, npix)
+        frame[ self->indpup()] =1
+	return, frame
 end
 
 function AOpupils::nsub
