@@ -346,18 +346,27 @@ pro AOsinuscalib::visu_specs, idx
 end
 
 
-pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out
+pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_tracknum= compIM_tracknum
 	if n_elements(mode) ne 1 then begin
 		message, 'SINTAXIS: ee->compare_sigs, mode.  (One mode at a time)',/info
 		return
 	endif
 	if not keyword_set(REFMODE) then REFMODE = mode
-	refsx = reform((self->imobj())->sx(REFMODE))
-	refsy = reform((self->imobj())->sy(REFMODE))
+	if not keyword_set(compIM_tracknum) then imobj = self->imobj() else begin
+		imfname = filepath(root=file_dirname((self->imobj())->fname()), 'Intmat_'+compIM_tracknum+'.fits')
+		if not file_test(imfname) then begin
+			message, 'Requested IM not found: '+imfname,/info
+			return
+		endif
+		imobj = obj_new('AOintmat', imfname)
+	endelse
+	refsx = reform(imobj->sx(REFMODE))
+	refsy = reform(imobj->sy(REFMODE))
 	sinsx = reform(self->sx(mode))
 	sinsy = reform(self->sy(mode))
 
-	pupobj = ((self->imobj())->wfs_status())->pupils()
+	pupobj  = (imobj->wfs_status())->pupils()
+	puptrn  = pupobj->pup_tracknum()
 	indpup = (pupobj->indpup())
 	fr_sz =80L		;pixels
 	mypup = 0	;use this pupil info to remap signals
@@ -378,6 +387,22 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out
 	window,0, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='reference IM'
 
+
+	pupobj1  = ((self->imobj())->wfs_status())->pupils()
+	puptrn1  = pupobj1->pup_tracknum()
+	if puptrn1 ne puptrn then begin
+		indpup = (pupobj1->indpup())
+		fr_sz =80L		;pixels
+		mypup = 0	;use this pupil info to remap signals
+		cx  = (pupobj1->cx())[mypup]
+		cy  = (pupobj1->cy())[mypup]
+		rad = (pupobj1->radius())[mypup]
+		xr = [floor(cx-rad),ceil(cx+rad)]
+		yr = [floor(cy-rad),ceil(cy+rad)]
+		sl2d_w = xr[1]-xr[0]+1
+		sl2d_h = yr[1]-yr[0]+1
+	endif
+
 	s2d = fltarr(fr_sz,fr_sz)
 	s2d[indpup[*,mypup]] = sinsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
@@ -387,23 +412,27 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out
 	window,1, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='sinusoidal IM'
     slo_out=sl_2d
-	s2d = fltarr(fr_sz,fr_sz)
-	s2d[indpup[*,mypup]] = refsx - sinsx
-	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-	s2d[indpup[*,mypup]] = refsy - sinsy
-	s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-	sl_2d = [s2d_tmpA,s2d_tmpB]
-	window,2, XSIZE=550, YSIZE=216
-	image_show, sl_2d, /as,/sh, title='difference'
 
-	diff = [sinsx,sinsy] - [refsx,refsy]
-	window,3
-	plot, [sinsx,sinsy],yrange=minmax([sinsx,sinsy,refsx,refsy])
-	oplot, [refsx,refsy], color=255L
-	oplot, diff, color=255L*250L
-	legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
+	if puptrn1 eq puptrn then begin
+		s2d = fltarr(fr_sz,fr_sz)
+		s2d[indpup[*,mypup]] = refsx - sinsx
+		s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+		s2d[indpup[*,mypup]] = refsy - sinsy
+		s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+		sl_2d = [s2d_tmpA,s2d_tmpB]
+		window,2, XSIZE=550, YSIZE=216
+		image_show, sl_2d, /as,/sh, title='difference'
 
-	print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
+		diff = [sinsx,sinsy] - [refsx,refsy]
+		window,3
+		plot, [sinsx,sinsy],yrange=minmax([sinsx,sinsy,refsx,refsy])
+		oplot, [refsx,refsy], color=255L
+		oplot, diff, color=255L*250L
+		legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
+		print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
+	endif else begin
+		print, 'pup_tracknum discrepancy between sin and ref IMs. No difference visualized'
+	endelse
 end
 
 
