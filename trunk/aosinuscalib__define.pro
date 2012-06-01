@@ -146,7 +146,7 @@ end
 ;+
 ; DEMODULATE THE SIGNALS!
 ;-
-pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
+pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly, compare=compare
 
 	AA_mat = fltarr(self._nmeas)
 	BB_mat = fltarr(self._nslopes, self._nmeas)
@@ -156,26 +156,20 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 
 	; Find the CL modal amplitudes, the signal amplitudes, and estimate delay between c(t) and s(t)
 	;-----------------------------------------------------------------------------------------------
-	for ii=0, self._nmeas-1 do begin
-  		if ii gt 0 then $
-  			if self->trn(ii) ne self->trn(ii-1) then ao->free
-		ao = getaoelab(self->trn(ii))
-		coeff  = reform(((ao->modalpositions())->modalpositions())[*,self->modes(ii)])
-		slopes = (ao->slopes())->slopes()
-		sl_idx = where(total(slopes,1) ne 0., nsl)
-;		if self._nslopes ne nsl then message, 'wrong number of slope signals!'
-;		slopes = slopes[*,sl_idx]
-		slopes = slopes[*,0:self._nslopes-1]
-		fs 	= 1. / (ao->modalpositions())->deltat()	;data sampling frequency considering decimation!
-		demodulate_signals, coeff, slopes, self->req_freq(ii), fs, AA, BB, delta, VISU=VISU, WIN_ID=10, $
-			xtitle='delay between c(t) and s(t) [degrees]', $
-			title='mode'+strtrim(self->modes(ii),2)+', '+ strtrim(string(self->req_freq(ii),format='(f7.2)'),2)+'Hz'
-        if n_elements(slowly) eq 1 then wait, slowly
-		AA_mat[ii] = AA
-  		BB_mat[*,ii]=BB
-  		delta_mat[*,ii] = delta
-	endfor
-	ao->free
+        trk= self->tracknums()
+        meas=0
+        for t=0,n_elements(trk)-1 do begin
+                ao = getaoelab(trk[t])
+                ao->demodulate_signals, AA, BB, delta, VISU = VISU, slowly =slowly
+                nmodes = (ao->disturb())->nsinmodes()
+                for m=0,nmodes-1 do begin
+		   AA_mat[meas] = AA[m]
+  		   BB_mat[*,meas]=BB[*,m]
+  		   delta_mat[*,meas] = delta[*,m]
+                   meas +=1
+                endfor
+                ao->free
+        endfor
 
 	; Find the sign of demodulated signals (modes with same sin frequency analyzed together)
 	;------------------------------------------------------------------------------------------
