@@ -57,6 +57,7 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
 ;    ; initialize help object and add methods and leafs
     self->addMethodHelp, "summary"	 			 , "summary of parameters (modes, frequencies, amplitudes...)"
     self->addMethodHelp, "sin_intmat([/VISU])"	 , "sinusoidal IM (float)"
+    self->addMethodHelp, "imobj()",	"Returns an AOINTMAT object with the sinusoidal IM"
     self->addMethodHelp, "global_sign()"		 , "current value of global sign (float)"
     self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
     self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
