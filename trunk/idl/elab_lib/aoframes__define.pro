@@ -71,6 +71,8 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self->addMethodHelp, "ron()", "Estimate of Read-Out Noise"
     self->addMethodHelp, "center_separation()", 'Estimates 4 center separations (float)"
     self->addMethodHelp, "mean_center_separation()", 'Mean of 4 center separations (float)"
+    self->addMethodHelp, "pup_diameter()", 'Estimates 4 pupil diameters (float)"
+    self->addMethodHelp, "mean_pup_diameter()", 'Mean of 4 pupil diameters (float)"
     self->addMethodHelp, "replay, wait=wait, zoom=zoom", "Replay the CCD frames"
     return, 1
 end
