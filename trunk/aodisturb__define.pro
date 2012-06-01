@@ -106,6 +106,8 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
             if not self->AOdisturb_sinmode::Init(root_obj) then return,0
             self->AOdisturb_sinmode::addHelp, self
             END
+        'autogain': BEGIN
+            END
 		'':	message, 'Unknown type of disturbance', /info
 	ENDCASE
 

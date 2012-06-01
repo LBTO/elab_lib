@@ -27,7 +27,7 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
 	for ii=0, self->count()-1 do begin
 		trn = self->get(pos=ii)
 		ao = getaoelab(trn)
-		if ii eq 0 then self._imobj = ao->intmat()
+		if ii eq 0 then self._meas_imobj = ao->intmat()
 		nmodes = ao->ex('disturb.nsinmodes')
 		tracknums1 	= replicate(trn,nmodes)
 		modes1 		= ao->ex('disturb.sin_mode')
@@ -314,8 +314,15 @@ function AOsinuscalib::sy, mode_num_idx
 	return, sy
 end
 
+function AOsinuscalib::meas_imobj
+	return, self._meas_imobj
+end
+
 function AOsinuscalib::imobj
-	return, self._imobj
+        fname = filepath(root=getenv('IDL_TMPDIR'), 'im.fits')
+        if file_test(fname) then file_delete, fname
+        self->export_sin_intmat, fname = fname
+        return, obj_new('aointmat', fname)
 end
 
 ;-------------------------------------
@@ -346,8 +353,8 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 		return
 	endif
 	if not keyword_set(REFMODE) then REFMODE = mode
-	if not keyword_set(compIM_tracknum) then imobj = self->imobj() else begin
-		imfname = filepath(root=file_dirname((self->imobj())->fname()), 'Intmat_'+compIM_tracknum+'.fits')
+	if not keyword_set(compIM_tracknum) then imobj = self->meas_imobj() else begin
+		imfname = filepath(root=file_dirname((self->meas_imobj())->fname()), 'Intmat_'+compIM_tracknum+'.fits')
 		if not file_test(imfname) then begin
 			message, 'Requested IM not found: '+imfname,/info
 			return
@@ -382,7 +389,7 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	image_show, sl_2d, /as,/sh, title='reference IM'
 
 
-	pupobj1  = ((self->imobj())->wfs_status())->pupils()
+	pupobj1  = (imobj->wfs_status())->pupils()
 	puptrn1  = pupobj1->pup_tracknum()
 	if puptrn1 ne puptrn then begin
 		indpup = (pupobj1->indpup())
@@ -432,7 +439,7 @@ end
 
 ;EXPORT INTMAT AS FITS FILE
 ;--------------------------------------------------------------------------------------------------------------
-pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, this_dir=this_dir
+pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, this_dir=this_dir, fname = fname
 
 	matinter = self->sin_intmat()
 	max_nmodes = max(self->modes())+1
@@ -456,10 +463,10 @@ pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, thi
 		;Setup fits header
 		ao = getaoelab(self->get(pos=0))
 		hdr = (ao->wfs_status())->header()	;Include this WFS status in IM fits header.
-		exp_hdr = self._imobj->header()
+		exp_hdr = self._meas_imobj->header()
 
 	  	sxaddpar, hdr, 'IM_TYPE'	, 'SINUS'				, 'IM calib method'
-	  	sxaddpar, hdr, 'CL_IM'		, self._imobj->fname()	, 'IM used in CL during acquisition'
+	  	sxaddpar, hdr, 'CL_IM'		, self._meas_imobj->fname()	, 'IM used in CL during acquisition'
 		sxaddpar, hdr, 'FILETYPE'	, 'intmat'
 		sxaddpar, hdr, 'N_TRN'		, self->count()			, 'Total number of tracknums associated to this IM calib'
 		for ii=0, self->count()-1 do $
@@ -469,9 +476,9 @@ pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, thi
 		sxaddpar, hdr, 'IM_MODES', 	nmodes[jj]
 		sxaddpar, hdr, 'PUPILS', 	aoget_fits_keyword(exp_hdr, 'PUPILS')
 
-		if not keyword_set(this_dir) then this_dir=file_dirname(self._imobj->fname()) else $
+		if not keyword_set(this_dir) then this_dir=file_dirname(self._meas_imobj->fname()) else $
 			if not file_test(this_dir,/dir) then file_mkdir, this_dir
-		fname = filepath(root=this_dir, export_fname)
+		if not keyword_set(fname) then fname = filepath(root=this_dir, export_fname)
 		if file_test(fname) then message, 'File already exists! '+ fname
 		writefits, fname, float(matinter1), hdr
 		print, 'sinus-calib IM saved in: '+ fname
@@ -497,7 +504,7 @@ end
 
 
 pro AOsinuscalib::Cleanup
-	obj_destroy, self._imobj
+	obj_destroy, self._meas_imobj
 	ptr_free, self._trns
 	ptr_free, self._modes
 	ptr_free, self._req_freq
@@ -517,7 +524,7 @@ end
 
 pro AOsinuscalib__define
     struct = { AOsinuscalib	, $
-    	_imobj				: obj_new() , $
+    	_meas_imobj				: obj_new() , $
     	_trns				: ptr_new() , $
 		_modes				: ptr_new()	, $
 		_req_freq			: ptr_new() , $
