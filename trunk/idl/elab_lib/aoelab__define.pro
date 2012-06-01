@@ -278,6 +278,14 @@ function AOelab::Init, tracknum, $
         if strtrim(file_basename( (self->wfs_status())->slopes_null_fname()),2) eq 'nc.fits' then self._meas_type = 'NCPA'
     if file_test(filepath(root=self._datadir, 'gains_step1.fits')) then self._meas_type = 'AG'
 
+
+    ; Demodulation
+    self._demodulation_fname = filepath(root=self._elabdir, 'demodulation.sav')
+    if self._recompute eq 1B then begin
+        file_delete, self._demodulation_fname, /allow_nonexistent
+    endif
+
+
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOElab', 'Represents an AO measure') then return, 0
     if obj_valid(self._obj_tracknum) then self->addleaf, self._obj_tracknum, 'obj_tracknum'
@@ -817,6 +825,48 @@ function AOelab::override
     IF (OBJ_VALID(self._override)) THEN return, self._override else return, obj_new()
 end
 
+pro AOelab::demodulate_signals, AA, BB, delta, VISU = VISU, WIN_ID = WIN_ID, slowly = slowly
+
+    if file_test(self._demodulation_fname) then begin
+        restore, self._demodulation_fname
+        if keyword_set(VISU) then begin
+            if n_elements(win_id) eq 0 then window, 10 else wset, WIN_ID
+            for ii=0,n_elements(AA)-1 do begin
+               aohistoplot, delta[*,ii]*180d/!dPI, /fill, bin=2, mininput=-200, maxinput=200, $
+                       xtitle='delay between c(t) and s(t) [degrees]', $
+                        title='mode'+strtrim(modes[ii],2)+', '+ strtrim(string(freqs[ii],format='(f7.2)'),2)+'Hz'
+
+               if n_elements(slowly) eq 1 then wait, slowly
+            endfor
+        endif
+    endif else begin
+        modes = (self->disturb())->sin_mode()
+        freqs = (self->disturb())->sin_freq()
+        coeffs = ((self->modalpositions())->modalpositions())[*,modes]
+        nslopes = ((self->wfs_status())->pupils())->nsub()*2L
+        slopes = ((self->slopes())->slopes())[*,0:nslopes-1]
+        fs    = 1. / (self->modalpositions())->deltat() ;data sampling frequency considering decimation!
+
+        nmodes = n_elements(modes)
+        AA = fltarr(nmodes)
+        BB = fltarr(nslopes, nmodes)
+        delta = fltarr(nslopes, nmodes)
+        for m=0,nmodes-1 do begin
+            coeff = reform(coeffs[*,m])
+            demodulate_signals, coeff, slopes, freqs[m], fs, A, B, d, VISU=VISU, WIN_ID=10, $
+                        xtitle='delay between c(t) and s(t) [degrees]', $
+                        title='mode'+strtrim(modes[m],2)+', '+ strtrim(string(freqs[m],format='(f7.2)'),2)+'Hz'
+            AA[m] = A
+            BB[*,m] = B
+            delta[*,m] = d
+            if n_elements(slowly) eq 1 then wait, slowly
+        endfor
+        save, AA, BB, delta, modes, freqs, filename=self._demodulation_fname
+
+    endelse
+
+end
+
 function AOelab::ex, cmd,  isvalid=isvalid
   	apex = string(39B)
 
@@ -952,6 +1002,7 @@ pro AOelab__define
         _n_periods		   : 0L,		$
         _operation_mode    : "",		$	; "RR": retroreflector, "ONSKY", idem.
         _meas_type         : "",		$	; "LOOP", "NCPA", "AG"
+        _demodulation_fname : ""              , $
         _reflcoef		   : 0.,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
