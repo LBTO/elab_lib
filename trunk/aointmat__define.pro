@@ -5,14 +5,16 @@
 
 function AOintmat::Init, fname
     self._im_file  = fname
-    full_fname = filepath(root=ao_datadir(), fname)
-    if not file_test(full_fname) then begin
-        message, full_fname + ' not found', /info
+    self._full_fname = fname
+    if strmid(fname,0,1) ne '/' then self._full_fname = filepath(root=ao_datadir(), fname)
+
+    if not file_test(self._full_fname) then begin
+        message, self._full_fname + ' not found', /info
         return,0
     endif
 
-    header = headfits(full_fname ,/SILENT, errmsg=errmsg)
-    if errmsg ne '' then message, full_fname+ ': '+ errmsg, /info
+    header = headfits(self._full_fname ,/SILENT, errmsg=errmsg)
+    if errmsg ne '' then message, self._full_fname+ ': '+ errmsg, /info
 
    	if strtrim(aoget_fits_keyword(header, 'FILETYPE'),2) NE 'intmat' then begin
     	message, fname + ': not valid IM fits header', /info
@@ -22,7 +24,7 @@ function AOintmat::Init, fname
     self._basis = strtrim(aoget_fits_keyword(header, 'M2C'))
     self._nmodes  = -1
     self._nslopes = -1
-    self._wfs_status = obj_new('AOwfs_status', self, full_fname)
+    self._wfs_status = obj_new('AOwfs_status', self, self._full_fname)
 	im_type = strtrim(aoget_fits_keyword(header, 'IM_TYPE'))
     self._im_file_fitsheader = ptr_new(header, /no_copy)
 
@@ -71,6 +73,10 @@ function AOintmat::fname
     return, self._im_file
 end
 
+function AOintmat::full_fname
+    return, self._full_fname
+end
+
 function AOintmat::header
     if ptr_valid(self._im_file_fitsheader) then return, *(self._im_file_fitsheader) else return, ""
 end
@@ -80,7 +86,7 @@ function AOintmat::im_type
 end
 
 function AOintmat::im
-    im = readfits(ao_datadir()+path_sep()+self->fname(), /SILENT)
+    im = readfits(self->full_fname(), /SILENT)
     if not ptr_valid(self._modes_idx) then begin
     	self._modes_idx = ptr_new(where(total(im^2.,2) ne 0, t_nmodes), /no_copy)
     	if t_nmodes eq 0 then message, 'Null im matrix '+self->fname()
@@ -263,6 +269,7 @@ end
 pro AOintmat__define
     struct = { AOintmat									, $
         _im_file                          : ""			, $
+        _full_fname                       : ""			, $
         _im_file_fitsheader               : ptr_new()	, $
         _im_type						  : ""			, $
         _basis							  : ""			, $
