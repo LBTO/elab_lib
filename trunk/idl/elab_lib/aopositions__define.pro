@@ -81,7 +81,7 @@ function AOpositions::GetDati
 end
 
 function AOpositions::flatpositions
-    restore, ao_datadir()+path_sep()+(self._root_obj->adsec_status())->shape_file()
+    restore, (self._root_obj->adsec_status())->shape_file()
     flat=flattened_status.position
     return, flat
 end
