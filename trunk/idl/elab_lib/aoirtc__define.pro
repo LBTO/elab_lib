@@ -22,22 +22,28 @@ function AOIRTC::Init, root_obj, psf_fname, dark_fname
 	endif
 
     ; Pixelscale:
-    apertnr = long(aoget_fits_keyword(fitsheader, 'APERTNR'))
-    valid_pixscale = 1B
-	CASE apertnr of
-    	1: pixelscale = 0.010
-        2: pixelscale = 0.020
-        3: pixelscale = 0.100
-     else: begin
+    catch, err
+    if err ne 0 then begin 
+        apertnr = long(aoget_fits_keyword(fitsheader, 'APERTNR'))
+        valid_pixscale = 1B
+	    CASE apertnr of
+    	    1: pixelscale = 0.010
+            2: pixelscale = 0.020
+            3: pixelscale = 0.100
+        else: begin
      		msg_temp = 'Unknown IRTC pixelscale'
             message, msg_temp, /info
 	        self._irtc_err_msg += ' - ' + msg_temp
 	        valid_pixscale = 0B
-	        ;pixelscale = 1.
 	        pixelscale = !VALUES.F_NAN
            end
-    ENDCASE
-
+        ENDCASE
+        catch, /cancel 
+    endif else  begin
+        valid_pixscale = 1B
+        pixelscale = (root_obj->override())->overriden_value('irtc.pixelscale')
+        catch, /cancel
+    endelse
 
     ; Detect filter:
     filter_number = long(aoget_fits_keyword(fitsheader, 'FILTRNR'))
