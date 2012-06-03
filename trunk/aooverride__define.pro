@@ -4,9 +4,17 @@
 ;
 ;
 ; USAGE
-; catch, errOver
-; if errOver ne 0 then catch, /cancel else self._operation_mode = (self->override())->overriden_value('operation_mode')
+; Howto override irtc.pixelscale for a dataset
+; for i=0, set->count()-1 do begin & ee=getaoelab(set->get(pos=i)) & (ee->override())->set_overriden_value, 'irtc.pixelscale', 1  & endfor;
 ;
+; In the IRTC object do something like this
+; catch, errOver
+; if errOver ne 0 then 
+;   self._pixelscale = READ IT FROM FITS HEADER
+; endif else self._pixelscale = (root_obj->override())->overriden_value('irtc.pixelscale')
+; catch, /cancel
+;
+; 
 ; INTERNALS
 ; .sav file contains an 'override_str' variable that is a struct containing structures each having a tag 'k' [string] 
 ;  and a tag 'v' [whatever type]
