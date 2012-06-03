@@ -83,8 +83,9 @@ function AOelab::Init, tracknum, $
 	endif else self._operation_mode = "RR"	;in Solar Tower
     ; operation mode can be overridden
     catch, err
-    if err ne 0 then catch, /cancel else self._operation_mode = (self->override())->overriden_value('operation_mode')
-
+    ;if err ne 0 then catch, /cancel else self._operation_mode = (self->override())->overriden_value('operation_mode')
+    if err eq 0 then self._operation_mode = (self->override())->overriden_value('operation_mode')
+    catch, /cancel
 
 	;Single or double reflection
 	if self->operation_mode() eq "RR" then self._reflcoef=4. else self._reflcoef=2.
@@ -582,16 +583,23 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 		clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
 		yrange = sqrt(minmax(clvar))
     	if obj_valid(self._disturb) then begin
-    		olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
-    		yrange = sqrt(minmax([clvar,olvar]))
+			if (self->adsec_status())->disturb_status() ne 0 then begin
+    			olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
+    			yrange = sqrt(minmax([clvar,olvar]))
+			endif
     	endif
         if not keyword_set(OVERPLOT) then  begin
-		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
+		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
+						 title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
         endif else begin
 		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
         endelse
-		if obj_valid(self._disturb) then oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
-		if obj_valid(self._disturb) then legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+		if obj_valid(self._disturb) then begin
+			if (self->adsec_status())->disturb_status() ne 0 then begin
+				oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+				legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+			endif
+		endif
 	endif else begin
 ;		nmodes = (self->residual_modes())->nmodes()
 		clvar  = (self->residual_modes())->time_variance() * ((self->residual_modes())->norm_factor())^2.
@@ -601,7 +609,8 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 		olvar  = olvar[modes_idx]
    		yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(OVERPLOT) then  begin
-			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
+			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
+						 title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
         endif else begin
 		    oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
 		endelse
@@ -1036,6 +1045,7 @@ pro AOelab__define
         INHERITS AOhelp $
     }
 end
+
 
 
 
