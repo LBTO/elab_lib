@@ -4,9 +4,9 @@
 ;
 ;-
 
-function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_tracknum=to_tracknum, recompute=recompute, check=check
+function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_tracknum=to_tracknum, recompute=recompute
 
-	if not self->AOdataset::Init(tracknumlist, from=from_tracknum, to=to_tracknum, recompute=recompute, check=check) then return,0
+	if not self->AOdataset::Init(tracknumlist, from=from_tracknum, to=to_tracknum, recompute=recompute, /check) then return,0
 	set1 = self->where('disturb.type', 'ne', 'sinusmode')
 	if obj_valid(set1) then self->removeTracknum, set1->tracknums()
 
@@ -62,9 +62,14 @@ function AOsinuscalib::Init, tracknumlist, from_tracknum=from_tracknum, to_track
     self->addMethodHelp, "set_global_sign, x"	 , "changes global sign of sinusoidal IM: x={-1.,1.}"
     self->addMethodHelp, "demodulate_im, [/VISU]", "process all signals and produce IM"
     self->addMethodHelp, "compare_sigs, mode, [REFMODE=REFMODE]"	 , "for selected mode, compares demodulated and reference signals"
-    self->addMethodHelp, "export_sin_intmat, [export_date=export_date, nmodes=nmodes, this_dir=this_dir]",	"generates fits file with IM"
+    self->addMethodHelp, "export [nmodes=nmodes, this_dir=this_dir, /REC]",	"generates fits file with IM"
 ;    self->addMethodHelp, "verify_disturb", "Checks that disturbance files comply with requirements (PSD analysis)"
     self->addMethodHelp, "visu_specs,idx",	"Visualizes the input and CL disturbance PSD of acquisition #idx"
+    self->addMethodHelp, "modes()",                "list of modes actuated in the input disturbances"
+    self->addMethodHelp, "req_freq()",             "requested frequency of disturbances"
+    self->addMethodHelp, "req_amp()",              "requested amplitude of disturbances"
+    self->addMethodHelp, "app_freq()",             "applied frequency of disturbances"
+    self->addMethodHelp, "app_amp()",              "applied amplitude of disturbances"
 
 	return,1
 end
@@ -97,6 +102,7 @@ pro AOsinuscalib::verify_disturb
 	max_amp_rel_err  = 5.	;(%) maximum relative error in amplitude
 	max_freq_rel_err = 5.	;(%) maximum relative error in frequency
 
+    init_progress, self._nmeas
 	for ii=0, self._nmeas-1 do begin
 		ao = getaoelab(self->trn(ii))
 		(ao->modaldisturb())->set_threshold, 1e-5
@@ -117,6 +123,7 @@ pro AOsinuscalib::verify_disturb
 		freq_rel_err[ii] = abs(freqs[ii] - self->req_freq(ii))  / self->req_freq(ii) * 100.
 		if amp_rel_err[ii]  gt max_amp_rel_err  then dist_ok[ii] = 0B
 		if freq_rel_err[ii] gt max_freq_rel_err then dist_ok[ii] = 0B
+        progress, ii, ao->tracknum()
 	endfor
 
 	self._dist_ok = ptr_new(dist_ok)
@@ -159,12 +166,12 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 	;-----------------------------------------------------------------------------------------------
         trk= self->tracknums()
         meas=0
-        start = systime(/sec)
+        init_progress, n_elements(trk)
         for t=0,n_elements(trk)-1 do begin
                 now = systime(/sec)
                 ao = getaoelab(trk[t])
                 ao->demodulate_signals, AA, BB, delta, VISU = VISU, slowly =slowly
-                if now-start gt 2 then print, format='($, %"%s, %d%% done\r")',ao->tracknum(), fix(t*100.0/n_elements(trk)-1)
+                progress, t, ao->tracknum()
                 nmodes = (ao->disturb())->nsinmodes()
                 for m=0,nmodes-1 do begin
                    AA_mat[meas] = AA[m]
@@ -325,7 +332,7 @@ end
 function AOsinuscalib::imobj
         fname = filepath(root=getenv('IDL_TMPDIR'), 'im.fits')
         if file_test(fname) then file_delete, fname
-        self->export_sin_intmat, fname = fname
+        self->export, fname = fname
         return, obj_new('aointmat', fname)
 end
 
@@ -441,9 +448,9 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 end
 
 
-;EXPORT INTMAT AS FITS FILE
+;EXPORT INTMAT AS FITS FILE (with optional reconstructor if /REC is set)
 ;--------------------------------------------------------------------------------------------------------------
-pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, this_dir=this_dir, fname = fname
+pro AOsinuscalib::export, nmodes=nmodes, this_dir=this_dir, fname = fname, REC = REC
 
 	matinter = self->sin_intmat()
 	max_nmodes = max(self->modes())+1
@@ -451,18 +458,17 @@ pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, thi
 	;If requested, export an IM with a lower number of modes
 	if n_elements(nmodes) eq 0 then nmodes = [max_nmodes]
 
+    ; Generate tracknum
+    caldat, systime(/julian), m,d,y,hh,mm,ss
+
 	for jj=0, n_elements(nmodes)-1 do begin
+
+        export_tracknum = string(format='(%"%04d%02d%02d_%02d%02d%02d")', y,m,d,hh,mm,ss)
+
 		matinter1 = matinter[0:nmodes[jj]-1,*]
 
-		;Prepare fits name to hold exported IM
-		if n_elements(export_date) eq 0 then begin
-			today_date = bin_date()
-			export_date = 	string(today_date[0],format='(i4)') 	+ $
-							string(today_date[1],format='(i02)')	+ $
-							string(today_date[2],format='(i02)')
-		endif
-		export_tracknum = export_date + '_' + string(nmodes[jj], format='(i06)')
 		export_fname = 'Intmat_'+export_tracknum+'.fits'
+        rec_fname = 'Rec_'+export_tracknum+'.fits'
 
 		;Setup fits header
 		ao = getaoelab(self->get(pos=0))
@@ -480,12 +486,32 @@ pro AOsinuscalib::export_sin_intmat, export_date=export_date, nmodes=nmodes, thi
 		sxaddpar, hdr, 'IM_MODES', 	nmodes[jj]
 		sxaddpar, hdr, 'PUPILS', 	aoget_fits_keyword(exp_hdr, 'PUPILS')
 
-		if not keyword_set(this_dir) then this_dir=file_dirname(self._meas_imobj->fname()) else $
+		if not keyword_set(this_dir) then this_dir=file_dirname(self._meas_imobj->full_fname()) else $
 			if not file_test(this_dir,/dir) then file_mkdir, this_dir
-		if not keyword_set(fname) then fname = filepath(root=this_dir, export_fname)
-		if file_test(fname) then message, 'File already exists! '+ fname
-		writefits, fname, float(matinter1), hdr
-		print, 'sinus-calib IM saved in: '+ fname
+		if not keyword_set(fname) then begin
+            intmat_fname = filepath(root=this_dir, export_fname)
+            rec_fname = filepath(root=this_dir, rec_fname)
+        endif else begin
+            intmat_fname = fname
+            rec_fname = intmat_fname+'_rec.fits'
+        endelse
+
+		if file_test(intmat_fname) then message, 'File already exists! '+ intmat_fname
+		writefits, intmat_fname, float(matinter1), hdr
+		print, 'sinus-calib IM saved in: '+ intmat_fname
+
+        if keyword_set(REC) then begin
+		    if file_test(rec_fname) then message, 'File already exists! '+ rec_fname
+            gen_reconstructor, INPUT_FILE=intmat_fname, OUTPUT_FILE=rec_fname, final_dim=[1600,672], CUT=0
+		    print, 'reconstructor saved in: '+ rec_fname
+        endif
+
+        ;; Prepare next tracknum
+        ss +=1
+        if ss gt 59 then begin
+            ss=0
+            mm+=1
+        endif
 	endfor
 end
 
@@ -508,7 +534,6 @@ end
 
 
 pro AOsinuscalib::Cleanup
-	obj_destroy, self._meas_imobj
 	ptr_free, self._trns
 	ptr_free, self._modes
 	ptr_free, self._req_freq

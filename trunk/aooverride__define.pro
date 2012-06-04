@@ -50,6 +50,7 @@ pro AOoverride::lazy_init
     ; check type of override_str
     if size(override_str, /typ) ne 8 then message, 'override file '+self->fname()+' contains unexpected data'
     self._str = ptr_new(override_str, /no_copy) 
+    obj_destroy, save_obj ; LB beware !!!
 end
 
 ; getter

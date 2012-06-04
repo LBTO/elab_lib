@@ -69,6 +69,8 @@ end
 
 ; for debug
 pro aomultiton_elab::debug
+    print, 'tag count '+strtrim(n_elements(*self._tag_list)-1,2)
+    print, 'obj count '+strtrim(self._obj_list->Count(),2)
     print, *self._tag_list
     print, self._obj_list->Get(/all)
 end
