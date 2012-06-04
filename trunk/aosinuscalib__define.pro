@@ -147,7 +147,7 @@ end
 ;+
 ; DEMODULATE THE SIGNALS!
 ;-
-pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly, compare=compare
+pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 
 	AA_mat = fltarr(self._nmeas)
 	BB_mat = fltarr(self._nslopes, self._nmeas)
@@ -159,14 +159,17 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly, compare=compare
 	;-----------------------------------------------------------------------------------------------
         trk= self->tracknums()
         meas=0
+        start = systime(/sec)
         for t=0,n_elements(trk)-1 do begin
+                now = systime(/sec)
                 ao = getaoelab(trk[t])
                 ao->demodulate_signals, AA, BB, delta, VISU = VISU, slowly =slowly
+                if now-start gt 2 then print, format='($, %"%s, %d%% done\r")',ao->tracknum(), fix(t*100.0/n_elements(trk)-1)
                 nmodes = (ao->disturb())->nsinmodes()
                 for m=0,nmodes-1 do begin
-		   AA_mat[meas] = AA[m]
-  		   BB_mat[*,meas]=BB[*,m]
-  		   delta_mat[*,meas] = delta[*,m]
+                   AA_mat[meas] = AA[m]
+                   BB_mat[*,meas]=BB[*,m]
+                   delta_mat[*,meas] = delta[*,m]
                    meas +=1
                 endfor
                 ao->free
