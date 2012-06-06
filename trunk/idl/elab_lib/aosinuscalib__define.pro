@@ -159,28 +159,29 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 	AA_mat = fltarr(self._nmeas)
 	BB_mat = fltarr(self._nslopes, self._nmeas)
 	delta_mat = fltarr(self._nslopes, self._nmeas)
+    nmodes = max(self->modes())
+    saturation = fltarr(nmodes, 3)
 
 	if keyword_set(VISU) then window,10
+    ; Save saturation data
 
 	; Find the CL modal amplitudes, the signal amplitudes, and estimate delay between c(t) and s(t)
 	;-----------------------------------------------------------------------------------------------
-        trk= self->tracknums()
-        meas=0
-        init_progress, n_elements(trk)
-        for t=0,n_elements(trk)-1 do begin
-                now = systime(/sec)
-                ao = getaoelab(trk[t])
-                ao->demodulate_signals, AA, BB, delta, VISU = VISU, slowly =slowly
-                progress, t, ao->tracknum()
-                nmodes = (ao->disturb())->nsinmodes()
-                for m=0,nmodes-1 do begin
-                   AA_mat[meas] = AA[m]
-                   BB_mat[*,meas]=BB[*,m]
-                   delta_mat[*,meas] = delta[*,m]
-                   meas +=1
-                endfor
-                ao->free
-        endfor
+    trk= self->tracknums()
+    meas=0
+    init_progress, n_elements(trk)
+    for t=0,n_elements(trk)-1 do begin
+        ao = getaoelab(trk[t])
+        (ao->sinusacq())->demodulate, VISU = VISU, slowly =slowly
+        progress, t, ao->tracknum()
+        idx = lindgen((ao->sinusacq())->nmodes())+meas
+        AA_mat[idx] = (ao->sinusacq())->AA()
+        BB_mat[*,idx]= (ao->sinusacq())->BB()
+        delta_mat[*,idx] = (ao->sinusacq())->delta()
+        saturation[ (ao->sinusacq())->modes(), *] = (ao->sinusacq())->saturation()
+        meas += (ao->sinusacq())->nmodes()
+        ao->free
+    endfor
 
 	; Find the sign of demodulated signals (modes with same sin frequency analyzed together)
 	;------------------------------------------------------------------------------------------
@@ -223,6 +224,8 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 	self._cl_amp_dem = ptr_new(AA_mat)
 	self._sin_intmat = ptr_new(IM)
 	self._delay		 = ptr_new(delays)
+	self._saturation = ptr_new(saturation)
+
 end
 
 
@@ -292,6 +295,11 @@ function AOsinuscalib::cl_amp_dem, idx
 		return, (*self._cl_amp_dem)[idx]
 end
 
+function AOsinuscalib::saturation
+    if not ptr_valid(self._saturation) then self->demodulate_im
+	return, *(self._saturation)
+end
+
 function AOsinuscalib::global_sign
 	return, self._global_sign
 end
@@ -358,22 +366,20 @@ pro AOsinuscalib::visu_specs, idx
 end
 
 
-pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_tracknum= compIM_tracknum
+pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_tracknum= compIM_tracknum, data_out = data_out
 	if n_elements(mode) ne 1 then begin
 		message, 'SINTAXIS: ee->compare_sigs, mode.  (One mode at a time)',/info
 		return
 	endif
 	if not keyword_set(REFMODE) then REFMODE = mode
 	if not keyword_set(compIM_tracknum) then imobj = self->meas_imobj() else begin
-		imfname = filepath(root=file_dirname((self->meas_imobj())->fname()), 'Intmat_'+compIM_tracknum+'.fits')
+		imfname = filepath(root=file_dirname((self->meas_imobj())->full_fname()), 'Intmat_'+compIM_tracknum+'.fits')
 		if not file_test(imfname) then begin
 			message, 'Requested IM not found: '+imfname,/info
 			return
 		endif
 		imobj = obj_new('AOintmat', imfname)
 	endelse
-	refsx = reform(imobj->sx(REFMODE))
-	refsy = reform(imobj->sy(REFMODE))
 	sinsx = reform(self->sx(mode))
 	sinsy = reform(self->sy(mode))
 
@@ -390,31 +396,7 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	sl2d_w = xr[1]-xr[0]+1
 	sl2d_h = yr[1]-yr[0]+1
 
-	s2d = fltarr(fr_sz,fr_sz)
-	s2d[indpup[*,mypup]] = refsx
-	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-	s2d[indpup[*,mypup]] = refsy
-	s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-	sl_2d = [s2d_tmpA,s2d_tmpB]
-	window,0, XSIZE=550, YSIZE=216
-	image_show, sl_2d, /as,/sh, title='reference IM'
-
-
-	pupobj1  = (imobj->wfs_status())->pupils()
-	puptrn1  = pupobj1->pup_tracknum()
-	if puptrn1 ne puptrn then begin
-		indpup = (pupobj1->indpup())
-		fr_sz =80L		;pixels
-		mypup = 0	;use this pupil info to remap signals
-		cx  = (pupobj1->cx())[mypup]
-		cy  = (pupobj1->cy())[mypup]
-		rad = (pupobj1->radius())[mypup]
-		xr = [floor(cx-rad),ceil(cx+rad)]
-		yr = [floor(cy-rad),ceil(cy+rad)]
-		sl2d_w = xr[1]-xr[0]+1
-		sl2d_h = yr[1]-yr[0]+1
-	endif
-
+    ; sinus
 	s2d = fltarr(fr_sz,fr_sz)
 	s2d[indpup[*,mypup]] = sinsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
@@ -425,26 +407,40 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	image_show, sl_2d, /as,/sh, title='sinusoidal IM'
     slo_out=sl_2d
 
-	if puptrn1 eq puptrn then begin
-		s2d = fltarr(fr_sz,fr_sz)
-		s2d[indpup[*,mypup]] = refsx - sinsx
-		s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-		s2d[indpup[*,mypup]] = refsy - sinsy
-		s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-		sl_2d = [s2d_tmpA,s2d_tmpB]
-		window,2, XSIZE=550, YSIZE=216
-		image_show, sl_2d, /as,/sh, title='difference'
+    ; ref
+    if REFMODE ge max(imobj->modes_idx()) then begin
+        message, 'Cannot compare with mode '+strtrim(REFMODE,2)+': reference matrix stops at mode '+strtrim(max(imobj->modes_idx()),2), /info
+        return
+    endif
+	refsx = reform(imobj->sx(REFMODE))
+	refsy = reform(imobj->sy(REFMODE))
 
-		diff = [sinsx,sinsy] - [refsx,refsy]
-		window,3
-		plot, [sinsx,sinsy],yrange=minmax([sinsx,sinsy,refsx,refsy])
-		oplot, [refsx,refsy], color=255L
-		oplot, diff, color=255L*250L
-		legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
-		print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
-	endif else begin
-		print, 'pup_tracknum discrepancy between sin and ref IMs. No difference visualized'
-	endelse
+	s2d = fltarr(fr_sz,fr_sz)
+	s2d[indpup[*,mypup]] = refsx
+	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+	s2d[indpup[*,mypup]] = refsy
+	s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+	sl_2d = [s2d_tmpA,s2d_tmpB]
+	window,0, XSIZE=550, YSIZE=216
+	image_show, sl_2d, /as,/sh, title='reference IM'
+
+	s2d = fltarr(fr_sz,fr_sz)
+	s2d[indpup[*,mypup]] = refsx - sinsx
+	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+	s2d[indpup[*,mypup]] = refsy - sinsy
+	s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
+	sl_2d = [s2d_tmpA,s2d_tmpB]
+	window,2, XSIZE=550, YSIZE=216
+	image_show, sl_2d, /as,/sh, title='difference'
+
+	diff = [sinsx,sinsy] - [refsx,refsy]
+	window,3
+	plot, [sinsx,sinsy],yrange=minmax([sinsx,sinsy,refsx,refsy])
+	oplot, [refsx,refsy], color=255L
+	oplot, diff, color=255L*250L
+	legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
+	print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
+    data_out =[[[sinsx,sinsy]], [[refsx,refsy]], [diff]]
 end
 
 
@@ -530,23 +526,12 @@ pro AOsinuscalib::free
 	ptr_free, self._freq_rel_err
 	ptr_free, self._delay
 	ptr_free, self._sin_intmat
+	ptr_free, self._saturation
 end
 
 
 pro AOsinuscalib::Cleanup
-	ptr_free, self._trns
-	ptr_free, self._modes
-	ptr_free, self._req_freq
-	ptr_free, self._req_amp
-	ptr_free, self._app_freq
-	ptr_free, self._app_amp
-	ptr_free, self._cl_amp_psd
-	ptr_free, self._cl_amp_dem
-	ptr_free, self._dist_ok
-	ptr_free, self._amp_rel_err
-	ptr_free, self._freq_rel_err
-	ptr_free, self._delay
-	ptr_free, self._sin_intmat
+    self->free
 	self->AOdataset::Cleanup
 end
 
@@ -565,6 +550,7 @@ pro AOsinuscalib__define
 		_dist_ok			: ptr_new() , $
 		_amp_rel_err		: ptr_new() , $
 		_freq_rel_err		: ptr_new() , $
+        _saturation         : ptr_new() , $
 		_nmeas				: 0L		, $
 		_nslopes			: 0L		, $
 		_global_sign		: 0.		, $

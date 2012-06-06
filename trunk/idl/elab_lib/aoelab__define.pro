@@ -280,10 +280,10 @@ function AOelab::Init, tracknum, $
     if file_test(filepath(root=self._datadir, 'gains_step1.fits')) then self._meas_type = 'AG'
 
 
-    ; Demodulation
-    self._demodulation_fname = filepath(root=self._elabdir, 'demodulation.sav')
-    if self._recompute eq 1B then begin
-        file_delete, self._demodulation_fname, /allow_nonexistent
+    if obj_valid(self._disturb) then begin
+       if (self._meas_type eq 'LOOP') and (self._disturb->type() eq 'sinusmode') then begin
+          self._sinusacq = obj_new('AOsinus_acq', self)
+       endif
     endif
 
 
@@ -318,6 +318,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._slopes_null) then self->addleaf, self._slopes_null, 'slopesnull'
     if obj_valid(self._modes_null) then self->addleaf, self._modes_null, 'modesnull'
     if obj_valid(self._override) then self->addleaf, self._override, 'override'
+    if obj_valid(self._sinusacq) then self->addleaf, self._sinusacq, 'sinusacq'
 
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -349,6 +350,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "slopesnull()", "reference to a slopesnull object (AOslopes)"
     self->addMethodHelp, "modesnull()", "reference to a modesnull object (AOresidual_modes)"
     self->addMethodHelp, "override()", "reference to a override object (AOoverride)"
+    self->addMethodHelp, "sinusacq()", "reference to a sinus acq object (AOsinus_acq)"
     self->addMethodHelp, "isOK(cause=cause)", "return 1 if diagnostic flags are OK. 0 otherwise"
     self->addMethodHelp, "errorDescription()", "return the error description in case isOK return 0"
     self->addMethodHelp, "closedloop()", "return 1 if loop is closed"
@@ -571,6 +573,7 @@ pro AOelab::fullsummary
     if obj_valid(self._slopes_null) then if obj_hasmethod(self._slopes_null, 'summary') then self._slopes_null->summary
     if obj_valid(self._modes_null) then if obj_hasmethod(self._modes_null, 'summary') then self._modes_null->summary
     if obj_valid(self._override) then if obj_hasmethod(self._override, 'summary') then self._override->summary
+    if obj_valid(self._sinusacq) then if obj_hasmethod(self._sinusacq, 'summary') then self._sinusacq->summary
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -834,46 +837,8 @@ function AOelab::override
     IF (OBJ_VALID(self._override)) THEN return, self._override else return, obj_new()
 end
 
-pro AOelab::demodulate_signals, AA, BB, delta, VISU = VISU, WIN_ID = WIN_ID, slowly = slowly
-
-    if file_test(self._demodulation_fname) then begin
-        restore, self._demodulation_fname
-        if keyword_set(VISU) then begin
-            if n_elements(win_id) eq 0 then window, 10 else wset, WIN_ID
-            for ii=0,n_elements(AA)-1 do begin
-               aohistoplot, delta[*,ii]*180d/!dPI, /fill, bin=2, mininput=-200, maxinput=200, $
-                       xtitle='delay between c(t) and s(t) [degrees]', $
-                        title='mode'+strtrim(modes[ii],2)+', '+ strtrim(string(freqs[ii],format='(f7.2)'),2)+'Hz'
-
-               if n_elements(slowly) eq 1 then wait, slowly
-            endfor
-        endif
-    endif else begin
-        modes = (self->disturb())->sin_mode()
-        freqs = (self->disturb())->sin_freq()
-        coeffs = ((self->modalpositions())->modalpositions())[*,modes]
-        nslopes = ((self->wfs_status())->pupils())->nsub()*2L
-        slopes = ((self->slopes())->slopes())[*,0:nslopes-1]
-        fs    = 1. / (self->modalpositions())->deltat() ;data sampling frequency considering decimation!
-
-        nmodes = n_elements(modes)
-        AA = fltarr(nmodes)
-        BB = fltarr(nslopes, nmodes)
-        delta = fltarr(nslopes, nmodes)
-        for m=0,nmodes-1 do begin
-            coeff = reform(coeffs[*,m])
-            demodulate_signals, coeff, slopes, freqs[m], fs, A, B, d, VISU=VISU, WIN_ID=10, $
-                        xtitle='delay between c(t) and s(t) [degrees]', $
-                        title='mode'+strtrim(modes[m],2)+', '+ strtrim(string(freqs[m],format='(f7.2)'),2)+'Hz'
-            AA[m] = A
-            BB[*,m] = B
-            delta[*,m] = d
-            if n_elements(slowly) eq 1 then wait, slowly
-        endfor
-        save, AA, BB, delta, modes, freqs, filename=self._demodulation_fname
-
-    endelse
-
+function AOelab::sinusacq
+    IF (OBJ_VALID(self._sinusacq)) THEN return, self._sinusacq else return, obj_new()
 end
 
 function AOelab::ex, cmd,  isvalid=isvalid
@@ -968,6 +933,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._slopes_null)) THEN  self._slopes_null->free
     IF (OBJ_VALID(self._modes_null)) THEN  self._modes_null->free
     IF (OBJ_VALID(self._override)) THEN  self._override->free
+    IF (OBJ_VALID(self._sinusacq)) THEN  self._sinusacq->free
 end
 
 pro AOelab::Cleanup
@@ -1000,6 +966,7 @@ pro AOelab::Cleanup
     obj_destroy, self._slopes_null
     obj_destroy, self._modes_null
     obj_destroy, self._override
+    obj_destroy, self._sinusacq
     self->AOhelp::Cleanup
 end
 
@@ -1011,7 +978,6 @@ pro AOelab__define
         _n_periods		   : 0L,		$
         _operation_mode    : "",		$	; "RR": retroreflector, "ONSKY", idem.
         _meas_type         : "",		$	; "LOOP", "NCPA", "AG"
-        _demodulation_fname : ""              , $
         _reflcoef		   : 0.,		$
         _obj_tracknum      : obj_new(), $
         _adsec_status      : obj_new(), $
@@ -1042,6 +1008,7 @@ pro AOelab__define
         _slopes_null       : obj_new(), $
         _modes_null        : obj_new(), $
         _override          : obj_new(), $
+        _sinusacq          : obj_new(), $
         INHERITS AOhelp $
     }
 end
