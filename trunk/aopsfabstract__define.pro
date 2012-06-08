@@ -96,6 +96,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->AOframe::addHelp, obj
     obj->addMethodHelp, "lambda()", 		"central filter wavelength [m]"
     obj->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
+    obj->addMethodHelp, "framerate()",  	"framerate [Hz]"
     obj->addMethodHelp, "gaussfit()",  		"return reference to psf gaussfit object (AOgaussfit)"
     obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
