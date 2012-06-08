@@ -112,13 +112,15 @@ pro AOtelemetryfile::parse
         free_lun, unit
 
         ; Sort everything
-        idx = where(strmid(tag_names(s),0,1) ne '_')
-        for i=0,n_elements(idx)-1 do begin
-            t = *(s.(idx[i]+1))
-            srt = sort(t)
-            *s.(idx[i]+1) = (*s.(idx[i]+1))[srt]
-            *s.(idx[i]+2) = (*s.(idx[i]+2))[*,srt]
-        endfor
+        idx = where(strmid(tag_names(s),0,1) ne '_', count)
+        if count gt 0 then begin
+            for i=0,n_elements(idx)-1 do begin
+                t = *(s.(idx[i]+1))
+                srt = sort(t)
+                *s.(idx[i]+1) = (*s.(idx[i]+1))[srt]
+                *s.(idx[i]+2) = (*s.(idx[i]+2))[*,srt]
+            endfor
+        endif
 
         ; Might not have a savefile if reading live data
         if self._data_fname ne '' then save, s, file=self._data_fname
@@ -132,6 +134,9 @@ end
 
 ; Archive file into ao_datadir! 
 pro AOtelemetryfile::archive
+
+    if self->num_streams() lt 1 then return
+
     names = self->names()
     mmm = [1e9,-1e9]
     for n=0,n_elements(names)-1 do begin
@@ -179,6 +184,13 @@ pro AOtelemetryfile::archive
             today += 1
         endrep until today gt max(t)
     endfor
+end
+
+function AOtelemetryfile::num_streams
+    if not ptr_valid(self._data) then self->parse
+    names = tag_names(*self._data)
+    idx = where(strmid(names,0,1) ne '_', count)
+    return,count
 end
 
 function AOtelemetryfile::has_name, logger
