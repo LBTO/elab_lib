@@ -360,6 +360,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
     self->addMethodHelp, "meas_type()", "Return the type of measurement: LOOP, NCPA (non-common path calibration), AG (autogain)"
     self->addMethodHelp, "psf", "quick psf display"
+    self->addMethodHelp, "duration()", "Return the measurement duration in seconds, if applicable"
     ; free memory
     self->free
 
@@ -685,6 +686,20 @@ function AOelab::sr_from_positions, lambda_perf=lambda_perf
 	if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
 	pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
 	return, exp(-total(pos_coef_var))
+end
+
+function AOelab::duration
+    d_irtc=0
+    d_pisces=0
+    d_loop=0
+    if obj_valid(self->irtc()) then $
+       d_irtc = (self->irtc())->nframes() * (self->irtc())->exptime()
+    if obj_valid(self->pisces()) then $
+       d_pisces = (self->pisces())->nframes() * (self->pisces())->exptime()
+    if obj_valid(self->frames_counter()) then $
+       d_loop = (self->frames_counter())->nframes() * (self->frames_counter())->deltat()
+
+    return, max([d_irtc, d_pisces, d_loop])
 end
 
 pro AOelab::psf, PARENT = PARENT, fullframe=fullframe, sr=sr
