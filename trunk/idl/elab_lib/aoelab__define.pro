@@ -280,10 +280,17 @@ function AOelab::Init, tracknum, $
     if file_test(filepath(root=self._datadir, 'gains_step1.fits')) then self._meas_type = 'AG'
 
 
+    ; Sinusoidal acquisitions
     if obj_valid(self._disturb) then begin
        if (self._meas_type eq 'LOOP') and (self._disturb->type() eq 'sinusmode') then begin
           self._sinusacq = obj_new('AOsinus_acq', self)
        endif
+    endif
+
+    ; Telemetry
+    telemetrydir = filepath(root=ao_datadir(), sub=['adsec_data', date, 'telemetry'], '')
+    if n_elements(FILE_SEARCH(filepath(root=telemetrydir, '*_t.fits'))) ne 0 then begin
+          self._telemetry = obj_new('aotelemetry', self)
     endif
 
 
@@ -319,6 +326,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modes_null) then self->addleaf, self._modes_null, 'modesnull'
     if obj_valid(self._override) then self->addleaf, self._override, 'override'
     if obj_valid(self._sinusacq) then self->addleaf, self._sinusacq, 'sinusacq'
+    if obj_valid(self._telemetry) then self->addleaf, self._telemetry, 'telemetry'
 
     self->addMethodHelp, "tracknum()", "Tracknum (string)"
     self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -351,6 +359,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "modesnull()", "reference to a modesnull object (AOresidual_modes)"
     self->addMethodHelp, "override()", "reference to a override object (AOoverride)"
     self->addMethodHelp, "sinusacq()", "reference to a sinus acq object (AOsinus_acq)"
+    self->addMethodHelp, "telemetry()", "reference to telemetry object"
     self->addMethodHelp, "isOK(cause=cause)", "return 1 if diagnostic flags are OK. 0 otherwise"
     self->addMethodHelp, "errorDescription()", "return the error description in case isOK return 0"
     self->addMethodHelp, "closedloop()", "return 1 if loop is closed"
@@ -856,6 +865,10 @@ function AOelab::sinusacq
     IF (OBJ_VALID(self._sinusacq)) THEN return, self._sinusacq else return, obj_new()
 end
 
+function AOelab::telemetry
+    IF (OBJ_VALID(self._telemetry)) THEN return, self._telemetry else return, obj_new()
+end
+
 function AOelab::ex, cmd,  isvalid=isvalid
   	apex = string(39B)
 
@@ -949,6 +962,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._modes_null)) THEN  self._modes_null->free
     IF (OBJ_VALID(self._override)) THEN  self._override->free
     IF (OBJ_VALID(self._sinusacq)) THEN  self._sinusacq->free
+    IF (OBJ_VALID(self._telemetry)) THEN  self._telemetry->free
 end
 
 pro AOelab::Cleanup
@@ -982,6 +996,7 @@ pro AOelab::Cleanup
     obj_destroy, self._modes_null
     obj_destroy, self._override
     obj_destroy, self._sinusacq
+    obj_destroy, self._telemetry
     self->AOhelp::Cleanup
 end
 
@@ -1024,6 +1039,7 @@ pro AOelab__define
         _modes_null        : obj_new(), $
         _override          : obj_new(), $
         _sinusacq          : obj_new(), $
+        _telemetry         : obj_new(), $
         INHERITS AOhelp $
     }
 end
