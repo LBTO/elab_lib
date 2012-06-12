@@ -126,7 +126,7 @@ pro AOtelemetryfile::parse
         if self._data_fname ne '' then save, s, file=self._data_fname
     endelse
 
-    if ptr_valid(self._data) then ptr_free, self._data
+    self->free_data
     self._data = ptr_new(s)
 
 end
@@ -169,14 +169,14 @@ pro AOtelemetryfile::archive
                 if file_test(fname_t) then begin
                     t_old = readfits(fname_t, /SILENT)
                     v_old = readfits(fname_v, /SILENT)
-                    t_new = [t_new,t_old]
-                    v_new = [[v_new],[v_old]]
+                    t_new = [temporary(t_new),t_old]
+                    v_new = [[temporary(v_new)],[v_old]]
                     s = sort(t_new)
-                    t_new = t_new[s]
-                    v_new = v_new[*,s]
+                    t_new = (temporary(t_new))[s]
+                    v_new = (temporary(v_new))[*,s]
                     u = uniq(t_new)
-                    t_new = t_new[u]
-                    v_new = v_new[*,u]
+                    t_new = (temporary(t_new))[u]
+                    v_new = (temporary(v_new))[*,u]
                 endif
                 writefits, fname_t, t_new
                 writefits, fname_v, v_new
@@ -246,11 +246,15 @@ pro AOtelemetryfile::free
 end
 
 pro AOtelemetryfile::Cleanup
+    self->free_data
+end
+
+pro AOtelemetryfile::free_data
     if ptr_valid(self._data) then begin
         idx = where(strmid(self->names(),0,1) ne '_')
         for i=0,n_elements(idx)-1 do begin
-            if ptr_valid( s.(idx[i]+1)) then ptr_free, s.(idx[i]+1)
-            if ptr_valid( s.(idx[i]+2)) then ptr_free, s.(idx[i]+2)
+            if n_tags((*self._data)) gt (idx[i]+1) then if ptr_valid( (*self._data).(idx[i]+1)) then ptr_free, (*self._data).(idx[i]+1)
+            if n_tags((*self._data)) gt (idx[i]+2) then if ptr_valid( (*self._data).(idx[i]+2)) then ptr_free, (*self._data).(idx[i]+2)
         endfor
         ptr_free, self._data
     endif
@@ -272,8 +276,9 @@ pro archive_all
    files = file_search('/local/aolog/current/*.tel.gz')
    for f=0,n_elements(files)-1 do begin
       print,files[f]
-      a= obj_new('aotelemetryfile', files[f], /rec)
+      a= obj_new('aotelemetryfile', files[f])
       if a->data_fname() ne '' then a->archive
+      obj_destroy,a
    endfor
 
      
