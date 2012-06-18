@@ -22,11 +22,37 @@ function AOelab::Init, tracknum, $
 		return, 0
 	endif
 
-	temp = FILE_SEARCH(FILEPATH(root=self._datadir, 'gains_step*.fits'), COUNT=ngainfiles)
-	if ngainfiles ne 0 then begin
-		print, 'gain optimization data: Data_'+tracknum
-        self._meas_type = 'AG'
-	endif
+    ; Detect measurement type
+    typefile = filepath(root=self._datadir,'type.fits')
+    if file_test(typefile) then begin 
+        dummy = readfits(typefile, hdr)
+        meas_type = aoget_fits_keyword(hdr, 'MEASTYPE')     
+        case meas_type of
+           'AG': begin
+		      print, 'gain optimization data: Data_'+tracknum
+              self._meas_type = 'AG'
+           end
+           'NC': begin
+		      print, 'non-commonpath aberration: Data_'+tracknum
+              self._meas_type = 'NCPA'
+           end
+           'LOOP': begin
+              self._meas_type = 'LOOP'
+           end
+           ELSE: begin
+              message,'Unknown measurement type: '+strtrim(meas_type,2), /info
+              return, 0
+           end
+        endcase
+    endif else begin
+	    temp = FILE_SEARCH(FILEPATH(root=self._datadir, 'gains_step*.fits'), COUNT=ngainfiles)
+	    if ngainfiles ne 0 then begin
+		    print, 'gain optimization data: Data_'+tracknum
+            self._meas_type = 'AG'
+	    endif else begin
+            self._meas_type = ''  ; Detect type later, based on file contents
+        endelse
+    endelse
 
 
 
@@ -272,19 +298,19 @@ function AOelab::Init, tracknum, $
     ;
     ; measurement type
     ; if slope null file ==nc.fits then 'SlopeNullMeas'
-    ; if file exists 'gains_step1.fits' then 'GainMeas'
     ; else 'LoopMeas'
-    self._meas_type = 'LOOP'
-    if  obj_valid(self->wfs_status()) then $
-        if strtrim(file_basename( (self->wfs_status())->slopes_null_fname()),2) eq 'nc.fits' then self._meas_type = 'NCPA'
-    if file_test(filepath(root=self._datadir, 'gains_step1.fits')) then self._meas_type = 'AG'
-
+    if self._meas_type eq '' then begin
+        self._meas_type = 'LOOP'
+        if obj_valid(self->wfs_status()) then begin
+            if strtrim(file_basename( (self->wfs_status())->slopes_null_fname()),2) eq 'nc.fits' then self._meas_type = 'NCPA'
+        endif
+    endif
 
     ; Sinusoidal acquisitions
     if obj_valid(self._disturb) then begin
-       if (self._meas_type eq 'LOOP') and (self._disturb->type() eq 'sinusmode') then begin
-          self._sinusacq = obj_new('AOsinus_acq', self)
-       endif
+        if (self._meas_type eq 'LOOP') and (self._disturb->type() eq 'sinusmode') then begin
+            self._sinusacq = obj_new('AOsinus_acq', self)
+        endif
     endif
 
     ; Telemetry
