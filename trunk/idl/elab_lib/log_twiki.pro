@@ -1,7 +1,7 @@
 pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     if not keyword_set(ref_star) then ref_star='???'
 
-    objref =  aodataset->Get(/all)
+    objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
            "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
