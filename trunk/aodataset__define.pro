@@ -4,11 +4,10 @@
 ; KEYWORD
 ;    lastminute   analyze tracknums acquired in the last lastminute minutes
 ;    check        check that tracknums contain valid data and reject improper saved data
-;    all           include autogain directories. Default is to skip all of those
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check, all = all
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
 
@@ -63,11 +62,10 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
-        	    if keyword_set(check) or not keyword_set(all) then begin
+        	    if keyword_set(check) then begin
         	        tmp = getaoelab(tracknums[i])
         	        if not obj_valid(tmp) then continue
         	    endif
-        	    if not keyword_set(all) then if tmp->meas_type() ne 'LOOP' then continue
             	self->add, tracknums[i]
         	endif
         	obj_destroy, o_track
@@ -76,11 +74,10 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 		; check that the values are string representing tracknums
 		for ii=0, n_elements(tracknumlist)-1 do begin
 			if not stregex(tracknumlist[ii], '^[0-9]{8}_[0-9]{6}$', /bool) then continue
-			if keyword_set(check) or not keyword_set(all) then begin
+			if keyword_set(check) then begin
 			    tmp = getaoelab(tracknumlist[ii])
 			    if not obj_valid(tmp) then continue
 			endif
-			if not keyword_set(all) then if tmp->meas_type() ne 'LOOP' then continue
 			self->add, tracknumlist[ii]
 		endfor
 	endelse
@@ -137,8 +134,8 @@ end
 ;
 function AOdataset::union, dataset2
     if not obj_isa(dataset2, 'AOdataset') then message, 'argument is not a valid AOdataset object', BLOCK='elab', name='ao_oaa_dataset'
-    elem2  = dataset2->Get(/all)
-    elem   = self->Get(/all)
+    elem2  = dataset2->Get()
+    elem   = self->Get()
     return, obj_new('aodataset', [elem, elem2])
 end
 
@@ -147,8 +144,8 @@ end
 ;
 function AOdataset::intersection, dataset2
     if not obj_isa(dataset2, 'AOdataset') then message, 'argument is not a valid AOdataset object', BLOCK='elab', name='ao_oaa_dataset'
-    elem2  = dataset2->Get(/all)
-    elem   = self->Get(/all)
+    elem2  = dataset2->Get()
+    elem   = self->Get()
     res = obj_new('aodataset')
     for i=0, n_elements(elem2)-1 do begin
         idx=where(elem2[i] eq elem, cnt)
@@ -161,7 +158,7 @@ end
 
 pro AOdataset::RemoveTracknum, tracknums
     for i=0, n_elements(tracknums)-1 do begin
-        idx = where (self->Get(/all) eq tracknums[i], cnt)
+        idx = where (self->Get() eq tracknums[i], cnt)
         if cnt gt 0 then dum = self->Remove(idx)
     endfor
 end
@@ -182,7 +179,7 @@ end
 ; free memory
 ;
 pro AOdataset::free
-    tns = self->Get(/all)
+    tns = self->Get()
     for i=0L, self->Count()-1 do begin
         ee = getaoelab(tns[i])
         if obj_valid(ee) eq 0 then begin
@@ -198,7 +195,7 @@ end
 ;
 function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
 
-    objref = self->Get(/all)
+    objref = self->Get()
     index = lindgen(self->count())
 	nel = n_elements(objref)
     isvalid = bytarr(nel)
@@ -305,7 +302,7 @@ end
 ;
 function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbose=verbose, index=index
 
-    objref = self->Get(/all)
+    objref = self->Get()
     nel = self->Count()
     isvalid = bytarr(nel)
     error = 0
@@ -390,7 +387,7 @@ function aodataset::count
     return, self._nelems
 end
 
-function aodataset::Get, pos=pos, all=all
+function aodataset::Get, pos=pos
     if self->count() eq 0 then return, ""
     if n_elements(pos) ne 0  then begin
         if max(pos) ge self->count() then begin
