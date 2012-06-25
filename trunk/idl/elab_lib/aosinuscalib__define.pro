@@ -192,6 +192,7 @@ pro AOsinuscalib::demodulate_im, VISU=VISU, slowly=slowly
 		idx_freq = where(self->req_freq() eq sin_freqs[ii], nf)
 		idx_neg = sgn_sin_modes(delta_mat[*,idx_freq], VISU=VISU, WIN_ID=10, delay=delay $
 					, title='modes @ '+ strtrim(string(sin_freqs[ii],format='(f7.2)'),2)+'Hz' )
+                if (n_elements(idx_neg) eq 1) and (idx_neg[0] eq -1) then continue
 		delays[idx_freq] = delay
 		BB_temp = BB_mat[*,idx_freq]
 		BB_temp[idx_neg] *= -1.
