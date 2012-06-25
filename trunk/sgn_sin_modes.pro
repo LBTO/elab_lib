@@ -66,7 +66,7 @@ function sgn_sin_modes, delta_mat, VISU=VISU, WIN_ID=win_id, N_TERMS_FIT=n_terms
   endif
 
   idx = where(abs(delta_mat-delay) le !DPI/2, count, comp=idx_comp)
-  if count eq 0 then message,"UNEXPECTED DATA VALUES. No data having abs(delta-phase)<90deg"
+  if count eq 0 then message,"UNEXPECTED DATA VALUES. No data having abs(delta-phase)<90deg", /info
 
   return, idx
 
