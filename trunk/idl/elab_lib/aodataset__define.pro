@@ -441,20 +441,60 @@ end
 ;+
 ;
 ;-
-pro aodataset::modalplot, _extra=ex
+pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
 	tr = self->tracknums()
 	case self->count() of
 	  1: cols = [!P.COLOR]
 	  2: cols = [!P.COLOR, 250L]
 	  else: cols = [[!P.COLOR],comp_colors(self->count()-1)]
 	endcase
-	for ii=0, self->count()-1 do begin
-		ao = getaoelab(self->get(pos=ii))
-        if not obj_valid(ao) then continue
-		if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
-						ao->modalplot, /OVERPLOT, COLOR=cols[ii]
-	endfor
-	legend, tr, psym=replicate(-1,self->count()), color=cols, /right
+
+    n=0
+    if keyword_set(average) then begin
+        init_progress, self->count()
+        for ii=0, self->count()-1 do begin
+            ao = getaoelab(self->get(pos=ii))
+            if not obj_valid(ao) then continue
+            if ao->meas_type() ne 'LOOP' then continue
+            if n_elements(clvar) eq 0 then clvar = (ao->modalpositions())->time_variance()*0
+            if n_elements(nmodes) eq 0 then nmodes = (ao->modes())->nmodes()
+            clvar += (ao->modalpositions())->time_variance() * (1e9*ao->reflcoef())^2.
+            n +=1
+            progress, n, ao->tracknum()
+            ao->free
+        endfor
+        clvar  = clvar /n
+        yrange = sqrt(minmax(clvar))
+        ao = getaoelab(self->get(pos=0))
+        if (ao->adsec_status())->disturb_status() ne 0 then begin
+            olvar  = (ao->modaldisturb())->time_variance() * ((ao->modaldisturb())->norm_factor())^2.
+            yrange = sqrt(minmax([clvar,olvar]))
+        endif
+        if not keyword_set(overplot) then begin
+            title = tr[0] + ' to ' + tr[n_elements(tr)-1] + ' (average)'
+            plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
+                 yrange=yrange, title=title, _extra=ex
+        endif else begin
+            oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, _extra=ex
+        endelse
+        if (ao->adsec_status())->disturb_status() ne 0 then begin
+                oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+                legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+        endif
+        ao->free
+    endif else begin
+        init_progress, self->count()
+	    for ii=0, self->count()-1 do begin
+		    ao = getaoelab(self->get(pos=ii))
+            if not obj_valid(ao) then continue
+            if ao->meas_type() ne 'LOOP' then continue
+		    if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
+		    				ao->modalplot, /OVERPLOT, COLOR=cols[ii]
+            progress, ii, ao->tracknum()
+            ao->free
+	    endfor
+	    legend, tr, psym=replicate(-1,self->count()), color=cols, /right
+    endelse
 end
 
 
