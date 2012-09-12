@@ -1,6 +1,9 @@
+; FLAO#1 TRACKNUMS SELECTION!!!!!!!!!!!!!!
+;THIS PROGAM LOADS THE ONSKY TRACKNUMS FOR WHICH A GOOD SR ESTIMATE IS AVAILABLE.
+
 function db_good_for_onsky_sr
 
-	db=getdb()
+	db=getdb(1)
 	setstar = db->query('refStar', 'eq', 'Wref1')
 	setstar = setstar->union(db->query('refStar', 'eq', 'Wref3'))
 	setstar = setstar->union(db->query('refStar', 'eq', 'Wref5'))

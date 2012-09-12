@@ -1,8 +1,14 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; F L A O  # 1  ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;D A T A B A S E    C R E A T I O N ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;( ADD RETRO-REFLECTOR DATA TO THE DATABASE );;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 pro db_populate_rr, recompute=recompute
 
     if keyword_set(recompute) then rec=1 else rec=0   ; set this if you want to recompute
 
-    db = getdb()
+    db = getdb(1)
 
 	rrMay1 = obj_new('aodataset', from='20100525_184042', to='20100525_184603', rec=rec)
 	db->insert, rrMay1->tracknums()

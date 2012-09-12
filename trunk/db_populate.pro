@@ -1,10 +1,16 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; F L A O  # 1  ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;D A T A B A S E    C R E A T I O N ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;+ ===============================================================================
 ;
 ; ADD REFERENCE SOURCE INFORMATION TO THE DATABASE
 ;
 ;- ===============================================================================
 pro db_add_wref
-    db = getdb()
+    db = getdb(1)
 
     db->alter, (obj_new('aodataset', from='20100526_043000', to='20100526_055000'))->tracknums(), 'refStar', 'Wref3'
     db->alter, (obj_new('aodataset', from='20100526_063700', to='20100526_071000'))->tracknums(), 'refStar', 'Wref5'
@@ -153,7 +159,7 @@ end
 ;- ===============================================================================
 PRO db_add_to_ignore_list
 
-	db = getdb()
+	db = getdb(1)
 
 	;Initialze Ignore Property:
 	db->alter, db->tracknums(), 'ignore', 0
@@ -184,14 +190,14 @@ END
 
 ;+ ===============================================================================
 ;
-; RETRIEVE ALL DATA FROM THE WHOLE COMMISSIONING PERIOD AND FILL IN THE DATABASE
+; RETRIEVE ALL DATA FROM THE WHOLE FLAO#1 COMMISSIONING PERIOD AND FILL IN THE DATABASE
 ;
 ;- ===============================================================================
 pro db_populate, recompute=recompute
 
     if keyword_set(recompute) then rec=1 else rec=0   ; set this if you want to recompute
 
-    db = getdb()
+    db = getdb(1)
 
     setMay1 = obj_new('aodataset', from='20100526_043000', to='20100527_114000', rec=rec)
     db->insert, setMay1->tracknums()
