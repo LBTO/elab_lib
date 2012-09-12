@@ -38,7 +38,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         ;    band = '?'
         ;endelse
         if ee->operation_mode() eq 'RR' then begin
-        	if obj_valid(ee->disturb()) then disturb='ON' else disturb='OFF'
+            disturb='OFF'
+        	if obj_valid(ee->disturb()) then if obj_valid(ee->adsec_status()) then if (ee->adsec_status())->disturb_status() eq 1 then  disturb='ON'
             if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
         endif else disturb='ONSKY'
 
@@ -91,4 +92,6 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     idlstring +="]"
     print, 'IDL string:  ' +idlstring
     if n_elements(VALID) gt 1 then VALID = VALID[1:*]
+    print, 'SR average =', mean(aodataset->value('irtc.sr_se'))
+    print, 'SR std_dev =', stddev(aodataset->value('irtc.sr_se'))
 end
