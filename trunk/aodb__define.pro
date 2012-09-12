@@ -1,6 +1,19 @@
 ;;;;;;;;;;;;;;;;;
-function aodb::Init, recompute=recompute
+function aodb::Init, SYSTEM_ID, recompute=recompute
 
+	if n_elements(SYSTEM_ID) eq 0 then begin
+		message, 'USAGE: db=getdb(SYSTEM_ID) where SYSTEM_ID is: 1 (FLAO1); 2 (FLAO2).',/info
+		return,0
+	endif
+
+	CASE SYSTEM_ID OF
+		1: 	self._db_fname = 'db_flao1.sav'
+		2:	self._db_fname = 'db_flao2.sav'
+		else: begin
+			message, 'Unknown AO system',/info
+			return,0
+		endelse
+	ENDCASE
 
     if keyword_set(recompute) then begin
         res = dialog_message('Do you really want to rebuild the whole database?', /center, /question)
@@ -25,7 +38,17 @@ function aodb::Init, recompute=recompute
         message, 'restoring db from: '+self->db_fname(), /info
         self->restore
         return,1
-    endif
+    endif else begin
+    	message, 'The file '+self->db_fname()+' in '+ao_elabdir()+' does not exist!', /info
+    	print, 'Are you sure you want to create a db file from scratch???? (Y/N):'
+    	READKEY: key = get_kbrd(0.01)
+    	CASE STRLOWCASE(key) OF
+			'y': print, 'New db will be created....'
+			'n': return, 0
+			else:  goto, READKEY
+		ENDCASE
+	endelse
+
 
     cfg = [  $
         {name:'refStar',                            type:'string'}, $
@@ -39,7 +62,9 @@ function aodb::Init, recompute=recompute
         {name:'wfs_status.modulation',              type:'real'}, $
         {name:'wfs_status.rerotator',               type:'real'}, $
         ;{name:'wfs_status.camera_lens',               type:'real'}, $
-        ;{name:'wfs_status.stages',                    type:'real'}, $
+        {name:'wfs_status.stagex',                 	type:'real'}, $
+        {name:'wfs_status.stagey',                 	type:'real'}, $
+        {name:'wfs_status.stagez',                 	type:'real'}, $
         {name:'wfs_status.lamp_intensity',          type:'real'}, $
         {name:'wfs_status.cube_angle',              type:'real'}, $
         {name:'wfs_status.cube_stage',              type:'real'}, $
@@ -67,6 +92,7 @@ function aodb::Init, recompute=recompute
         {name:'intmat.modalamp_fname',              type:'string'}, $
         {name:'intmat.modal_dist_fname',            type:'string'}, $
         {name:'intmat.basis',            			type:'string'}, $
+        {name:'intmat.im_type',            			type:'string'}, $
         {name:'frames.nphsub_per_int_av',           type:'real'}, $
         {name:'frames.antidrift_status', 			type:'integer'}, $
         {name:'disturb.fname',                      type:'string'}, $
@@ -119,10 +145,11 @@ function aodb::Init, recompute=recompute
         {name:'control.iskalman',                   type:'integer'},  $
         {name:'control.maxgain',                    type:'real'},  $
         {name:'control.mingain',                    type:'real'},  $
-		{name:'frames.ron',							type:'real'}  $
-; {name:'control.maxgain',                   type:'real'}  $
-; {name:'control.mingain',                   type:'real'}  $
-
+		{name:'frames.ron',							type:'real'},  $
+ 		{name:'control.ttgain',                     type:'real'},  $
+		{name:'control.mogain',                   	type:'real'},  $
+		{name:'control.hogain',                   	type:'real'},  $
+		{name:'frames.mean_center_separation',		type:'real'}  $
     ]
 
     ; create db
@@ -193,12 +220,13 @@ pro aodb::insert, tracknum_list, property=propertylist
             endelse
             catch, /cancel
         endfor
-        ee->free
+        ;ee->free
+        obj_destroy, ee
     endfor
 end
 
 function aodb::db_fname
-    return, filepath(root=ao_elabdir(), 'db.sav')
+    return, filepath(root=ao_elabdir(), self._db_fname)
 end
 
 pro aodb::save, backup=backup
@@ -425,6 +453,7 @@ pro aodb__define
 ;        _dict_irtc_sr_se        : obj_new() ,$
 ;        _dict_irtc_exptime      : obj_new() ,$
 ;        _dict_irtc_framerate    : obj_new() ,$
+		 _db_fname				: ""		, $
         INHERITS AOhelp $
     }
 end
