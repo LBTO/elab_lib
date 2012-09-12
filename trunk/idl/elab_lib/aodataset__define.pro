@@ -570,6 +570,15 @@ pro AOdataset::recompute
     for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
 end
 
+function AOdataset::group, cmd
+    v = self->value(cmd)
+    vv = v[uniq(v)]
+    res = obj_new('IDL_container')
+    for i=0,n_elements(vv)-1 do res->add, self->where(cmd, 'eq', vv[i])
+    return, res
+
+end
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
