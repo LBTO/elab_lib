@@ -458,6 +458,9 @@ pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
             if ao->meas_type() ne 'LOOP' then continue
             if n_elements(clvar) eq 0 then clvar = (ao->modalpositions())->time_variance()*0
             if n_elements(nmodes) eq 0 then nmodes = (ao->modes())->nmodes()
+            if n_elements(olvar) eq 0 then if obj_valid(ao->adsec_status()) then if (ao->adsec_status())->disturb_status() ne 0 then begin
+                olvar  = (ao->modaldisturb())->time_variance() * ((ao->modaldisturb())->norm_factor())^2.
+            endif
             clvar += (ao->modalpositions())->time_variance() * (1e9*ao->reflcoef())^2.
             n +=1
             progress, n, ao->tracknum()
@@ -465,11 +468,7 @@ pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
         endfor
         clvar  = clvar /n
         yrange = sqrt(minmax(clvar))
-        ao = getaoelab(self->get(pos=0))
-        if (ao->adsec_status())->disturb_status() ne 0 then begin
-            olvar  = (ao->modaldisturb())->time_variance() * ((ao->modaldisturb())->norm_factor())^2.
-            yrange = sqrt(minmax([clvar,olvar]))
-        endif
+        if n_elements(olvar) gt 0 then yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(overplot) then begin
             title = tr[0] + ' to ' + tr[n_elements(tr)-1] + ' (average)'
             plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
@@ -484,12 +483,14 @@ pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
         ao->free
     endif else begin
         init_progress, self->count()
+        first=1
 	    for ii=0, self->count()-1 do begin
 		    ao = getaoelab(self->get(pos=ii))
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
-		    if ii eq 0 then ao->modalplot, _extra=ex, title='' else $
-		    				ao->modalplot, /OVERPLOT, COLOR=cols[ii]
+		    if first eq 1 then ao->modalplot, _extra=ex, title='' else $
+		    			       ao->modalplot, /OVERPLOT, COLOR=cols[ii]
+            first=0
             progress, ii, ao->tracknum()
             ao->free
 	    endfor
