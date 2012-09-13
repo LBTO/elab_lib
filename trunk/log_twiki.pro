@@ -50,6 +50,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             bname = file_basename((ee->slopes_null())->fname())
             if stregex( bname, '[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 6 )
             if stregex( bname, '[0-9]*_[0-9]*_[0-9]*.fits') eq 0 then sn_fname = strmid(bname, 9, 10 )
+            if sn_fname eq 'NO' then sn_fname = bname
         endif
 
         VALID = [VALID, ee->tracknum()]
