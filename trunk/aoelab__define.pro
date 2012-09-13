@@ -381,7 +381,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "modaldisturb()", "reference to modal disturb object (AOmodaldisturb)"
     self->addMethodHelp, "offloadmodes()", "reference to offload modes object (AOoffloadmodes)"
     self->addMethodHelp, "accel()", "reference to adsec accelerometer data object (0:1 centroid, 2 x, 3 y, 4 z, 5 Rx, 6 Ry, 7 Rz) (AOaccel)"
-    self->addMethodHelp, "slopesnull()", "reference to a slopesnull object (AOslopes)"
+    self->addMethodHelp, "slopes_null()", "reference to a slopesnull object (AOslopes)"
     self->addMethodHelp, "modesnull()", "reference to a modesnull object (AOresidual_modes)"
     self->addMethodHelp, "override()", "reference to a override object (AOoverride)"
     self->addMethodHelp, "sinusacq()", "reference to a sinus acq object (AOsinus_acq)"
