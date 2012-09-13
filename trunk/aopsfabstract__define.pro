@@ -113,6 +113,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in lambda/D units"
     obj->addMethodHelp, "enc_ene_binsize()","radial bin size [in pixels] used in the computation of EE"
     obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in PIXELS from longExposure PSF center"
+    obj->addMethodHelp, "plotjitter, from_freq=from_freq, to_freq=to_freq",  "Plots TT cum PSDs"
     obj->addMethodHelp, "replay,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
     obj->AOtime_series::addHelp, obj
 end
@@ -400,15 +401,19 @@ function AOpsfAbstract::GetDati
 	return, self._centroid
 end
 
-pro AOpsfAbstract::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
+pro AOpsfAbstract::plotJitter, from_freq=from_freq, to_freq=to_freq, overplot=overplot, psym=psym, _extra=ex
 
     freq = self->freq(from=from_freq, to=to_freq)
     tip  = self->power(0, from=from_freq, to=to_freq, /cum) * self->norm_factor()^2.
     tilt = self->power(1, from=from_freq, to=to_freq, /cum) * self->norm_factor()^2.
-    plot, freq, sqrt(tip + tilt), xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1, $
+    if not keyword_set(overplot) then begin
+        plot, freq, sqrt(tip + tilt), xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1, $
         title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter ['+self._spectra_units+' rms]', _extra=ex
-    oplot, freq, sqrt(tip), col='0000ff'x
-    oplot, freq, sqrt(tilt), col='00ff00'x
+    endif else begin
+        oplot, freq, sqrt(tip + tilt), psym=psym, _extra=ex
+    endelse
+    oplot, freq, sqrt(tip), col='0000ff'x, psym=psym, _extra=ex
+    oplot, freq, sqrt(tilt), col='00ff00'x, psym=psym, _extra=ex
     legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
     sigmatot2 = max( self->power(0, /cum)+self->power(1, /cum) ) * self->norm_factor()^2. / 2
