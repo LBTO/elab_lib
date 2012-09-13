@@ -60,6 +60,7 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
     nsup = 40.	;maximum radius to ensure all star light is in.
 	halosizepx = nsup * lambda / ao_pupil_diameter() / 4.85e-6 / pixelscale
 
+  self._enc_ene_binsize = 1.
 
     ; File names
     if not keyword_set(store_radix) then store_radix = filepath(root=getenv('IDL_TMPDIR'), 'psfabstract')
@@ -104,12 +105,13 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "prof_dist()", 		"profile distance vector in arcsec"
     obj->addMethodHelp, "prof_dist_lD()", 	"profile distance vector in lambda/D units"
     obj->addMethodHelp, "prof_binsize()", 	"radial bin size [in pixels] used in the computation of the PSF profile"
-    obj->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
+;    obj->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
     obj->addMethodHelp, "sym_psf()",		"radial-symmetrical PSF image"
     obj->addMethodHelp, "show_profile, [/SHOW_RMS, _EXTRA=EX]", "show PSF profile"
     obj->addMethodHelp, "enc_ene()",		"encircled energy"
     obj->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
-    obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in arcsec in lambda/D units"
+    obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in lambda/D units"
+    obj->addMethodHelp, "enc_ene_binsize()","radial bin size [in pixels] used in the computation of EE"
     obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in PIXELS from longExposure PSF center"
     obj->addMethodHelp, "replay,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
     obj->AOtime_series::addHelp, obj
@@ -316,15 +318,16 @@ pro AOpsfAbstract::compute_encircled_energy
 		total_ene = total( psf1[2:self->roi_w()-3, 2:self->roi_h()-3] )
 
 		; Compute encircled energy
-		binsize = 1
+		binsize = self->enc_ene_binsize()
 		ee = enc_energy(psf1/total_ene, centre=gauss_center, bin_radius=bin_radius, binsize=binsize)
 		ee_dist    = bin_radius * self->pixelscale()
 		ee_dist_lD = bin_radius * self->pixelscale_lD()
-		save, ee, ee_dist, ee_dist_lD, bin_radius, filename=self._stored_enc_ene_fname, /compress
+		save, ee, ee_dist, ee_dist_lD, bin_radius, binsize, filename=self._stored_enc_ene_fname, /compress
 	endelse
 	self._enc_ene         = ptr_new(ee, /no_copy)
 	self._enc_ene_dist    = ptr_new(ee_dist, /no_copy)
 	self._enc_ene_dist_lD = ptr_new(ee_dist_lD, /no_copy)
+	self._enc_ene_binsize = binsize
 end
 
 function AOpsfAbstract::enc_ene
@@ -342,6 +345,9 @@ function AOpsfAbstract::enc_ene_dist_lD
 	return, *(self._enc_ene_dist_lD)
 end
 
+function AOpsfAbstract::enc_ene_binsize
+  return, self._enc_ene_binsize
+end
 
 ;===================================================================================
 ; 	P S F   C E N T R O I D   C O M P U T A T I O N   A N D   S T A T I S T I C S
@@ -592,6 +598,7 @@ pro AOpsfAbstract__define
 		_enc_ene_dist	:  ptr_new()	, $
 		_enc_ene_dist_lD:  ptr_new()	, $
 		_stored_enc_ene_fname	:  ""	, $
+		_enc_ene_binsize : 0.       , $
         INHERITS AOframe     			, $
         INHERITS AOtime_series			  $
     }
