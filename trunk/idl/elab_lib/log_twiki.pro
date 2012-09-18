@@ -93,6 +93,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     idlstring +="]"
     print, 'IDL string:  ' +idlstring
     if n_elements(VALID) gt 1 then VALID = VALID[1:*]
-    print, 'SR average =', mean(aodataset->value('irtc.sr_se'))
+    print, 'SR average (stdev) =', mean(aodataset->value('irtc.sr_se'))
     print, 'SR std_dev =', stddev(aodataset->value('irtc.sr_se'))
+    print, 'Seeing average =', mean(aodataset->value('olmodes.seeing'))
+    print, 'Seeing std_dev =', stddev(aodataset->value('olmodes.seeing'))
 end
