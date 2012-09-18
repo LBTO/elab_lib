@@ -275,7 +275,9 @@ pro archive_all
 
    files = file_search('/local/aolog/current/*.tel.gz')
    for f=0,n_elements(files)-1 do begin
+      if strpos(files[f],'fastdiagn') gt 0 then continue
       print,files[f]
+      if strpos(files[f], 'fastdiagn') gt 0 then stop
       a= obj_new('aotelemetryfile', files[f])
       if a->data_fname() ne '' then a->archive
       obj_destroy,a
