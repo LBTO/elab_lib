@@ -93,8 +93,15 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     idlstring +="]"
     print, 'IDL string:  ' +idlstring
     if n_elements(VALID) gt 1 then VALID = VALID[1:*]
-    print, 'SR average (stdev) =', mean(aodataset->value('irtc.sr_se'))
-    print, 'SR std_dev =', stddev(aodataset->value('irtc.sr_se'))
-    print, 'Seeing average =', mean(aodataset->value('olmodes.seeing'))
-    print, 'Seeing std_dev =', stddev(aodataset->value('olmodes.seeing'))
+    
+    sr= aodataset->value('irtc.sr_se') > 0 < 1.
+    print, string(format='(%"| %s | %g (%g) |")', 'SR', mean(sr),  stddev(sr))
+    ols= aodataset->value('olmodes.seeing')
+    ols = ols[where(finite(ols) eq 1)]
+    print, string(format='(%"| %s | %g (%g) |")', 'SEEING (WFS)', mean(ols),  stddev(ols))
+    ;print, 'Seeing average =', mean(aodataset->value('olmodes.seeing'))
+    ;print, 'Seeing std_dev =', stddev(aodataset->value('olmodes.seeing'))
+    dimmsee=aodataset->value('tel.dimm_seeing')
+    dimmsee = dimmsee[where(finite(dimmsee) eq 1)]
+    print, string(format='(%"| %s | %g (%g) |")', 'SEEING (DIMM)', mean(dimmsee),  stddev(dimmsee))
 end
