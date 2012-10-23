@@ -97,11 +97,15 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     sr= aodataset->value('irtc.sr_se') > 0 < 1.
     print, string(format='(%"| %s | %g (%g) |")', 'SR', mean(sr),  stddev(sr))
     ols= aodataset->value('olmodes.seeing')
-    ols = ols[where(finite(ols) eq 1)]
-    print, string(format='(%"| %s | %g (%g) |")', 'SEEING (WFS)', mean(ols),  stddev(ols))
-    ;print, 'Seeing average =', mean(aodataset->value('olmodes.seeing'))
-    ;print, 'Seeing std_dev =', stddev(aodataset->value('olmodes.seeing'))
+    idx = where(finite(ols) eq 1, cnt)
+    if cnt gt 0 then begin
+        ols = ols[idx]
+        print, string(format='(%"| %s | %g (%g) |")', 'SEEING (WFS)', mean(ols),  stddev(ols))
+    endif
     dimmsee=aodataset->value('tel.dimm_seeing')
-    dimmsee = dimmsee[where(finite(dimmsee) eq 1)]
-    print, string(format='(%"| %s | %g (%g) |")', 'SEEING (DIMM)', mean(dimmsee),  stddev(dimmsee))
+    idx = where(finite(dimmsee) eq 1, cnt)
+    if cnt gt 0 then begin
+        dimmsee = dimmsee[idx]
+        print, string(format='(%"| %s | %g (%g) |")', 'SEEING (DIMM)', mean(dimmsee),  stddev(dimmsee))
+    endif
 end
