@@ -48,7 +48,8 @@ function AOadsec_struct::sc
 end
 
 function AOadsec_struct::act_coordinates
-  return, (*self._adsec).act_coordinates
+    stru = self->adsec()
+    return, stru.act_coordinates
 end
 
 pro AOadsec_struct::free
