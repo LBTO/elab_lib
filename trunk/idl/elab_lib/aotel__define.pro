@@ -13,10 +13,10 @@ function AOtel::Init, root, fitsfile
 								   self._rot_angle = !VALUES.F_NAN
 
 	az = double(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
-	if az ne -9999. then self._az = az/3600d else self._az = !VALUES.F_NAN
+	if az ne -9999. then self._az = az else self._az = !VALUES.F_NAN
 
 	el = double(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
-	if el ne -9999. then self._el = el/3600d else self._el = !VALUES.F_NAN
+	if el ne -9999. then self._el = el else self._el = !VALUES.F_NAN
 
     dec =  double(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
 	if dec ne -9999. then self._dec = dec * 180d/!pi else self._dec = !VALUES.F_NAN
