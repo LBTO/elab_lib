@@ -1,6 +1,6 @@
 
  
-pro act_distance, tracknum, ACT_DISTANCE = ACT_DISTANCE
+pro act_distance, tracknum, ACT_DISTANCE = ACT_DISTANCE, SOGLIA=SOGLIA
 
   a = getaoelab(tracknum)
   s = (a->slopes())->slopes2d()
@@ -13,7 +13,12 @@ pro act_distance, tracknum, ACT_DISTANCE = ACT_DISTANCE
   xmezzi = n_elements(m[*,0])/2
   absm = abs(m[0:xmezzi-1,*]) + abs(m[xmezzi:*,*])
 
-  soglia = max(absm) * 0.2
+  if not keyword_set(soglia) then begin
+     soglia = max(absm) * 0.4
+  endif else begin
+     soglia *= max(absm)
+  endelse
+
   absm[ where(absm lt soglia)] =0
   window,0,retain=2, xsize=400, ysize=300
   image_show, absm, /as, /sh
