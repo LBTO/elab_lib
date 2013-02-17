@@ -100,12 +100,18 @@ function AOelab::Init, tracknum, $
 		; ADI breaks next check!
         ;if not (finite( (self->tel())->rot_angle())) then self._operation_mode = "RR" else begin
 
+        cube_pos = -40.
+        if obj_valid(self->wfs_status()) then if strmid((self->wfs_status())->wunit(),0,4) eq 'LBTI' then begin
+            if ((self->wfs_status())->cube_stage() gt 20.) then self._operation_mode = 'ONSKY' $
+               else self._operation_mode = 'RR'
+        endif else begin
+
 			if ((self->wfs_status())->cube_stage() lt -40.) then self._operation_mode = "ONSKY" else $
 			if (self->wfs_status())->lamp_intensity() gt .001 then self._operation_mode = "RR" else begin
 				self._operation_mode = "ONSKY"
 				message, 'Warning: Cube stage inside with lamp off.... Better move it out!',/info
 			endelse
-		;endelse
+		endelse
 	endif else self._operation_mode = "RR"	;in Solar Tower
     ; operation mode can be overridden
     catch, err
