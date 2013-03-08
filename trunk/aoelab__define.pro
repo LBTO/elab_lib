@@ -102,7 +102,7 @@ function AOelab::Init, tracknum, $
 
         cube_pos = -40.
         if obj_valid(self->wfs_status()) then if strmid((self->wfs_status())->wunit(),0,4) eq 'LBTI' then begin
-            if ((self->wfs_status())->cube_stage() gt 20.) then self._operation_mode = 'ONSKY' $
+            if ((self->wfs_status())->cube_stage() gt -10.) then self._operation_mode = 'ONSKY' $
                else self._operation_mode = 'RR'
         endif else begin
 
