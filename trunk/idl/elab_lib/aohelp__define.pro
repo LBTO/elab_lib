@@ -16,6 +16,21 @@ function AOhelp::howDoTheyCallMe
     return, self._objcall
 end
 
+function AOhelp::methodsHelp, leafs=leafs
+    if not keyword_set(leafs) or (self._leafs->Count() eq 0) then return, self._methods_help
+
+    ret = obj_new('IDL_Container')
+    for i=0L, self._leafs->Count()-1 do begin
+        cmdleaf = (self._leafs->Get(pos=i))->methodsHelp(/leafs)
+        help,cmdleaf
+        help,cmdleaf->Count()
+        for j=0L, cmdleaf->Count()-1 do begin
+            ret->add, cmdleaf->Get(pos=j)
+        endfor
+    endfor
+    return, ret
+end
+
 
 function AOhelp::fmthelp, syntax, descr, indent, style=style, root=root
     if n_elements(style) ne 0 then usestyle=style else usestyle='method'
@@ -41,7 +56,7 @@ pro AOhelp::printhelp, syntax, descr, indent, style=style
     print, stringa
 end
 
-function AOhelp::cmdlist,root=root
+function AOhelp::cmdlist,root=root, noleafs=noleafs
     ;if not keyword_set(root) then root="ee"
     cmdlista = ['']
     if obj_valid(self._methods_help) then begin
@@ -53,11 +68,13 @@ function AOhelp::cmdlist,root=root
     endif
 
     ; go down in tree
-    if obj_valid(self._leafs) then begin
-        for i=0L, self._leafs->Count()-1 do begin
-	    sroot=  n_elements(root) ne 0  ? "("+root+"->"+self->howDoTheyCallMe()+")" : self->howDoTheyCallMe()
-            cmdlista = [temporary(cmdlista), (self._leafs->Get(pos=i))->AOhelp::cmdlist(root=sroot)]
-        endfor
+    if not keyword_set(noleafs) then begin
+        if obj_valid(self._leafs) then begin
+            for i=0L, self._leafs->Count()-1 do begin
+    	    sroot=  n_elements(root) ne 0  ? "("+root+"->"+self->howDoTheyCallMe()+")" : self->howDoTheyCallMe()
+                cmdlista = [temporary(cmdlista), (self._leafs->Get(pos=i))->AOhelp::cmdlist(root=sroot)]
+            endfor
+        endif
     endif
     return, cmdlista
 end

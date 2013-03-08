@@ -54,7 +54,6 @@ pro read_cur_dataset, RECALC = RECALC
 common xelab_common
 
      catch, error
-     if error eq 0 then print,'ciao'
      set_status,'Reading dataset...', /BUSY
      dataset = obj_new('aodataset', from=cur.day+'_000000', to=cur.day+'_235959', REC = RECALC)
      log_twiki, dataset, TEXT = text, VALID = VALID
@@ -74,8 +73,12 @@ pro show_cur_psf
 common xelab_common
     set_status,'Generating PSF...', /BUSY
     WIDGET_CONTROL, ids.display, /DESTROY
-    ids.display     = WIDGET_BASE(ids.rootdisplay, XSIZE=400, YSIZE=300)
-    (cur.ee)->psf, PARENT = ids.display
+    ids.display     = WIDGET_DRAW(ids.rootdisplay, RETAIN=2, XSIZE=400, YSIZE=300)
+    WIDGET_CONTROL, ids.display, GET_VALUE=w
+    wset, w
+    loadct, 3
+    obj = OBJ_VALID((cur.ee)->irtc()) ? (cur.ee)->irtc() : (cur.ee)->pisces()
+    image_show, /lab, /as, /sh, /log, title=(cur.ee)->tracknum(), pos=pos, obj->longexposure(/fullframe)>0.1
     set_status,/READY
 end
 
@@ -91,6 +94,17 @@ common xelab_common
     set_status, /READY
 end
 
+pro show_cur_plotjitter
+common xelab_common
+    set_status,'Generating plotjitter...', /BUSY
+    WIDGET_CONTROL, ids.display, /DESTROY
+    ids.display     = WIDGET_DRAW(ids.rootdisplay, RETAIN=2, XSIZE=400, YSIZE=300)
+    WIDGET_CONTROL, ids.display, GET_VALUE=w
+    wset, w
+    ((cur.ee)->residual_modes())->plotjitter
+    set_status, /READY
+end
+
 pro show_cur_summary
 common xelab_common
     set_status,'Generating summary...', /BUSY
@@ -99,6 +113,39 @@ common xelab_common
     set_status, /READY
 end
 
+pro reset_cmdlist 
+common xelab_common
+    if ids.cmdtree ne 0 then widget_control, ids.cmdtree, /destroy
+    ids.cmdtree = WIDGET_TREE(ids.base_tree, VALUE='Commands', UVALUE='cmd', /FOLDER, /EXPANDED)
+end
+
+pro fill_cmdlist, root, ee, prefix
+common xelab_common
+
+   children = WIDGET_INFO( root, /ALL_CHILDREN )
+   IF ( children[0] ne 0 ) THEN RETURN
+
+   if not keyword_set(prefix) then prefix=''
+   hcont = ee->methodshelp()
+   s = strarr(hcont->Count())
+   for i=0, hcont->Count()-1 do s[i] = (hcont->Get(pos=i))->syntax()
+   ss = sort(s)
+   for i=0, n_elements(s)-1 do begin
+     syntax = s[ss[i]]
+     if prefix ne '' then call = prefix+'.'+syntax else call=syntax
+     isvalid=1
+     catch, err
+     if err ne 0 then begin
+          isvalid=0
+          catch, /cancel
+     endif
+     if isvalid then tmp = cur.ee->ex(call, isvalid=isvalid)
+     if not isvalid then continue
+     if obj_valid(tmp) then folder=1 else folder=0
+     leaf = WIDGET_TREE(root, VALUE=syntax, UVALUE='cmd'+call, folder=folder)
+   endfor
+
+end
 
 ; --------------
 ;
@@ -106,8 +153,6 @@ end
 
 pro xelab_event, event
 common xelab_common
-
-   help,event,/STR
 
 if (event.id eq event.handler) then begin ; A top level resize event
 
@@ -119,10 +164,23 @@ endif else begin
 
 
     WIDGET_CONTROL, event.id, GET_UVALUE = uvalue
-    print, uvalue
+    if strmid(uvalue, 0, 3) eq 'cmd' then begin
+      cmd=strmid(uvalue, 3)
+      uvalue='cmd'
+    endif
     CASE uvalue OF
         'exit': begin
             WIDGET_CONTROL, event.top, /DESTROY
+        end
+
+        'cmd': begin
+            WIDGET_CONTROL, event.id, GET_VALUE=value
+            tmp = cur.ee->ex(cmd)
+            if (obj_valid(tmp)) then begin
+                fill_cmdlist, event.id, tmp, cmd
+            endif else begin
+                help,tmp
+            endelse
         end
 
         'daylist': begin
@@ -145,6 +203,8 @@ endif else begin
                 show_cur_summary
                 show_cur_psf
                 set_status, /READY
+                reset_cmdlist
+                fill_cmdlist, ids.cmdtree, cur.ee
             endif
         end
         'disp_selection':begin
@@ -155,6 +215,9 @@ endif else begin
                     end
                     'modalplot':begin
                          show_cur_modalplot
+                    end
+                    'plotjitter':begin
+                         show_cur_plotjitter
                     end
                 endcase
             endif
@@ -195,6 +258,8 @@ common xelab_common
            acqlist      : 0L, $
            numacq_label : 0L, $
            rec_button   : 0L, $
+           base_tree    : 0L, $
+           cmdtree      : 0L, $
            summary      : 0L, $
            rootdisplay  : 0L, $
            display      : 0L, $
@@ -230,12 +295,18 @@ common xelab_common
                                        UVALUE='daylist', XSIZE=10, YSIZE=15)
 
     ; Acquisition list (log twiki)
-    base_acqlist = WIDGET_BASE(base_select, /COLUMN)
+    base_list = WIDGET_BASE(base_select, /ROW)
+
+    base_acqlist = WIDGET_BASE(base_list, /COLUMN)
     ids.acqlist = WIDGET_LIST(base_acqlist, VALUE=strarr(1),  $
                                        UVALUE='acqlist', XSIZE=100, YSIZE=20)
     base_acqlist2 = WIDGET_BASE(base_acqlist, /ROW)
     ids.numacq_label = widget_label(base_acqlist2, VALUE='', XSIZE=150, YSIZE=20)
     ids.rec_button = WIDGET_BUTTON(base_acqlist2, VALUE='Force recalc', UVALUE='acqlist_recalc')
+
+    ids.base_tree = WIDGET_TREE(base_list)
+    reset_cmdlist
+
 
     ; Acq detail
     base_acq = WIDGET_BASE(base_acqlist, /ROW)
@@ -247,8 +318,8 @@ common xelab_common
     ids.display     = WIDGET_BASE(ids.rootdisplay)
 
     base_selection = WIDGET_BASE(base_acqinfo, /COLUMN, XSIZE=50)
-    ids.disp_selection = CW_BGROUP(base_selection, ['Psf display', 'Modalplot'], $
-                                         BUTTON_UVALUE=['psf_display', 'modalplot'], $
+    ids.disp_selection = CW_BGROUP(base_selection, ['Psf display', 'Modalplot', 'Plot jitter'], $
+                                         BUTTON_UVALUE=['psf_display', 'modalplot', 'plotjitter'], $
                                          UVALUE = 'disp_selection', $
                                          COLUMN=1, /EXCLUSIVE, SET_VALUE=0)
 
