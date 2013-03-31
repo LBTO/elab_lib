@@ -45,15 +45,17 @@ function AOm2c::m2c
     return, *self._m2c
 end
 
-function AOm2c::c2m
-    if file_test(self._store_c2m_fname) then begin
-        restore, self._store_c2m_fname
+function AOm2c::c2m, N_MODES=N_MODES
+    if not keyword_set(N_MODES) then N_MODES=0
+    filename = self._store_c2m_fname+strtrim(N_MODES,2)
+    if file_test(filename) then begin
+        restore, filename
     endif else begin
         m2c = self->m2c()
 		idx_valid_modes = where(total(m2c,2) ne 0, nmodes_max)
 		m2c = m2c[idx_valid_modes,*]
-        c2m = pseudo_invert(m2c)
-        save, c2m, file=self._store_c2m_fname
+        c2m = pseudo_invert(m2c, n_modes=N_MODES)
+        save, c2m, file=filename
     endelse
     if not ptr_valid (self._c2m) then self._c2m = ptr_new(c2m, /no_copy)
     return, *self._c2m

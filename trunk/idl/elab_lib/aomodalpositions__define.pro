@@ -10,6 +10,7 @@ function AOmodalpositions::Init, root_obj
     self._pos_obj = root_obj->positions()
     self._m2c_obj = root_obj->control()
     self._fc_obj  = root_obj->frames_counter()
+    self._modalrec= root_obj->modal_rec()
     self._root_obj = root_obj
     if not obj_valid(self._pos_obj) then return, 0
 	self._ts_surf_rms = -1.
@@ -47,7 +48,8 @@ pro AOmodalpositions::datiProducer
     if file_test(self._store_fname) then begin
         restore, self._store_fname
     endif else begin
-        modalpositions = self._m2c_obj->c2m() ## self._pos_obj->positions()
+        n_modes = self._modalrec->num_svd_filt_modes()
+        modalpositions = self._m2c_obj->c2m(n_modes = n_modes) ## self._pos_obj->positions()
         save, modalpositions, file=self._store_fname
     endelse
     self._modalpositions = ptr_new(modalpositions, /no_copy)
@@ -118,6 +120,7 @@ pro AOmodalpositions__define
         _m2c_obj           :  obj_new(), $
         _pos_obj           :  obj_new(), $
         _fc_obj            :  obj_new(), $
+        _modalrec          :  obj_new(), $
         _store_fname       : ""		   , $
         _ts_surf_rms	   : 0.		   , $
         INHERITS    AOwf			   , $
