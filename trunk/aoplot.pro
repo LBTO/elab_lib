@@ -57,7 +57,7 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 
 	;Preferred symbols (Note: requires cgsymcat() ).
 	plotsym, 0	;Open circle for HISTO_VAR and normal plot.
-	sym_type = setdifference(indgen(47),[0,3,9,10])	;for GROUP_VAR
+	sym_type = cgsetdifference(indgen(47),[0,3,9,10])	;for GROUP_VAR
 
 	if n_elements(G) ne 0 then begin
 
@@ -125,7 +125,7 @@ PRO AOplot, X, Y, HISTO_VAR=H, GROUP_VAR=G, _EXTRA = ex, CURSOR=CURSOR, tr=tr $
 	 			for j=0, ng-1 do begin
 ;	 				if not ptr_valid(histo.idxarr[i]) then continue
 					grpidx = where(G eq g_ele[j])
-	 				idx = setintersection(*histo.idxarr[histo.valididx[i]],grpidx)
+	 				idx = cgsetintersection(*histo.idxarr[histo.valididx[i]],grpidx)
 	 				if idx[0] eq -1 then continue
 	 				if sym_type[j] eq 8 then plotsym,0
 	 				oplot, [X[idx]], [Y[idx]], color=histo.cols[i], psym=cgsymcat(sym_type[j]), symsize=sym_size
