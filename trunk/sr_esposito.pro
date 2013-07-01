@@ -19,7 +19,7 @@ ima_bs[*,npy-npr:*] = 0
 max_ima = max(ima_bs,h)
 
 if n_elements(plot) ne 0 then print, 'Imax, x, y', max_ima,h/npx,h-h/npx*npx
-ima_fit = gauss2dfit(double(ima_bs),coeff)
+ima_fit = gauss2dfit(ima_bs,coeff)
 ;print,'Gaussian fit:',coeff
 xc = round(coeff(4))
 yc = round(coeff(5))
