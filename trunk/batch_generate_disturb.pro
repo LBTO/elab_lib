@@ -5,9 +5,12 @@
 disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
 ;disturb_dir = 'phase_screens/'
 
+;FLAO#1
+disturb_dir = '/savedata/phase_screens_flao1_ts4/'
+
 ;FLAO#2
-disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
-disturb_dir = '/savedata/phase_screens_flao2/'
+;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
+;disturb_dir = '/savedata/phase_screens_flao2/'
 ;prefix = 'dist_FLAO2_20111210_'
 
 ;MAG585
@@ -26,23 +29,24 @@ v_wind = 15.
 seed = 1983L
 n_steps = 4000
 ;hz = [500., 625., 800., 1000.]
-hz = [600.]
+hz = [1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
 ;******************************************************************
 ;Dpix		  = 233			; pupil diameter [pix]			;FLAO1
 ;Dpix		  = 232			; pupil diameter [pix]			;FLAO2
-Dpix		  = 219			; pupil diameter [pix]			;FLAO2 20111210
+;Dpix		  = 219			; pupil diameter [pix]			;FLAO2 20111210
 ;Dpix		  = 217			; pupil diameter [pix]			;MAG585
-
+Dpix      = 221     ; pupil diameter [ix]       ;FLAO1 with TS4
 
 ;mirror modes file (required to compute zonal IFmatrix)
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'	;FLAO1
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_FLAO2_20101207.sav'	;FLAO2 @ aosimul
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ corsica
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_MAG585_20110706.sav'	;MAG585 @ corsica
-mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20111210.sav'
+;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20111210.sav'
+mirmodes_file = '/savedata/phase_maps/MMmatrix_TS4_2013031.sav'
 
 ; Pre-correction parameters:
 ;*************************************************************
