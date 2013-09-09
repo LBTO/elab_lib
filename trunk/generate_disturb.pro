@@ -166,7 +166,8 @@ scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 
 ;rname = 'dist_'+disturb_type		;FLAO1
 ;rname = 'dist_flao2a'+disturb_type	;FLAO2
-rname = 'dist_flao2_20111210_'+disturb_type	;FLAO2
+;rname = 'dist_flao2_20111210_'+disturb_type	;FLAO2
+rname = 'dist_flao1_ts4_'+disturb_type  ;FLAO1 with TS4
 
 
 ; Vibration Disturbance Handling
@@ -301,7 +302,7 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
 	;inv_IFmat = disturb_dir+'inv_IFmatrix_flao2.sav'
 	;inv_IFmat = disturb_dir+'inv_MMmatrix_mag585.sav'
-	inv_IFmat = disturb_dir+'inv_MMmatrix_flao2_20111210.sav'
+	inv_IFmat = filepath(root=disturb_dir,'inv_'+file_basename(mirmodes_file))
 	if file_test(inv_IFmat) then begin
 		undefine, IFmatrix
 		restore, inv_IFmat
