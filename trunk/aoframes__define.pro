@@ -72,7 +72,8 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
     self->addMethodHelp, "center_separation()", 'Estimates 4 center separations (float)"
     self->addMethodHelp, "mean_center_separation()", 'Mean of 4 center separations (float)"
     self->addMethodHelp, "pup_diameter()", 'Estimates 4 pupil diameters (float)"
-    self->addMethodHelp, "mean_pup_diameter()", 'Mean of 4 pupil diameters (float)"
+    self->addMethodHelp, "mean_pup_diameter()", "Mean of 4 pupil diameters (float)"
+    self->addMethodHelp, "pup_image()", "Image used for realtime pupil acquisition"
     self->addMethodHelp, "replay, wait=wait, zoom=zoom", "Replay the CCD frames"
     return, 1
 end
@@ -306,6 +307,32 @@ end
 function AOframes::pup_diameter
 	if total(self._pup_diameter) eq 0 then self->calc_pupils
 	return, self._pup_diameter
+end
+
+function AOframes::pup_image
+    f = total(self->frames(/dark),3)
+    dimx = n_elements(f[*,0])
+    dimy = n_elements(f[0,*])
+    binning = 80/dimx
+    cx = dimx/2
+    cy = dimy/2
+    cx1 = cx+2/binning
+    cy1 = cy+0/binning
+    dx = cx1-cx
+    dy = cy1-cy
+    dim = min([cx-abs(dx), cy-abs(dy)])
+    a = f[cx1-dim:cx1-1, cy1-dim:cy1-1]
+    b = f[cx1:cx1+dim-1, cy1-dim:cy1-1]
+    c = f[cx1-dim:cx1-1, cy1:cy1+dim-1]
+    d = f[cx1:cx1+dim-1, cy1:cy1+dim-1]
+    side=36/binning
+
+    a += shift( b, dim-side, 0)
+    a += shift( c, 0, dim-side)
+    a += shift( d, dim-side, dim-side)
+
+    return, a
+
 end
 
 function AOframes::mean_center_separation
