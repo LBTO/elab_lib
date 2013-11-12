@@ -34,7 +34,7 @@ pro demodulate_signals, a_hist, s_hist, fdist, fsamp, AA, BB, delta, VISU=visu, 
 
   sz = size(s_hist, /DIM)
   if sz[0] ne nt then message, "Mismatch between size of a_hist and s_hist"
-  p_count = sz[1]
+  if n_elements(sz) eq 1 then p_count = 1L else p_count = sz[1]
 
   w = 2*!DPI*fdist
 
