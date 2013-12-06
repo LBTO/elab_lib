@@ -22,14 +22,14 @@ ao_init;, root='~'
 ;atmospheric parameters
 ;******************************************************************
 ;seeing = [0.4, 0.6, 1.0, 1.2, 1.5]
-seeing = [0.8]
+seeing = [1.0, 1.2, 1.5, 0.8]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
-seed = 1983L
+seed = 3892L
 n_steps = 4000
-;hz = [500., 625., 800., 1000.]
-hz = [1000.]
+hz = [625., 800.]
+;hz = [1000.]
 nhz = n_elements(hz)
 
 ;mirror parameters:
@@ -46,7 +46,7 @@ Dpix      = 221     ; pupil diameter [ix]       ;FLAO1 with TS4
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20110311.sav'	;FLAO2 @ corsica
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_MAG585_20110706.sav'	;MAG585 @ corsica
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20111210.sav'
-mirmodes_file = '/savedata/phase_maps/MMmatrix_TS4_2013031.sav'
+mirmodes_file = '/savedata/phase_maps/MMmatrix_TS4_20130831.sav'
 
 ; Pre-correction parameters:
 ;*************************************************************
