@@ -34,7 +34,7 @@ static int debug=0;
 // is ignored too, so it is possibile to arbitrarily comment the file.
 //@
 
-unsigned char *ReadASCIIFile( char *path, int *len)
+unsigned char *ReadASCIIFile(const char *path, int *len)
 {
         FILE *fp;
         char linebuffer[32], *pos;
@@ -101,7 +101,7 @@ unsigned char *ReadASCIIFile( char *path, int *len)
 // Reads a binary configuration file from disk
 //@
 
-unsigned char *ReadBinaryFile( char *path, int *len)
+unsigned char *ReadBinaryFile(const char *path, int *len)
 {
         FILE *fp;
         unsigned char *buffer;
@@ -162,7 +162,7 @@ unsigned char *ReadBinaryFile( char *path, int *len)
 // Simple function to read a single databuffer from a fits file. Reads the first HDU.
 //@
 
-unsigned char *ReadFitsFile( char *path, int *len)
+unsigned char *ReadFitsFile(const char *path, int *len)
 {
     fitsfile *fptr;
     int fits_status =0; // MUST initialize status
@@ -188,7 +188,7 @@ unsigned char *ReadFitsFile( char *path, int *len)
 // @
 //@
 
-int PeekFitsFile( char *path, int *datatype, int *ndims, long **dims)
+int PeekFitsFile(const char *path, int *datatype, int *ndims, long **dims)
 {
 
     fitsfile *fptr;
@@ -241,7 +241,7 @@ int PeekFitsFile( char *path, int *datatype, int *ndims, long **dims)
 // Read a fits file and searches for an additional HDU containing the reordering LUT.
 //@
 
-unsigned char *ReadFitsFileWithLUT( char *path, int *len, int maxdim, int *ndims, long *dims, int **lut, int *lutlen)
+unsigned char *ReadFitsFileWithLUT(const char *path, int *len, int maxdim, int *ndims, long *dims, int **lut, int *lutlen)
 {
     fitsfile *fptr;
     int fits_status =0; // MUST initialize status
@@ -307,7 +307,7 @@ unsigned char *ReadFitsFileWithLUT( char *path, int *len, int maxdim, int *ndims
 // Internal function to read one HDU from an openened FITS file
 //@
 
-unsigned char *ReadFitsHDU( fitsfile *fptr, int *len, int maxdim, int *naxis, long *axes, int *getdatasize)
+unsigned char *ReadFitsHDU(fitsfile *fptr, int *len, int maxdim, int *naxis, long *axes, int *getdatasize)
 {
     int fits_status =0; // MUST initialize status
     int size, datatype, datasize, i, bitpix;
@@ -427,11 +427,11 @@ unsigned char *ReadFitsHDU( fitsfile *fptr, int *len, int maxdim, int *naxis, lo
 //@
 
 
-int WriteFitsFile( char *path, unsigned char *buffer, int type, long *dims, int ndims) {
+int WriteFitsFile(const char *path, unsigned char *buffer, int type, long *dims, int ndims) {
    return WriteFitsFileWithKeywords( path, buffer, type, dims, ndims, NULL, 0);
 }
 
-int WriteFitsFileWithKeywords( char *path, unsigned char *buffer, int type, long *dims, int ndims, fitskeyword *keywords, int nkeywords) {
+int WriteFitsFileWithKeywords(const char *path, unsigned char *buffer, int type, long *dims, int ndims, fitskeyword *keywords, int nkeywords) {
 
    fitsfile *fptr;
    int status =0; // MUST initialize status
@@ -500,7 +500,7 @@ int WriteFitsFileWithKeywords( char *path, unsigned char *buffer, int type, long
 // Writes a data buffer into a FITS file along with a reordering LUT.
 //@
 
-int WriteFitsFileWithLUT( char *path, unsigned char *buffer, int type, long *dims, int ndims, int *lut, int lutlen)
+int WriteFitsFileWithLUT(const char *path, unsigned char *buffer, int type, long *dims, int ndims, int *lut, int lutlen)
 {
    fitsfile *fptr;
    int status =0; // MUST initialize status
@@ -534,7 +534,7 @@ int WriteFitsFileWithLUT( char *path, unsigned char *buffer, int type, long *dim
     return 1;
 }
 
-int ReadFitsKeyword( char *path, char *keyword, int datatype, void *value) {
+int ReadFitsKeyword(const char *path, char *keyword, int datatype, void *value) {
 
     fitsfile *fptr;
     int fits_status =0; // MUST initialize status
@@ -574,19 +574,19 @@ int ReadFitsKeyword( char *path, char *keyword, int datatype, void *value) {
 // Also available are writeFits2D and writeFits1D
 //@
 
-int writeFits3D( char *filename, void *buf, int type, int dim1, int dim2, int dim3) {
+int writeFits3D(const char *filename, void *buf, int type, int dim1, int dim2, int dim3) {
 
       long dims[] = { dim1, dim2, dim3 };
       return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 3);
 }
 
-int writeFits2D( char *filename, void *buf, int type, int dim1, int dim2) {
+int writeFits2D(const char *filename, void *buf, int type, int dim1, int dim2) {
 
       long dims[] = { dim1, dim2 };
       return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 2);
 }
 
-int writeFits1D( char *filename, void *buf, int type, int dim1) {
+int writeFits1D(const char *filename, void *buf, int type, int dim1) {
 
       long dims[] = { dim1 };
       return WriteFitsFile( filename, (unsigned char *) buf, type, dims, 1);
