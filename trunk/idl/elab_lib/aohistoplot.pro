@@ -2,7 +2,7 @@
 ;+
 ; NAME:
 ;       aohistoplot (based on cghistoplot from coyote)
-;
+;ll
 ; PURPOSE:
 ;
 ;       This program is used to draw a histogram in an IDL direct graphics window.
@@ -298,7 +298,7 @@ PRO aoHistoplot, $                    ; The program name.
    Catch, theError
    IF theError NE 0 THEN BEGIN
       Catch, /Cancel
-      ok = Error_Message(!Error_State.Msg + '. Returning...')
+      ok = cgErrorMsg(!Error_State.Msg + '. Returning...')
       IF N_Elements(nancount) EQ 0 THEN BEGIN
             IF N_Elements(_dataToHistogram) NE 0 THEN dataToHistogram = Temporary(_dataToHistogram)
       ENDIF ELSE BEGIN
@@ -511,7 +511,7 @@ PRO aoHistoplot, $                    ; The program name.
    ; Need a probability distribution?
    IF Arg_Present(probablity) OR Keyword_Set(oprob) THEN BEGIN
        cumTotal = Total(histData, /CUMULATIVE)
-       probability = Scale_Vector(cumTotal, 0, 1)
+       probability = cgscalevector(cumTotal, 0, 1)
    ENDIF
 
    IF keyword_set(NOPLOT) then RETURN
@@ -733,9 +733,9 @@ PRO aoHistoplot, $                    ; The program name.
 
    ; Need to overplot probability function?
    IF Keyword_Set(oprob) THEN BEGIN
-        proby = Scale_Vector(cumTotal, !Y.CRange[0], !Y.CRange[1])
+        proby = cgscalevector(cumTotal, !Y.CRange[0], !Y.CRange[1])
         IF Keyword_Set(oplot) THEN bsize = 0 ELSE bsize = binsize
-        probx = Scale_Vector(Findgen(N_Elements(proby)), !X.CRange[0] + bsize, !X.CRange[1] - bsize)
+        probx = cgscalevector(Findgen(N_Elements(proby)), !X.CRange[0] + bsize, !X.CRange[1] - bsize)
         Oplot, probx, proby, COLOR=probcolor
    ENDIF
 
