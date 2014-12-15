@@ -141,6 +141,7 @@ function AOpsfAbstract::background_mask, xc, yc, nsup=nsup, borderpix=borderpix,
      endif
  	control_diam_pix = self->lambda() / dsup / 4.85e-6 / self->pixelscale()
  	np = max([self->frame_w(), self->frame_h()])
+    if np mod 2 eq 1 then np = np+1
  	diaratio = control_diam_pix/float(np)
  	if diaratio gt 1 then begin
  		mask_ok=0B

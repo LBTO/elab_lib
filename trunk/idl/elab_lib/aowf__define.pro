@@ -40,7 +40,7 @@ function AOwf::surfmat
 ;		TO DO: Use mode_idx properly for non-consecutive modes!! Maybe it is convenient to create a class "modes" before!
 ;  		mode_idx = (self._root_obj->modal_rec())->modes_idx() ;questo e' valido solo per residual_modes, modes, etc !!!
 		mode_idx = lindgen(nmodes)
-		shapes  = self._modeShapes->modemat(mode_idx=mode_idx) ## *(dati)
+		shapes  = matrix_multiply( *(dati), self._modeShapes->modemat(mode_idx=mode_idx) )
 		save, shapes, filename=self._wf_store_fname, /compress
 	endelse
 	return, shapes
