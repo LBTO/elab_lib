@@ -13,6 +13,10 @@ pro ao_global_data_init, wunit
 	if wunit eq 'MAG' then begin			;MAGELLAN
 	 	DpupM = 6.5
 	 	oc = 0.29
+    endif else $
+	if wunit eq 'LUCI' then begin			;MAGELLAN
+	 	DpupM = 8.222
+	 	oc = 0.314
 	endif else message, 'Which telescope are you using?????'
 end
 
