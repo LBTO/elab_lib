@@ -129,9 +129,10 @@ function AOcontrol::m2c
     ;return, readfits(ao_datadir()+path_sep()+self->m2c_fname(), header, /SILENT)
 end
 
-function AOcontrol::c2m, N_MODES=N_MODES
+function AOcontrol::c2m
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    if OBJ_VALID(m2cobj) then return, m2cobj->c2m(N_MODES=N_MODES) else return, -1
+    act_w_cl  = (self._root_obj._adsec_status)->act_w_cl()
+    if OBJ_VALID(m2cobj) then return, m2cobj->c2m(act_w_cl=act_w_cl) else return, -1
 end
 
 function AOcontrol::gain

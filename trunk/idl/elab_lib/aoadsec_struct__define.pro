@@ -52,6 +52,16 @@ function AOadsec_struct::act_coordinates
     return, stru.act_coordinates
 end
 
+function AOadsec_struct::act_wo_cl
+    stru = self->adsec()
+    return, stru.act_wo_cl
+end
+
+function AOadsec_struct::act_w_cl
+  stru = self->adsec()
+  return, stru.act_w_cl
+end
+
 pro AOadsec_struct::free
     if ptr_valid(self._adsec) then ptr_free, self._adsec
     if ptr_valid(self._adsec_shell) then ptr_free, self._adsec_shell
