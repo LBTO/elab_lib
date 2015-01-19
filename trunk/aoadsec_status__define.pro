@@ -95,6 +95,8 @@ function AOadsec_status::Init, root_obj, adsec_fname   ; adsec_status_struct
     self->addMethodHelp, "struct_gr()", "(struct)"
     self->addMethodHelp, "struct_sc()", "(struct)"
     self->addMethodHelp, "act_coordinates()", "return adsec coordinates (vect[2,672])"
+    self->addMethodHelp, "act_w_cl()", "index vector of active actuators"
+    self->addMethodHelp, "act_wo_cl()", "index vector of inactive actuators"    
     return, 1
 end
 
@@ -242,6 +244,14 @@ end
 
 function AOadsec_status::act_coordinates
   return, self._adsec_structs->act_coordinates()
+end
+
+function AOadsec_status::act_wo_cl
+  return, self._adsec_structs->act_wo_cl()
+end
+
+function AOadsec_status::act_w_cl
+  return, self._adsec_structs->act_w_cl()
 end
 
 pro AOadsec_status::free
