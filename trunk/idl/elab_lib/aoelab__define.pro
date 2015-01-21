@@ -229,13 +229,16 @@ function AOelab::Init, tracknum, $
     commands_fname = filepath(root=self._datadir,  'Commands_'+tracknum+'.fits')
     self._commands = obj_new('AOcommands', self, commands_fname, self._frames_counter)
 
+    ; modalcommands
+    self._modalcommands = obj_new('AOmodalcommands', self)
+
     ; positions
     positions_fname = filepath(root=self._datadir,  'Positions_'+tracknum+'.fits')
     self._positions = obj_new('AOpositions', self, positions_fname, self._frames_counter)
 
     ; modalpositions
     self._modalpositions = obj_new('AOmodalpositions', self)
-
+    
     ; open loop modes
     self._olmodes = obj_new('AOolmodes', self)
 
@@ -351,6 +354,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modes) then self->addleaf, self._modes, 'modes'
     if obj_valid(self._olmodes) then self->addleaf, self._olmodes, 'olmodes'
     if obj_valid(self._commands) then self->addleaf, self._commands, 'commands'
+    if obj_valid(self._modalcommands) then self->addleaf, self._modalcommands, 'modalcommands'
     if obj_valid(self._positions) then self->addleaf, self._positions, 'positions'
     if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions, 'modalpositions'
     if obj_valid(self._tv ) then self->addleaf, self._tv , 'tv'
@@ -382,6 +386,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "modes()", "reference to integrated modes object (AOmodes)"
     self->addMethodHelp, "olmodes()", "reference to open loop modes object (AOolmodes)"
     self->addMethodHelp, "commands()", "reference to deltacommands object (AOcommands)"
+    self->addMethodHelp, "modalcommands()", "reference to mirror modal commands object (AOmodalcommands)"
     self->addMethodHelp, "positions()", "reference to mirror positions object (AOpositions)"
     self->addMethodHelp, "modalpositions()", "reference to mirror modal positions object (AOmodalpositions)"
     self->addMethodHelp, "pisces()", "reference to PISCES object (AOscientificimage)"
@@ -620,6 +625,7 @@ pro AOelab::fullsummary
     if obj_valid(self._modes) then if obj_hasmethod(self._modes, 'summary') then self._modes->summary
     if obj_valid(self._olmodes) then if obj_hasmethod(self._olmodes, 'summary') then self._olmodes->summary
     if obj_valid(self._commands) then if obj_hasmethod(self._commands, 'summary') then self._commands->summary
+    if obj_valid(self._modalcommands) then if obj_hasmethod(self._modalcommands, 'summary') then self._modalcommands->summary
     if obj_valid(self._positions) then if obj_hasmethod(self._positions, 'summary') then self._positions->summary
     if obj_valid(self._modalpositions) then if obj_hasmethod(self._modalpositions, 'summary') then self._modalpositions->summary
     if obj_valid(self._tv) then if obj_hasmethod(self._tv, 'summary') then self._tv->summary
@@ -856,6 +862,10 @@ function AOelab::commands
     IF (OBJ_VALID(self._commands)) THEN return, self._commands else return, obj_new()
 end
 
+function AOelab::modalcommands
+    IF (OBJ_VALID(self._modalcommands)) THEN return, self._modalcommands else return, obj_new()
+end
+
 function AOelab::positions
     IF (OBJ_VALID(self._positions)) THEN return, self._positions else return, obj_new()
 end
@@ -1006,6 +1016,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._modes)) THEN  self._modes->free
     IF (OBJ_VALID(self._olmodes)) THEN  self._olmodes->free
     IF (OBJ_VALID(self._commands)) THEN  self._commands->free
+    IF (OBJ_VALID(self._modalcommands)) THEN  self._modalcommands->free
     IF (OBJ_VALID(self._positions)) THEN  self._positions->free
     IF (OBJ_VALID(self._modalpositions)) THEN  self._modalpositions->free
     IF (OBJ_VALID(self._tv)) THEN  self._tv->free
@@ -1042,6 +1053,7 @@ pro AOelab::Cleanup
     obj_destroy, self._modes
     obj_destroy, self._olmodes
     obj_destroy, self._commands
+    obj_destroy, self._modalcommands
     obj_destroy, self._positions
     obj_destroy, self._modalpositions
     obj_destroy, self._tv
@@ -1086,6 +1098,7 @@ pro AOelab__define
         _modes             : obj_new(), $
         _olmodes           : obj_new(), $
         _commands          : obj_new(), $
+        _modalcommands     : obj_new(), $
         _positions         : obj_new(), $
         _modalpositions    : obj_new(), $
         _tv                : obj_new(), $
