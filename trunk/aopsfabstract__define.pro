@@ -212,7 +212,7 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima
             	return, 0.
             endif else begin
     			psf_dl_fname = filepath( root=ao_elabdir(), $
-                	'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'.sav')
+                	'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(ao_pupil_oc()*1e3),2)+'.sav')
     			if file_test(psf_dl_fname) then begin
         			restore, psf_dl_fname
     			endif else begin
