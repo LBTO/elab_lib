@@ -15,6 +15,16 @@ function AOadsec_status::Init, root_obj, adsec_fname   ; adsec_status_struct
 
     savObj = obj_new('IDL_Savefile', adsec_fname)
     savObj->restore, 'status'
+    found_ncpa=0
+    names = savobj->names()
+    for i=0,n_elements(names)-1 do if names[i] eq 'NCPA' then found_ncpa=1
+    if found_ncpa then begin
+       savObj->restore, 'ncpa'
+       self._ncpa = ncpa
+    endif else begin
+       self._ncpa = fltarr(672)
+    endelse
+
     obj_destroy, savObj
 
     ;restore, adsec_fname ; contains status, [accel, data, mygr, myadsec, myadsec_shell, mysc]
@@ -45,6 +55,8 @@ function AOadsec_status::Init, root_obj, adsec_fname   ; adsec_status_struct
     	if time_or_freq lt 1. then self._ovsamp_time = time_or_freq else $		; it's a time!
    								   self._ovsamp_time = 1./time_or_freq			; it's a freq!
 	endif else self._ovsamp_time = -1.
+
+ 
 
 
   ;Search for struct containing information on adsec (used mainly for display of positions)
@@ -97,6 +109,7 @@ function AOadsec_status::Init, root_obj, adsec_fname   ; adsec_status_struct
     self->addMethodHelp, "act_coordinates()", "return adsec coordinates (vect[2,672])"
     self->addMethodHelp, "act_w_cl()", "index vector of active actuators"
     self->addMethodHelp, "act_wo_cl()", "index vector of inactive actuators"    
+    self->addMethodHelp, "ncpa()", "return NCPA vector fltarr(672)"
     return, 1
 end
 
@@ -132,6 +145,7 @@ pro AOadsec_status::test
     d = self->struct_gr()
     d = self->struct_sc()
     d = self->act_coordinates()
+    d = self->ncpa()
 end
 
 pro AOadsec_status::ConvertFilePath, struct
@@ -254,6 +268,10 @@ function AOadsec_status::act_w_cl
   return, self._adsec_structs->act_w_cl()
 end
 
+function AOadsec_status::ncpa
+  return, self._ncpa
+end
+
 pro AOadsec_status::free
     if obj_valid(self._adsec_structs) then self._adsec_structs->free
 end
@@ -276,6 +294,7 @@ pro AOadsec_status__define
         _shape_file              : "", $
         _ff_matrix_file          : "", $
         _ovsamp_time			 : 0., $
+        _ncpa                    : fltarr(672), $
         _adsec_struct_file		 : "", $
         _adsec_structs           :obj_new(), $
         INHERITS AOhelp $
