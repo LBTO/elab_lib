@@ -3,7 +3,10 @@
 #	rm -rf  $(ADOPT_SOURCE)/idl/msgcodes.pro
 #	rm -rf  $(ADOPT_SOURCE)/idl/vartypes.pro
 #
-all: errordb.pro msgcodes.pro vartypes.pro
+
+PRODUCTS = errordb.pro msgcodes.pro vartypes.pro
+
+all: $(PRODUCTS)
 
 errordb.pro: ../lib/base/errordb.txt
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(ADOPT_SOURCE)/lib/base errordb.pro
@@ -31,3 +34,4 @@ install: all
 	rsync -aC adsec_lib $(ADOPT_ROOT)/idl
 
 clean:
+	rm -rf $(PRODUCTS)
