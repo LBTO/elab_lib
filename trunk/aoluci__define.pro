@@ -23,7 +23,8 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     pixelscale = 0.0149
 
     ; Detect filter:
-    self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
+    ;self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
+    self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'HIERARCH LBTO LUCI INS FILTERS NAMES'),2)
     valid_filt_number = 1B
     CASE strtrim(self._filter_name,2) OF
     	'clear J':        lambda = 1.25e-6
