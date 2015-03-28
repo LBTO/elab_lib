@@ -47,8 +47,8 @@ pro demodulate_signals_optg, deltacomm_hist, comm_hist, fdist, fsamp, deltacomm_
   cc = total(comm_hist*dem_cos,/cum)/(findgen(nt)+1)
   
   ; square root
-  d_dem = sqrt(ds^2.+dc^2.)
-  c_dem = sqrt(cs^2.+cc^2.)
+  d_dem = 2.*sqrt(ds^2.+dc^2.)
+  c_dem = 2.*sqrt(cs^2.+cc^2.)
   
   ; mean on the last N points
   deltacomm_out = mean(d_dem[nt-N4mean:nt-1])
