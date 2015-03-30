@@ -17,10 +17,11 @@ OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
 # Only these archives should be linked by AOApp's
 ARCHIVES = aoapp.a configlib.a netlib.a adamlib.a adamtestlib.a logger.a iolib.a mastdiagnlib.a adsecdiagnlib.a
 
+AOSTATES = AOStates.c AOStates.h AOStates.pro
 
 ################## TARGETS ###################
 
-all: baselib $(OBJECTS) otherlibs AOStates.h AOStates.c $(ARCHIVES)
+all: baselib $(OBJECTS) otherlibs $(AOSTATES) $(ARCHIVES)
 
 include $(ADOPT_LIB)/base/makefile.base
 
@@ -53,9 +54,12 @@ clean:
 	$(Q)$(MAKE) $(MAKEOPTS) -C arblib clean
 	$(Q)$(MAKE) $(MAKEOPTS) -C drawlib clean
 	$(Q)$(MAKE) $(MAKEOPTS) -C env clean
+	$(Q)$(MAKE) $(MAKEOPTS) -C iceIF clean
 	$(Q)rm -f *.aux *.dvi *.log *.toc *.tmp
 	$(Q)rm -f *.o *.d *.a
 	$(Q)rm -f $(ARCHIVES)
+	$(Q)rm -f $(AOSTATES)
+	$(Q)rm -f ../PyModules/AdOpt/AOStates.py 
 
 tags:
 	ctags -t *.[ch]
@@ -95,7 +99,7 @@ Reorder.o: Reorder.cpp Reorder.h
 intmatlib.o: intmatlib.cpp intmatlib.h
 telemetry.o: telemetry.c telemetry.h
 
-AOStates.c AOStates.h: AOStates.txt
+$(AOSTATES): AOStates.txt
 	./makerrordb.py AOStates.txt -py AOStates
 	mv -f AOStates.py ../PyModules/AdOpt
 
