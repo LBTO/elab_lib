@@ -23,10 +23,11 @@ function AOm2c::Init, fname, recompute=recompute
     endif
     self._store_c2m_dir = store_c2m_dir
 
-    if keyword_set(recompute) then begin
-        c2m_files = file_search(store_c2m_dir, 'c2m*.sav', count=c2m_files_count)
-        if c2m_files_count gt 0 then file_delete, c2m_files, /allow_nonexistent
-    endif
+; [TODO] we need a different recompute flag as oppsed to the global one
+;    if keyword_set(recompute) then begin
+;        c2m_files = file_search(store_c2m_dir, 'c2m*.sav', count=c2m_files_count)
+;        if c2m_files_count gt 0 then file_delete, c2m_files, /allow_nonexistent
+;    endif
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOm2c', 'Represent an object to convert from modal to zonal basis') then return, 0

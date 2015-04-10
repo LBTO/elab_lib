@@ -131,7 +131,7 @@ end
 
 function AOcontrol::c2m
     m2cobj = getm2c(self->m2c_fname(), recompute= self._root_obj->recompute() )
-    act_w_cl  = (self._root_obj._adsec_status)->act_w_cl()
+    act_w_cl  = ((self._root_obj)->adsec_status())->act_w_cl()
     if OBJ_VALID(m2cobj) then return, m2cobj->c2m(act_w_cl=act_w_cl) else return, -1
 end
 
