@@ -198,7 +198,7 @@ function AOpsfAbstract::gaussfit, debug=debug
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio
-function AOpsfAbstract::SR_se, plot=plot, ima=ima
+function AOpsfAbstract::SR_se, plot=plot, ima=ima, psf_dl_ima=psf_dl_ima
 	if (self._sr_se eq -1.) or keyword_set(plot) or keyword_set(ima) then begin
 		if file_test(self._stored_sr_se_fname) and (not keyword_set(plot)) and (not keyword_set(ima)) then begin
 			restore, self._stored_sr_se_fname
@@ -211,15 +211,18 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima
             	message, 'pixelscale() and/or lambda() not known. SR cannot be computed',/info
             	return, 0.
             endif else begin
-    			psf_dl_fname = filepath( root=ao_elabdir(), $
-                	'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(ao_pupil_oc()*1e3),2)+'.sav')
-    			if file_test(psf_dl_fname) then begin
-        			restore, psf_dl_fname
-    			endif else begin
-        			psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_pupil_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
-        			save, psf_dl_ima, file=psf_dl_fname
-    			endelse
-    			sr_se = sr_esposito(ima1, psf_dl_ima, plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
+                        if not keyword_set(psf_dl_ima) then begin
+    			    psf_dl_fname = filepath( root=ao_elabdir(), $
+                	    'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(ao_pupil_oc()*1e3),2)+'.sav')
+    			    if file_test(psf_dl_fname) then begin
+        			    restore, psf_dl_fname
+    			    endif else begin
+        			    psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_pupil_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
+        			    save, psf_dl_ima, file=psf_dl_fname
+    			    endelse
+                        endif
+                        psf_dl_temp = psf_dl_ima
+    			sr_se = sr_esposito(ima1, psf_dl_temp, plot=plot, errmsg = sresposito_err_msg, /FIX_BG)
 				if n_elements(sresposito_err_msg) eq 0 then sresposito_err_msg = ''
             	if strtrim(sresposito_err_msg,2) ne '' then self._aopsf_err_msg += ' - ' + sresposito_err_msg
     			if not keyword_set(ima) then save, sr_se, sresposito_err_msg, filename=self._stored_sr_se_fname

@@ -47,7 +47,11 @@ pro AOmodalpositions::datiProducer
     if file_test(self._store_fname) then begin
         restore, self._store_fname
     endif else begin
-        modalpositions = self._control_obj->c2m() ## self._pos_obj->positions()
+        pos = self._pos_obj->positions()
+        nframes = n_elements(pos[*,0])
+        nact = n_elements(pos[0,*])
+        piston = total(pos,2) / nact
+        modalpositions = self._control_obj->c2m() ## (pos - rebin(piston, nframes, nact))
         save, modalpositions, file=self._store_fname
     endelse
     self._modalpositions = ptr_new(modalpositions, /no_copy)

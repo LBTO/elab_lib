@@ -35,6 +35,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
 			instr = ee->pisces()
 		endelse
 	endelse			
+        if not obj_valid(instr) then instr = ee->luci()
 
         ;if obj_valid(instr) then begin
         ;   case round( instr->lambda()*1e9) of

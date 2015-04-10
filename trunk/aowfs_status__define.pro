@@ -151,6 +151,10 @@ function AOwfs_status::slopes_null_fname
 	return, self._slopes_null_fname
 end
 
+function AOwfs_status::optg
+  return, self._optg
+end
+
 pro AOwfs_status::summary, COMPREHENSIVE=COMPREHENSIVE
     print, string(format='(%"%-30s %s")','Unit number', self->wunit() )
     print, string(format='(%"%-30s %f")','Modulation', self->modulation() )
