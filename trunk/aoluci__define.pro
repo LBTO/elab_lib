@@ -158,7 +158,7 @@ function aoluci::find_dark, thisJulday, dark_subdir, exptime, filter_tag, frame_
 			closest_av_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, file_basename(all_darks_fname[idx_closest[dd]], '_cube.fits'))
 			dark_header = headfits(closest_av_dark_fname)
 			dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))	;in seconds
-			dark_filter_tag = aoget_fits_keyword(dark_header, 'FILTERS')
+			dark_filter_tag = aoget_fits_keyword(dark_header, 'HIERARCH LBTO LUCI INS FILTERS NAMES')
 			dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
 			dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
 			if (dark_exptime eq exptime) and (strtrim(filter_tag,2) eq strtrim(dark_filter_tag,2)) and  $
