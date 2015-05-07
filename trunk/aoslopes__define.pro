@@ -10,7 +10,7 @@ function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
     endif
     self._file = slopes_file
     self._fc_obj = fc_obj
-	self._wfs_status = root_obj->wfs_status()
+    self._wfs_status = root_obj->wfs_status()
     self._fitsheader = ptr_new(headfits(self._file ,/SILENT), /no_copy)
 
     if not keyword_set(store_label) then store_label=''
@@ -41,8 +41,9 @@ function AOslopes::Init, root_obj, slopes_file, fc_obj, store_label=store_label
     self->addMethodHelp, "niter()", "return number of iteration (eventually after reforming using lost frames infos)"
     self->addMethodHelp, "sx( [subap_idx=subap_idx, iter_idx=iter_idx] )", "return x-slopes [nsubaps x niter]."
     self->addMethodHelp, "sy( [subap_idx=subap_idx, iter_idx=iter_idx] )", "return y-slopes [nsubaps x niter]."
-	self->addMethodHelp, "slopes2d( [iter_idx=iter_idx] )", "return cube with remapped slopes in 2D."
-	self->addMethodHelp, "replay[,wait=wait ,zoom=zoom]", "Replays the slopes history in 2D."
+    self->addMethodHelp, "slopes2d( [iter_idx=iter_idx] )", "return cube with remapped slopes in 2D."
+    self->addMethodHelp, "replay[,wait=wait ,zoom=zoom]", "Replays the slopes history in 2D."
+    self->addMethodHelp, "hist[,xhist=xhist, yhist=yhist, cumulated=cumulated]", "plot slopes histogram or cumulated histogram (cumulated keyword)."
     self->AOtime_series::addHelp, self
     return, 1
 end
@@ -207,6 +208,44 @@ pro AOslopes::replay, wait=wait, zoom=zoom
 		key = get_kbrd(0.01)
 		if STRLOWCASE(key) eq 's' then break
 	endfor
+end
+
+;slopes histogram
+pro AOslopes::hist, xhist=xhist, yhist=yhist, cumulated=cumulated
+
+  if not keyword_set(cumulated) then cumulated = 0
+  
+  slopes = self->slopes()
+  optg = (self->wfs_status())->optg()
+  ; normalizes the slopes if optg has been saved
+  if n_elements(optg) gt 0 then if optg gt 0 then slopes *= optg
+  ; find where the slopes are always zero
+  idx0 = (where(total(abs(slopes),1) eq 0))[0]
+  ; histogram plot
+  plothist, slopes[*,0:idx0-1], bin=0.1, xhist, yhist, /noplot
+  if cumulated then begin 
+    idxg0 = where(xhist ge 0)
+    idxl0 = where(xhist le 0)
+    if n_elements(idxg0) gt n_elements(idxl0) then begin
+      xcum = xhist[idxg0]
+      ycum = yhist[idxg0]
+      ytemp = reverse(yhist[where(xhist lt 0)])
+      ycum[1:n_elements(ytemp)] += ytemp
+    endif else begin
+      xcum = abs(reverse(xhist[idxl0]))
+      ycum = reverse(yhist[idxl0])
+      ytemp = yhist[where(xhist gt 0)]
+      ycum[1:n_elements(ytemp)] += ytemp
+    endelse
+    ycum = total(ycum,/cum)/total(ycum)
+    window, /free, xs=640, ys=480
+    plot, xcum, ycum, xst=17, yst=17, xtit='!17slopes value', ytit='!17ratio'
+    oplot, [1,1], [0,1], line=2
+  endif else begin
+    window, /free, xs=640, ys=480
+    plot, xhist, yhist/total(yhist), xtit='!17slopes value', ytit='!17occurence (normalized)'
+  endelse
+
 end
 
 
