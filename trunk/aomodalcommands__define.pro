@@ -49,7 +49,7 @@ pro AOmodalcommands::datiProducer
         restore, self._store_fname
     endif else begin
         n_modes = self._modalrec->num_svd_filt_modes()
-        modalcommands = self._m2c_obj->c2m(n_modes = n_modes) ## self._comm_obj->commands()
+        modalcommands = self._m2c_obj->c2m() ## self._comm_obj->commands()
         save, modalcommands, file=self._store_fname
     endelse
     self._modalcommands = ptr_new(modalcommands, /no_copy)
