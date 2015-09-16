@@ -26,15 +26,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             continue
         endif
 
-	if obj_valid(ee->luci()) then begin
-		 instr = ee->luci()
-	 endif else begin
-		if obj_valid(ee->irtc()) then begin
-			instr = ee->irtc()
-		endif else begin
-			instr = ee->pisces()
-		endelse
-	endelse			
+        instr = obj_valid(ee->irtc()) ? ee->irtc() : ee->pisces()
         if not obj_valid(instr) then instr = ee->luci()
 
         ;if obj_valid(instr) then begin
