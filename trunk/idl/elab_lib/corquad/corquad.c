@@ -52,7 +52,7 @@ cl > hedit dark*.fit COMMENT snowy ver-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fitsio.h"
+#include <cfitsio/fitsio.h>
 
 void	printerror( int status);
 void	convolve(float *insub, float *outsub, float *kernel);
