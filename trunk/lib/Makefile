@@ -21,7 +21,7 @@ AOSTATES = AOStates.c AOStates.h AOStates.pro
 
 ################## TARGETS ###################
 
-all: baselib $(OBJECTS) otherlibs $(AOSTATES) $(ARCHIVES)
+all: baselib $(OBJECTS) otherlibs $(AOSTATES) $(ARCHIVES) py_ice
 
 include $(ADOPT_LIB)/base/makefile.base
 
@@ -42,6 +42,8 @@ otherlibs:
 	$(Q)$(MAKE) $(MAKEOPTS) -C env
 
 
+py_ice:
+	$(Q)$(MAKE) $(MAKEOPTS) -C iceIF install
 
 
 clean:
