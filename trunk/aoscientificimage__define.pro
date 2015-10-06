@@ -53,6 +53,7 @@ pro AOscientificimage::addHelp, obj
     obj->addMethodHelp, "star_position_px([idx])",		"coords of detected stars in the frame [x,y]"
     obj->addMethodHelp, "star_fwhm([idx])",		"fwhm of detected stars"
     obj->addMethodHelp, "star_sr([idx])",		"SR of detected stars"
+    obj->addMethodHelp, "oc([idx])",		"SR of detected stars"
 end 
 
 pro aoscientificimage::summary
