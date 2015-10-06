@@ -22,6 +22,7 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     ; Pixelscale:
     pixelscale = 0.0149
 
+
     ; Detect filter:
     ;self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
     self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'HIERARCH LBTO LUCI INS FILTERS NAMES'),2)
@@ -109,6 +110,8 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
 	; initialize PSF object
     if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
     	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
+    ; Override obstruction
+    self._oc = 0.314
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('aoluci', 'luci image') then return, 0

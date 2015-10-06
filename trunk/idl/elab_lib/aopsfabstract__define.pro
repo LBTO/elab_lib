@@ -74,7 +74,9 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 	self._stored_enc_ene_fname  = store_radix+'_enc_ene.sav'
 
 
-
+    ; Use telescope obstruction by default
+    self._oc = -1
+ 
     if keyword_set(recompute) eq 1B then self->deletestoredfiles
 
     ;initialize AOframe object
@@ -99,6 +101,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "pixelscale()",  	"pixelscale [arcsec/px]"
     obj->addMethodHelp, "framerate()",  	"framerate [Hz]"
     obj->addMethodHelp, "gaussfit()",  		"return reference to psf gaussfit object (AOgaussfit)"
+    obj->addMethodHelp, "oc()",  		    "return camera obstruction (0..1)"
     obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
     obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
@@ -478,20 +481,24 @@ pro AOpsfAbstract::show_psf, radius=radius, _extra=ex, log=log, peak1=peak1, psf
 end
 
 
-pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms
+pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysize=ysize, title=title
     if not (PTR_VALID(self._psfprofile)) THEN self->compute_profile
 
 	;airy disk:
 	airysep_lD = findgen(1000)/(1000.-1.)*100.
-	oc = ao_pupil_oc()
+	oc = self->oc()
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
 	prof_xrange_lD = [0.1,1e2]
 	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    stop
 
 	winsize = get_screen_size()/2
-	window, /free, xsize=winsize[0], ysize=winsize[1], title='PSF profile'
+    if not keyword_set(xsize) then xsize= winsize[0]
+    if not keyword_set(ysize) then ysize= winsize[1]
+    if not keyword_set(title) then title= 'PSF profile'
+	window, /free, xsize=xsize, ysize=ysize, title=title
 	!P.MULTI = [0, 1, 2]
 	!Y.MARGIN = [4,3]
 	plot_oo, *self._psfprof_dist_lD, *self._psfprofile, xtitle='angular separation'+textoidl('(\lambda/D)') $
@@ -583,6 +590,11 @@ function AOpsfAbstract::isok, cause=cause
     return, isok
 end
 
+function AOpsfAbstract::oc
+    if self._oc lt 0 then return, ao_pupil_oc()
+    return, self._oc
+end
+
 pro AOpsfAbstract__define
     struct = { AOpsfAbstract			, $
         _aopsf_err_msg  :  ""           , $
@@ -591,6 +603,7 @@ pro AOpsfAbstract__define
         _pixelscale     :  0d			, $  ;[arcsec/pixel]
         _pixelscale_lD  :  0d			, $  ;[in lambda/D per pixel]
         _framerate		:  0.			, $	  ;Hz
+        _oc             :  0.           , $  ; Camera obstruction. If <0, uses telescope obstruction
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
         _stored_centroid_fname :  ""	, $
