@@ -216,11 +216,11 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima, psf_dl_ima=psf_dl_ima
             endif else begin
                         if not keyword_set(psf_dl_ima) then begin
     			    psf_dl_fname = filepath( root=ao_elabdir(), $
-                	    'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(ao_pupil_oc()*1e3),2)+'.sav')
+                	    'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(self->oc()*1e3),2)+'.sav')
     			    if file_test(psf_dl_fname) then begin
         			    restore, psf_dl_fname
     			    endif else begin
-        			    psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=ao_pupil_oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
+        			    psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=self->oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
         			    save, psf_dl_ima, file=psf_dl_fname
     			    endelse
                         endif
@@ -254,7 +254,6 @@ pro AOpsfAbstract::compute_profile
 		binsize = self._prof_binsize
 		radial_statistics, psf1/peak, CENTRE=gauss_center, MEAN=psfprofile, VAR=psfprofvar, $
 			COUNT=histo, BINSIZE=binsize, BIN_RADIUS=bin_radius, SYM_IMAGE=sym_psf
-
 		if finite(self->pixelscale()) then begin
 			psfprof_dist    = bin_radius * self->pixelscale()
 			psfprof_dist_lD = bin_radius * self->pixelscale_lD()
@@ -490,9 +489,11 @@ pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysiz
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
+    airysep_arcsec = airysep_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    save, airysep_lD, airysep_arcsec, airyprof, file='/tmp/airyprof.sav'
+
 	prof_xrange_lD = [0.1,1e2]
 	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
-    stop
 
 	winsize = get_screen_size()/2
     if not keyword_set(xsize) then xsize= winsize[0]
