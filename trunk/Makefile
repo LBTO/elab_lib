@@ -36,25 +36,7 @@ install-paths:
 	install -d $(ADOPT_ROOT)/bin
 	install -d $(ADOPT_ROOT)/idl
 	install -d $(ADOPT_ROOT)/idl/dlm
-	install -d $(ADOPT_ROOT)/conf
-	install -d $(ADOPT_ROOT)/conf/adsec
-	install -d $(ADOPT_ROOT)/conf/wfs
-	install -d $(ADOPT_ROOT)/calib
-	install -d $(ADOPT_ROOT)/calib/adsec
-	install -d $(ADOPT_ROOT)/calib/wfs
 	install -d $(ADOPT_ROOT)/py
-
-install-conf:
-	@echo "!!!WARNING!!! Installing the conf directory will overwrite your current configuration. Continue? [yes/no]"
-	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT) && \
-             rsync -avC --delete --exclude conf/adsec/585m/cksum_file --exclude conf/adsec/672b/cksum_file --exclude conf/adsec/672a/cksum_file --exclude 'adsec/current' --exclude 'wfs/current' conf $(ADOPT_ROOT) && echo "configuration installed"; else echo "Nothing done"; fi
-
-
-install-calib:
-	@echo "!!!WARNING!!! Installing the calib directory will overwrite your current calibration. Continue? [yes/no]"
-	@read answer && if [ "$$answer" = "yes" ] ; then install -d $(ADOPT_ROOT)/calib && \
-             install -d $(ADOPT_ROOT)/calib && \
-             rsync -aC calib $(ADOPT_ROOT) && echo "calibration installed"; else echo "Nothing done"; fi
 
 install-contrib:
 	(cd contrib; $(MAKE) install)
