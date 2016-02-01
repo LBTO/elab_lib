@@ -26,6 +26,7 @@ contrib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C contrib all
 
 install: install-paths
+	install .identity $(ADOPT_ROOT)/
 	for dir in ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} install) || break; \
 	done
