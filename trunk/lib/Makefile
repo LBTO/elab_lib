@@ -1,6 +1,8 @@
 # General Supervisor makefile
 include $(ADOPT_SOURCE)/makefile.gen
 
+CFLAGS := $(CFLAGS) -I$(FITSIO_INCLUDE)
+CPPFLAGS := $(CPPFLAGS) -I$(FITSIO_INCLUDE)
 
 .PHONY : baselib otherlibs 
 
