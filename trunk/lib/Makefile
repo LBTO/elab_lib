@@ -27,7 +27,7 @@ all: baselib $(OBJECTS) otherlibs $(AOSTATES) $(ARCHIVES) py_ice
 
 include $(ADOPT_LIB)/base/makefile.base
 
-install:
+install: py_ice
 
 # We can get away with BASE_COMPILE because it will not call this Makefile again
 baselib: $(BASE_COMPILE)
