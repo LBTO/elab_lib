@@ -20,13 +20,17 @@
 ;
 ;    deltacomm_out:   double scalar. Amplitude of the demodulated signal history from comm_hist
 ;
+;  KEYWORDS
+;
+;    t:               time vector
+;
 ;-
 
-pro demodulate_signals_optg, deltacomm_hist, comm_hist, fdist, fsamp, deltacomm_out, comm_out
+pro demodulate_signals_optg, deltacomm_hist, comm_hist, fdist, fsamp, deltacomm_out, comm_out, t=t
 
   dt = 1.0/fsamp
   nt = n_elements(deltacomm_hist)
-  t=findgen(nt)*dt
+  if n_elements(t) eq 0 then t=findgen(nt)*dt
 
   sz = size(comm_hist, /DIM)
   if sz[0] ne nt then message, "Mismatch between size of a_hist and s_hist"
