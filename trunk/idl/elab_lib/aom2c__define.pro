@@ -49,7 +49,7 @@ end
 
 function AOm2c::c2m, act_w_cl=act_w_cl
     if n_elements(act_w_cl) eq 0 then act_w_cl = indgen(672)  ;per retrocompatibilita'....
-    checksum32, act_w_cl, c2m_ID
+    checksum32, long(act_w_cl), c2m_ID
     self._store_c2m_fname = filepath(root=self._store_c2m_dir,'c2m_'+strtrim(c2m_ID,2)+'.sav')
     if file_test(self._store_c2m_fname) then begin
         restore, self._store_c2m_fname
