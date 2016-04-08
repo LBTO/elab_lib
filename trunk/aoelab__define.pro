@@ -164,6 +164,9 @@ function AOelab::Init, tracknum, $
     self._frames_counter = obj_new('AOframes_counter', frames_counter_file, self._wfs_status)
 	if not obj_valid(self._frames_counter) then message, 'Warning: FramesCounter object not initialized!', /info ;return,0
 
+    ; loop_delay
+    self._delay = obj_new('AOdelay', self)
+
     ; modal_rec
     if keyword_set(modal_reconstructor_file) then begin
         self._modal_rec = getrecmatrix( modal_reconstructor_file )
@@ -350,6 +353,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck, 'sanity_check'
     if obj_valid(self._control) then self->addleaf, self._control, 'control'
     if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter, 'frames_counter'
+    if obj_valid(self._delay) then self->addleaf, self._delay, 'delay'
     if obj_valid(self._slopes) then self->addleaf, self._slopes, 'slopes'
     if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
     if obj_valid(self._intmat) then self->addleaf, self._intmat, 'intmat'
@@ -632,6 +636,7 @@ pro AOelab::fullsummary
     if obj_valid(self._sanitycheck) then if obj_hasmethod(self._sanitycheck, 'summary') then self._sanitycheck->summary
     if obj_valid(self._control) then if obj_hasmethod(self._control, 'summary') then self._control->summary
     if obj_valid(self._frames_counter) then if obj_hasmethod(self._frames_counter, 'summary') then self._frames_counter->summary
+    if obj_valid(self._delay) then if obj_hasmethod(self._delay, 'summary') then self._delay->summary
     if obj_valid(self._slopes) then if obj_hasmethod(self._slopes, 'summary') then self._slopes->summary
     if obj_valid(self._modal_rec) then if obj_hasmethod(self._modal_rec, 'summary') then self._modal_rec->summary
     if obj_valid(self._intmat) then if obj_hasmethod(self._intmat, 'summary') then self._intmat->summary
@@ -863,6 +868,10 @@ function AOelab::frames
 	IF (OBJ_VALID(self._frames)) THEN return, self._frames else return, obj_new()
 end
 
+function AOelab::delay
+    IF (OBJ_VALID(self._delay)) THEN return, self._delay else return, obj_new()
+end
+
 function AOelab::slopes
     IF (OBJ_VALID(self._slopes)) THEN return, self._slopes else return, obj_new()
 end
@@ -1036,6 +1045,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
     IF (OBJ_VALID(self._control )) THEN  self._control->free
     IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free
+    IF (OBJ_VALID(self._delay)) THEN  self._delay->free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
     IF (OBJ_VALID(self._modes)) THEN  self._modes->free
@@ -1074,6 +1084,7 @@ pro AOelab::Cleanup
     obj_destroy, self._sanitycheck
     obj_destroy, self._control
     obj_destroy, self._frames_counter
+    obj_destroy, self._delay
     obj_destroy, self._slopes
     obj_destroy, self._residual_modes
     obj_destroy, self._modes
@@ -1120,6 +1131,7 @@ pro AOelab__define
         _sanitycheck       : obj_new(), $
         _control           : obj_new(), $
         _frames_counter    : obj_new(), $
+        _delay             : obj_new(), $
         _slopes            : obj_new(), $
         _residual_modes    : obj_new(), $
         _modes             : obj_new(), $
