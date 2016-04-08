@@ -13,7 +13,9 @@ function AOolmodes::Init, root_obj
     return, 0
   endif
 
-  self._totdelay   = 2L	;Assuming a total of 2 frames delay
+  delay = ((self._root_obj->delay())->frames_delay()
+  self._totdelay   = round(delay)
+  ;self._totdelay   = 2L	;Assuming a total of 2 frames delay
   self._decimation = (root_obj->frames_counter())->decimation()
   self._nnMin  =  4L
   self._r0	 =  -1.
