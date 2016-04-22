@@ -22,7 +22,6 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     ; Pixelscale:
     pixelscale = 0.0149
 
-
     ; Detect filter:
     ;self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
     self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'HIERARCH LBTO LUCI INS FILTERS NAMES'),2)
@@ -34,13 +33,16 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     	'clear Pbet':     lambda = 1.283e-6
     	'clear OH1060':   lambda = 1.060e-6
         'clear Br_gam':   lambda = 2.124e-6
+        'clear P_beta':   lambda = 1.28e-6
     	'J clear':        lambda = 1.25e-6
     	'H2 clear':       lambda = 2.124e-6
     	'FeII clear':     lambda = 1.646e-6
+    	'FeII H':         lambda = 1.646e-6
     	'HeI clear':      lambda = 1.088e-6
     	'Pbet clear':     lambda = 1.283e-6
     	'OH1060 clear':   lambda = 1.060e-6
         'Br_gam clear':   lambda = 2.124e-6
+        'P_beta clear':   lambda = 1.28e-6
     else: begin
      		lambda = !VALUES.F_NAN
      		msg_temp = 'Unknown luci filter <'+self._filter_name+'>'
@@ -110,6 +112,7 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
 	; initialize PSF object
     if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
     	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
+
     ; Override obstruction
     self._oc = 0.314
 
@@ -216,6 +219,12 @@ end
 function aoluci::temp
 	return, self._luci_temp
 end
+
+function aoluci::linearize, frame
+
+        return, frame + 4.218*1e-6*(frame^2)
+end
+         
 
 ;Returns the error messages
 ;-----------------------------------------------------

@@ -140,6 +140,7 @@ pro AOframe::process_cube
         psf = float(readfits(self->fname(), header, /SILENT))
         for i=0L, self->nframes()-1 do begin
             if (i+1) mod 10 eq 0 then print, string(format='(%"%d of %d ")', i+1, self->nframes() )
+                psf[*,*,i] = self->linearize(psf[*,*,i])
         	if self._dark_fname ne "" then           psf[*,*,i] -= self->dark_image()         ; subtract dark
         	if obj_valid(self._badpixelmap_obj) then psf[*,*,i] = self->maneggiaFrame(psf[*,*,i]) ; trigrid bad pixels
 			;if self._object_size ne 0 then           psf[*,*,i] = self->pulisceFrame(psf[*,*,i])  ; remove line noise
@@ -175,6 +176,14 @@ function AOframe::maneggiaFrame, psf
     endif
     return, psf
 end
+
+;; Apply linearization correction
+; Dummy function intended to be overriden by derived classes
+
+function AOframe::linearize, psf
+   return, psf
+end
+
 
 ; in case of a single object you can identify the background and
 ; clean for the  line noise.
@@ -329,6 +338,11 @@ function AOframe::longExposure, fullframe=fullframe
             endif
 		endif else begin
         	psf = float(readfits(self->fname(), header, /SILENT))
+                if self->nframes() gt 1 then begin
+                    for i=0,self->nframes()-1 do psf[*,*,i] = self->linearize(psf[*,*,i])
+                endif else begin
+                    psf = self->linearize(psf)
+                endelse
     		psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
         	if self._dark_fname ne "" then           psf_le -= self->dark_image()         ; subtract dark
         	if obj_valid(self._badpixelmap_obj) then psf_le = self->maneggiaFrame(psf_le) ; trigrid bad pixels
@@ -349,6 +363,11 @@ end
 ;
 function AOframe::rawImage, dark_correct=dark_correct, badpixel_correct=badpixel_correct, linenoise_correct=linenoise_correct
     psf = float(readfits(self->fname(), header, /SILENT))
+    if self->nframes() gt 1 then begin
+        for i=0,self->nframes()-1 do psf[*,*,i] = self->linearize(psf[*,*,i])
+    endif else begin
+        psf = self->linearize(psf)
+    endelse
     psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
     if keyword_set(dark_correct) then $
         if self._dark_fname ne "" then           psf_le -= self->dark_image()         ; subtract dark
