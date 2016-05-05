@@ -54,8 +54,13 @@ function res_scales_est, variables
 		wait, 0.5
 	endif
 	
+    ;w = param.mode_idx[1:*]
+    ;w -= param.mode_idx[0:n_elements(param.mode_idx)-2]
+    ;w = [w[0]-2,w]
+
 	; computes the error
 	;res = total(abs(param.olvar/turb_var - turb_var/turb_var))
+	;res = total(abs(param.olvar*w - turb_var*w))
 	res = total(abs(param.olvar - turb_var))
 
 	return, res
