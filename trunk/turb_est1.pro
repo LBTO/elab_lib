@@ -31,16 +31,13 @@ function res_psd_est, variables
     endif
 	; power > 0
 	if variables[1] le 0. then variables[1] = 1.
-	; noise frequency > cut-off frequency + 4 > 0
-	if variables[2] le 0 then variables[2] = min(param.freq)+4.
-	if variables[2] le variables[0]+4. then $
-		variables[2] = min([max([variables[0]*5./4.,min(param.freq)+4.]),max(param.freq)/5.*4.])
-	if variables[2] le variables[0]+4. then variables[0] = variables[2]*4./5.
+	; noise frequency > cut-off frequency + 5 > 0
+	if variables[2] lt variables[0]+5. then variables[2] = variables[0]+5.
 	; noise frequency < max(param.freq)*4./5.
 	if variables[2] gt max(param.freq)/5.*4. then variables[2] = max(param.freq)/5.*4.
     ; coeff<0.05 or >2/3
     if variables[3] lt 0. then variables[3] = 0.
-    if variables[3] gt 0.7 then variables[3] = 0.67
+    if variables[3] gt 0.67 then variables[3] = 0.67
 	
 	f_cut = variables[0]
 	power = variables[1]
@@ -72,8 +69,9 @@ function res_psd_est, variables
 	endif
 	
 	; computes the error
-    w = (findgen(param.n)+1)/param.n*(max(param.psd)/min(param.psd))^0.25
-    res = total(abs(param.psd*w - est_psd*w))
+    ;w = (findgen(param.n)+1)/param.n*(max(param.psd)/min(param.psd))^0.25
+    ;res = total(abs(param.psd*w - est_psd*w))
+    res = total(abs(param.psd - est_psd))
 
 	return, res
 end
