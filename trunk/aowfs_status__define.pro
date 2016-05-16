@@ -44,7 +44,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self._cubestage = float(aoget_fits_keyword(self->header(), 'cubestage.POSITION'))
 
     self._optg = float(aoget_fits_keyword(self->header(), 'sc.OPTG'))
-    self._ncpa_trigger = byte(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER'))
+    self._ncpa_trigger = byte(fix(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER')))
 
     self._ccd39  = obj_new('AOccd39',  self._header, self._wunit)
     self._pupils = obj_new('AOpupils', self._header, self._wunit)
