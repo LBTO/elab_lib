@@ -20,7 +20,7 @@ end
 pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEFT, RIGHT=RIGHT
 ; environment string definitions
 ;
-; rootdir : directory where towerdata is located (can be taken from env variable: ADOPT_DATA)
+; rootdir : directory where towerdata is located (can be taken from env variable: ADOPT_MEAS)
 ; elabdir : directory where elab is located. (DEFAULT: same as rootdir)
 ;											 (can be taken from env variable: ADOPT_ELAB)
 ; phasemapdir : directory where phasemapdir is located (DEFAULT: same as elabdir)
@@ -29,8 +29,8 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 ; LEFT and RIGHT, if specified, will force the rootdir and elabdir directories to end in "left" or "right" respectively
 
     if not keyword_set(rootdir) then begin
-        if getenv('ADOPT_DATA') ne '' then rootdir = getenv('ADOPT_DATA') else $
-			message, 'Root dir not specified. Is environment variable ADOPT_DATA set?'
+        if getenv('ADOPT_MEAS') ne '' then rootdir = getenv('ADOPT_MEAS') else $
+			message, 'Root dir not specified. Is environment variable ADOPT_MEAS set?'
     endif
 
 	if not keyword_set(elabdir) then begin
