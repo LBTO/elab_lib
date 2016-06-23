@@ -62,7 +62,7 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 
     ao_env = {       $
         root           : rootdir, $
-        datadir        : rootdir +path_sep()+'towerdata', $
+        datadir        : rootdir, $
         elabdir        : elabdir, $
         phasemapdir    : phasemapdir $
     }
