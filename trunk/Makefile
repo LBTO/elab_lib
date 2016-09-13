@@ -53,6 +53,7 @@ clean:
 	for dir in lib ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} clean) || break; \
 	done
+	(cd BCUEmulator; ${MAKE} clean)
 
 clean-contrib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C contrib clean
