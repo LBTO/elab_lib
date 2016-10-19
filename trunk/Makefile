@@ -6,7 +6,7 @@ SUBSYSTEMS =          MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl DiagnApp \
                       SimpleMotorCtrl GUI GUIs  ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl Arbitrator HexapodCtrl SysCheck idl_wrapper \
-                      OptLoopDiagnostic StartUp AnemometerMon TrueSense DBFiller
+                      OptLoopDiagnostic StartUp AnemometerMon lnIF TrueSense DBFiller
 					  #InterferometerCtrl 
 
 
@@ -53,7 +53,6 @@ clean:
 	for dir in lib ${SUBSYSTEMS}; do \
 	 (cd $$dir; ${MAKE} clean) || break; \
 	done
-	(cd BCUEmulator; ${MAKE} clean)
 
 clean-contrib:
 	$(Q)$(MAKE) $(MAKEOPTS) -C contrib clean

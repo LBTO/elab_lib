@@ -8,7 +8,8 @@ CPPFLAGS := $(CPPFLAGS) -I$(FITSIO_INCLUDE)
 
 # LIB OBJECTS
 # These archives shouldn't be linked directly: link ARCHIVES instead
-OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o iolib.o \
+OBJECTS = Logger.o RTDBvar.o stdconfig.o AOApp.o  \
+          iolib.o commlib.o \
           UdpConnection.o TcpConnection.o \
           NaNutils.o Utils.o Reorder.o Paths.o \
           AdamLib.o AdamTestLib.o bcu_diag.o aoapplib.o \
@@ -90,6 +91,7 @@ AdamLib.o: AdamLib.cpp AdamLib.h
 AdamTestLib.o: AdamTestLib.cpp AdamTestLib.h 
 UdpConnection.o: UdpConnection.cpp UdpConnection.h
 TcpConnection.o: TcpConnection.cpp TcpConnection.h
+commlib.o: commlib.c commlib.h 
 iolib.o: iolib.c iolib.h 
 eev39.o: eev39.c eev39.h 
 bcucommand.o: bcucommand.cpp bcucommand.h
