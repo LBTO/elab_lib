@@ -310,10 +310,12 @@ function AOframes::pup_diameter
 end
 
 function AOframes::pup_image
+;sensorSide = 80
+sensorSide = 240
     f = total(self->frames(/dark),3)
     dimx = n_elements(f[*,0])
     dimy = n_elements(f[0,*])
-    binning = 80/dimx
+    binning = sensorSide/dimx
     cx = dimx/2
     cy = dimy/2
     cx1 = cx+2/binning

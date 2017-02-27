@@ -451,7 +451,10 @@ pro AOsinuscalib::export, nmodes=nmodes, this_dir=this_dir, fname = fname, REC =
 
 	matinter = self->sin_intmat()
 	max_nmodes = max(self->modes())+1
-
+    ; in SOUL the slopes become 2848
+    ;n_slopes = 1600
+    n_slopes = 2848
+    
 	;If requested, export an IM with a lower number of modes
 	if n_elements(nmodes) eq 0 then nmodes = [max_nmodes]
 
@@ -499,7 +502,7 @@ pro AOsinuscalib::export, nmodes=nmodes, this_dir=this_dir, fname = fname, REC =
 
         if keyword_set(REC) then begin
 		    if file_test(rec_fname) then message, 'File already exists! '+ rec_fname
-            gen_reconstructor, INPUT_FILE=intmat_fname, OUTPUT_FILE=rec_fname, final_dim=[1600,672], CUT=0
+            gen_reconstructor, INPUT_FILE=intmat_fname, OUTPUT_FILE=rec_fname, final_dim=[n_slopes,672], CUT=0
 		    print, 'reconstructor saved in: '+ rec_fname
         endif
 

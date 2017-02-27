@@ -126,18 +126,22 @@ function AOpupils::indpup
 end
 
 function AOpupils::single_mask
+;sensorSide = 80
+sensorSide = 240
         hdr = *(self._header)
         bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
-        npix = 80/bin
+        npix = sensorSide/bin
 	frame = intarr(npix, npix)
         frame[ (self->indpup())[*,2]] =1
 	return, frame[0:npix/2-1, 0:npix/2-1]
 end
 
 function AOpupils::complete_mask
+;sensorSide = 80
+sensorSide = 240
         hdr = *(self._header)
         bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
-        npix = 80/bin
+        npix = sensorSide/bin
 	frame = intarr(npix, npix)
         frame[ self->indpup()] =1
 	return, frame

@@ -157,13 +157,19 @@ end
 ; return remapped signal vector
 function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 
+	;sensorSide = 80
+	sensorSide = 240
+	; in SOUL the slopes become 2848
+	;n_slopes = 1600
+	n_slopes = 2848
+
 	if n_elements(iter_idx) eq 0 then niter = self->niter() else niter=n_elements(iter_idx)
 	if n_elements(slopevec) ne 0 then niter=1
 
 	mypup = 0	;use this pupil info to remap signals
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	indpup = ((self->wfs_status())->pupils())->indpup()
-	fr_sz =80/((self->wfs_status())->ccd39())->binning()		;pixels
+	fr_sz =sensorSide/((self->wfs_status())->ccd39())->binning()		;pixels
 
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]

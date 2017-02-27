@@ -3,10 +3,16 @@ function demodulatedIM, set, plot=plot
 ; use first TN to determine common parameters
 ee=getaoelab(set->get(pos=0))
     
+;sensorSide = 80
+sensorSide = 240
+; in SOUL the slopes become 2848
+;n_slopes = 1600
+n_slopes = 2848
+
 idxslo = where(total((ee->slopes())->slopes(),1) ne 0., nslopes)
 ;nslopes = (ee->slopes())->nspectra()
 nmodes = max(set->value('disturb.sin_mode'))+1
-im = fltarr(nmodes, 1600)
+im = fltarr(nmodes, n_slopes)
 
 for i = 0, set->count()-1 do begin
 
@@ -18,7 +24,7 @@ for i = 0, set->count()-1 do begin
         ; demodule (need slopes and disturb) 
         f0 = (ee->disturb())->sin_freq(j)
         eps = 0.001
-        pp = (ee->slopes())->phase( (indgen(1600))[idxslo], from=f0-eps, to=f0+eps, /average) * 180/ !pi
+        pp = (ee->slopes())->phase( (indgen(n_slopes))[idxslo], from=f0-eps, to=f0+eps, /average) * 180/ !pi
         ;plot, pp, psym=4
 
         ; determine phase shift between disturb and slopes
@@ -43,7 +49,7 @@ for i = 0, set->count()-1 do begin
         if cnt gt 0 then sign[idx]=-1
 
         ; retrieve slopes from power and sign
-        slopevector = sqrt((ee->slopes())->power((indgen(1600))[idxslo], from=f0-0.001, to=f0+0.001)) * sign
+        slopevector = sqrt((ee->slopes())->power((indgen(n_slopes))[idxslo], from=f0-0.001, to=f0+0.001)) * sign
 
         ; normalize for disturb_amplitude 
         slopevector /= (ee->disturb())->mode_amp(j)
@@ -69,7 +75,7 @@ return, im
 end
 
 function reform_slopes2d, imvect, indpup
-    frame=fltarr (80,80)
+    frame=fltarr (sensorSide,sensorSide)
     nsubap = n_elements(indpup[*,0])
     frame[indpup[*,0]] = imvect[ 0:nsubap*2-1:2]
     frame[indpup[*,1]] = imvect[ 1:nsubap*2-1:2]

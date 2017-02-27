@@ -309,11 +309,16 @@ function AOsyncalib::find_registration, mode_list, init_pos=init_pos, visu=visu,
 end
 
 function AOsyncalib::scramble_syn2exp, synmat
+
+    ; in SOUL the slopes become 2848
+    ;n_slopes = 1600
+    n_slopes = 2848
+
 	nsub1 = (size(synmat,/dim))[1] / 2L
 	nmode = (size(synmat,/dim))[0]
 	sx = synmat[*,0:nsub1-1]
 	sy = synmat[*,nsub1:*]
-	synmat1 = fltarr(672,1600)
+	synmat1 = fltarr(672,n_slopes)
 	slv = fltarr(nsub1*2)
 	for ii=0, nmode-1 do begin
 		slv[0:*:2] = sx[ii,*]

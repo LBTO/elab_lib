@@ -179,13 +179,16 @@ end
 
 ; remaps IM in 2D
 pro AOintmat::im2d
+
+;sensorSide = 80
+sensorSide = 240
 	mypup = 0	;use this pupil info to remap signals
 	sx = self->sx()
 	sy = self->sy()
 	nm = max(self->modes_idx())+1
 	indpup = ((self->wfs_status())->pupils())->indpup()
 	nsub   = ((self->wfs_status())->pupils())->nsub()
-	fr_sz =80/((self->wfs_status())->ccd39())->binning()	;pixels
+	fr_sz =sensorSide/((self->wfs_status())->ccd39())->binning()	;pixels
 
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
