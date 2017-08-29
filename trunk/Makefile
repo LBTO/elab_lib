@@ -6,8 +6,8 @@ SUBSYSTEMS =          MsgD-RTDB StagesCtrl WFSCtrl TTCtrl BCUCtrl idl DiagnApp \
                       SimpleMotorCtrl GUI GUIs  ChUI Tester scripts MirrorDiagnostic \
                       PowerCtrl idl_control PyModules MasterDiagnostic MirrorCtrl Housekeeper AdamHousekeeper \
                       CameraLensCtrl Arbitrator HexapodCtrl SysCheck idl_wrapper \
-                      OptLoopDiagnostic StartUp AnemometerMon lnIF TrueSense DBFiller
-					  #InterferometerCtrl 
+                      OptLoopDiagnostic StartUp AnemometerMon lnIF TrueSense DBFiller\
+					  InterferometerCtrl 
 
 
 
