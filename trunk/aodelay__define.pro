@@ -6,8 +6,8 @@
 function AOdelay::Init, root_obj
 
     self._root_obj = root_obj
-    fs = ((self._root_obj->wfs_status())->ccd39())->framerate()
-    binning = ((self._root_obj->wfs_status())->ccd39())->binning()
+    fs = ((self._root_obj->wfs_status())->camera())->framerate()
+    binning = ((self._root_obj->wfs_status())->camera())->binning()
     T = 1/fs
 
     ;FLAO computation time (slope computation not parallelized)
@@ -32,7 +32,7 @@ function AOdelay::delay
 end
 
 function AOdelay::frames_delay
-    fs = ((self._root_obj->wfs_status())->ccd39())->framerate()
+    fs = ((self._root_obj->wfs_status())->camera())->framerate()
     return, self._delay*fs
 end
 

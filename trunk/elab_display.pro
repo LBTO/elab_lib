@@ -207,7 +207,7 @@ if n_elements(param_file) gt 0 then restore, param_file else begin
     for nr=0,adsec_shell_save.n_rings-1 do begin
 
         theta = findgen(adsec_shell_save.n_act_ring[nr])*(360.0/adsec_shell_save.n_act_ring[nr])+0.
-        theta = !PI/180.0*transpose(theta)
+        theta = !CONST.DtoR*transpose(theta)
         ;; act x,y coordinates
         act_coord[0,act0] = shift(adsec_shell_save.ring_radius[nr]*[cos(theta), sin(theta)],0,nr+1)
         act0 = act0+adsec_shell_save.n_act_ring[nr]
@@ -312,7 +312,7 @@ endif else begin
 endelse
 
 if n_elements(rot) ne 0 then begin
-    t=rot/180.0*!pi
+    t=rot*!CONST.DtoR
     matrot=transpose([[cos(t),sin(t)],[-sin(t),cos(t)]])
     dummy=matrot ## transpose([x,y])
     x=dummy[*,0]

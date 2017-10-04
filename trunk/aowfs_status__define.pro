@@ -45,8 +45,12 @@ function AOwfs_status::Init, root_obj, fitsfile
 
     self._optg = float(aoget_fits_keyword(self->header(), 'sc.OPTG'))
     self._ncpa_trigger = byte(fix(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER')))
-
-    self._ccd39  = obj_new('AOccd39',  self._header, self._wunit)
+    
+    if strpos(self._wunit, 'SOUL') ge 0 then begin
+        self._camera  = obj_new('AOocam2k',  self._header, self._wunit)
+    endif else begin
+		self._camera  = obj_new('AOccd39',  self._header, self._wunit)
+    endelse
     self._pupils = obj_new('AOpupils', self._header, self._wunit)
     self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
     self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2')
@@ -59,7 +63,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "fitsfile()", "wfs status fitsfile name (string)"
     self->addMethodHelp, "header()", "header of wfs status fitsfile (strarr)"
     self->addMethodHelp, "wunit()",  "W unit number (1,2,...)"
-    self->addMethodHelp, "ccd39()", "reference to ccd39 object"
+    self->addMethodHelp, "camera()", "reference to wfs camera object"
     self->addMethodHelp, "pupils()", "reference to pupils object"
     self->addMethodHelp, "filtw1()", "reference to filter wheel 1 object"
     self->addMethodHelp, "filtw2()", "reference to filter wheel 2 object"
@@ -72,7 +76,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "slopes_null_fname()",  "slopesnull vector fitsfile name (string)"
     self->addMethodHelp, "summary", "Summary of WFS status"
-    if obj_valid(self._ccd39) then self->addleaf, self._ccd39, 'ccd39'
+    if obj_valid(self._camera) then self->addleaf, self._camera, 'camera'
     if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
     if obj_valid(self._filtw1) then self->addleaf, self._filtw1, 'filtw1'
     if obj_valid(self._filtw2) then self->addleaf, self._filtw2, 'filtw2'
@@ -87,8 +91,8 @@ function AOwfs_status::fitsfile
     return, self._fitsfile
 end
 
-function AOwfs_status::ccd39
-	return, self._ccd39
+function AOwfs_status::camera
+	return, self._camera
 end
 
 function AOwfs_status::pupils
@@ -158,7 +162,7 @@ end
 pro AOwfs_status::summary, COMPREHENSIVE=COMPREHENSIVE
     print, string(format='(%"%-30s %s")','Unit number', self->wunit() )
     print, string(format='(%"%-30s %f")','Modulation', self->modulation() )
-    if obj_valid(self->ccd39())  then  (self->ccd39())->summary, COMPREHENSIVE=COMPREHENSIVE
+    if obj_valid(self->camera())  then  (self->camera())->summary, COMPREHENSIVE=COMPREHENSIVE
     if obj_valid(self->pupils()) then (self->pupils())->summary, COMPREHENSIVE=COMPREHENSIVE
     if obj_valid(self->filtw1()) then (self->filtw1())->summary, COMPREHENSIVE=COMPREHENSIVE
     if obj_valid(self->filtw2()) then (self->filtw2())->summary, COMPREHENSIVE=COMPREHENSIVE
@@ -178,7 +182,7 @@ pro AOwfs_status::test
     d = self->fitsfile()
     d = self->header()
     d = self->wunit()
-    d = self->ccd39()
+    d = self->camera()
     d = self->pupils()
     d = self->filtw1()
     d = self->filtw2()
@@ -190,7 +194,7 @@ pro AOwfs_status::test
     d = self->cube_angle()
     d = self->cube_stage()
     d = self->slopes_null_fname()
-    (self->ccd39())->test
+    (self->camera())->test
     (self->pupils())->test
     (self->filtw1())->test
     (self->filtw2())->test
@@ -204,7 +208,7 @@ end
 
 pro AOwfs_status::free
     ;if ptr_valid(self._header) then ptr_free, self._header
-    IF (OBJ_VALID(self._ccd39 )) THEN  self._ccd39->free
+    IF (OBJ_VALID(self._camera )) THEN  self._camera->free
     IF (OBJ_VALID(self._pupils )) THEN  self._pupils->free
     IF (OBJ_VALID(self._filtw1 )) THEN  self._filtw1->free
     IF (OBJ_VALID(self._filtw2 )) THEN  self._filtw2->free
@@ -212,7 +216,7 @@ end
 
 pro AOwfs_status::Cleanup
     ptr_free, self._header
-    obj_destroy, self._ccd39
+    obj_destroy, self._camera
     obj_destroy, self._pupils
     obj_destroy, self._filtw1
     obj_destroy, self._filtw2
@@ -230,7 +234,7 @@ pro AOwfs_status__define
         _stages         : [0.0, 0.0, 0.0],    $
         _camera_lens    : [0.0, 0.0],    $
         _header         : ptr_new(), $
-        _ccd39          : obj_new(), $
+        _camera          : obj_new(), $
         _pupils         : obj_new(), $
         _filtw1         : obj_new(), $
         _filtw2         : obj_new(), $

@@ -41,7 +41,7 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
     if ovs_time gt 0. then ovs_freq = 1./ovs_time
 
 	; Loop frequency (the frame rate):
-	ao_freq = ((root_obj->wfs_status())->ccd39())->framerate()
+	ao_freq = ((root_obj->wfs_status())->camera())->framerate()
 
 	; Synchronization mode:
     ; 	disturb_sync eq 0 ; disturb not applied (according to the WFS).

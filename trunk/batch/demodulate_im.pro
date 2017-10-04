@@ -23,7 +23,7 @@ function demodulate_im, ao, sinmodeno, VISU=VISU, VERBOSE=VERBOSE
 sign_swap	= +1.
 ;sinmodeno = 0
 
-fs 		= ((ao->wfs_status())->ccd39())->framerate()
+fs 		= ((ao->wfs_status())->camera())->framerate()
 mode 	= (ao->disturb())->sin_mode(sinmodeno)
 
 ; ----------- THRESHOLD FOR THE PEAK DETECTION ----------

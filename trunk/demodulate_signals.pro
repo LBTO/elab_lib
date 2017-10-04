@@ -76,8 +76,8 @@ pro demodulate_signals, a_hist, s_hist, fdist, fsamp, AA, BB, delta, VISU=visu, 
   ;          by !PI (180 degrees).
   if keyword_set(VISU) then begin
     if n_elements(win_id) eq 0 then window, id_win, /FREE else wset, win_id
-;    plothist, delta*180.0/!PI, XR=[-180.0,180.0], _extra=ex
-	aohistoplot, delta*180d/!dPI, /fill, bin=2, mininput=-200, maxinput=200, _extra=ex, xtitle='phase [degrees]'
+;    plothist, delta*!CONST.RtoD, XR=[-180.0,180.0], _extra=ex
+	aohistoplot, delta*!CONST.RtoD, /fill, bin=2, mininput=-200, maxinput=200, _extra=ex, xtitle='phase [degrees]'
   endif
 end
 

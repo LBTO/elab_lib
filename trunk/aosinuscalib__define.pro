@@ -387,7 +387,8 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	pupobj  = (imobj->wfs_status())->pupils()
 	puptrn  = pupobj->pup_tracknum()
 	indpup = (pupobj->indpup())
-	fr_sz =80L		;pixels
+	fr_sz = ((imobj->wfs_status())->camera())->sensorSide() ; pixels
+	; 240L		
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]

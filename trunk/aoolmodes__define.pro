@@ -493,7 +493,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
     endfor
     if plot eq 1 then $
       legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
-    angle=( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*180/!pi
+    angle=( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*!CONST.RtoD
     ; if key then return the angle in the telescope coordinates
     if keyword_set(teldir) then begin
     	ttangle=(self._root_obj->control())->ttdirections()

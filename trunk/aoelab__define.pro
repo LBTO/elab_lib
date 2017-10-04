@@ -245,7 +245,7 @@ function AOelab::Init, tracknum, $
     ; open loop modes
     self._olmodes = obj_new('AOolmodes', self)
 
-    ; ccd39 frames
+    ; wfs camera frames
     frames_fname = filepath(root=self._datadir,  'Frames_'+tracknum+'.fits')
     antidrift_fname = filepath(root=self._datadir, 'AntiDrift_'+tracknum+'.fits')
     self._frames = obj_new('AOframes', self, frames_fname, antidrift_fname)
@@ -309,7 +309,7 @@ function AOelab::Init, tracknum, $
 	    slopes_null_basename 	= (self->wfs_status())->slopes_null_fname()
         if slopes_null_basename ne "" then begin
             wunit  = (self->wfs_status())->wunit()
-            binning = ((self->wfs_status())->ccd39())->binning()
+            binning = ((self->wfs_status())->camera())->binning()
 	        slopes_null_subdir 		= ['wfs_calib_'+wunit,'slopenulls','bin'+strtrim(binning,2)]
 	        slopes_null_fname = filepath(root=ao_datadir(), sub=slopes_null_subdir,  slopes_null_basename)
             self._slopes_null = obj_new('AOslopes', self, slopes_null_fname, self._frames_counter, store_label='slopes_null')
@@ -508,26 +508,6 @@ function AOelab::closedloop
     return, (self->sanitycheck())->closedloop()
 end
 
-
-;function AOelab::mag_v2
-;    if obj_valid(self->frames()) then $
-;        if obj_valid(self->wfs_status()) then $
-;            if obj_valid( (self->wfs_status())->ccd39() ) then $
-;				if obj_valid( (self->wfs_status())->filtw1() ) then begin
-;					nphpup = (self->frames())->nph_per_int_av()
-;					framerate = ((self->wfs_status())->ccd39())->framerate()
-;					fw1_trans = ((self->wfs_status())->filtw1())->transmissivity()
-;					fw1_lower_bound = ((self->wfs_status())->filtw1())->cw() - $
-;									  ((self->wfs_status())->filtw1())->bw()/2.
-;					fw1_upper_bound = ((self->wfs_status())->filtw1())->cw() + $
-;									  ((self->wfs_status())->filtw1())->bw()/2.
-;
-;	            	return, tell_me_the_mag_v2(nphpup, framerate, fw1_trans, fw1_lower_bound, fw1_upper_bound)
-;				endif
-;    message, 'impossible to compute the magnitude', /info
-;    return, !values.f_nan
-;end
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                                   SUMMARY
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -557,9 +537,9 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
         TEXT = [TEXT, string(format='(%"| %-30s | %d |")','# Modes', (self->modal_rec())->nmodes())]
         TEXT = [TEXT, string(format='(%"| %-30s | %s |")','Modal rec', file_basename( (self->modal_rec())->fname() ) )]
     endif
-    if obj_valid(self->wfs_status()) then if obj_valid((self->wfs_status())->ccd39())  then begin
-        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->ccd39())->binning())]
-        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->ccd39())->framerate())]
+    if obj_valid(self->wfs_status()) then if obj_valid((self->wfs_status())->camera())  then begin
+        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Binning', ((self->wfs_status())->camera())->binning())]
+        TEXT = [TEXT, string(format='(%"| %-30s | %d |")','Frequency [Hz]', ((self->wfs_status())->camera())->framerate())]
         TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Modulation', (self->wfs_status())->modulation() )]
         ;TEXT = [TEXT, string(format='(%"%-30s %s")','B0_a matrix', (self->control())->b0_a_fname())]
         if obj_valid((self->wfs_status())->filtw1()) then $
@@ -825,9 +805,9 @@ end
 function AOelab::mag
     if obj_valid(self->frames()) then $
         if obj_valid(self->wfs_status()) then $
-            if obj_valid( (self->wfs_status())->ccd39() ) then $
+            if obj_valid( (self->wfs_status())->camera() ) then $
 	            return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
-							((self->wfs_status())->ccd39())->framerate() )
+							((self->wfs_status())->camera())->framerate() )
     message, 'impossible to compute the magnitude', /info
     return, !values.f_nan
 end

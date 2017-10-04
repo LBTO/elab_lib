@@ -35,7 +35,7 @@ function AOsyncalib::Init, im_tracknum, basis, syndata_dir=syndata_dir
 	if path_sep() eq '\' then defsysv, '!FFTW_ARCETRI', 0B else defsysv, '!FFTW_ARCETRI', 1B
 	init_parallel,0
 
-	binning = ((im_obj->wfs_status())->ccd39())->binning()
+	binning = ((im_obj->wfs_status())->camera())->binning()
 	print, 'binning mode #',strtrim(binning,2)
 
 	amp_mod = float(round((im_obj->wfs_status())->modulation()))
@@ -338,7 +338,7 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 
 	pupobj = ((self->imobj())->wfs_status())->pupils()
 	indpup = (pupobj->indpup())
-	fr_sz =80L		;pixels
+	fr_sz = (((self->imobj())->wfs_status())->camera())->sensorSide() ; 240L		;pixels
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]
@@ -451,53 +451,11 @@ pro AOsyncalib::export_synmat, anglerot, shiftval, export_date=export_date, nmod
 		sxaddpar, hdr, 'W_UNIT', 	aoget_fits_keyword(exp_hdr, 'W_UNIT')
 		aoadd_fits_keyword, hdr, 'tt.LAMBDA_D', (self->syn_pyr()).amp_mod
 		aoadd_fits_keyword, hdr, 'ccd39.BINNING', aoget_fits_keyword(exp_hdr, 'ccd39.BINNING')
+		aoadd_fits_keyword, hdr, 'ocam2k.BINNING', aoget_fits_keyword(exp_hdr, 'ocam2k.BINNING')
 		aoadd_fits_keyword, hdr, 'sc.PUPILS', aoget_fits_keyword(exp_hdr, 'sc.PUPILS')
 		writefits, filepath(root=self->syndata_dir(), export_fname), matinter1, hdr
 	endfor
 end
-
-;function AOsyncalib::exp_sl2d, slopevec
-;	pupobj
-;	nsub   = pupobj->nsub()
-;	indpup = pupobj->indpup()
-;	fr_sz =80L		;pixels
-;	mypup = 0	;use this pupil info to remap signals
-;	cx  = (pupobj->cx())[mypup]
-;	cy  = (pupobj->cy())[mypup]
-;	rad = (pupobj->radius())[mypup]
-;	xr = [floor(cx-rad),ceil(cx+rad)]
-;	yr = [floor(cy-rad),ceil(cy+rad)]
-;	sl2d_w = xr[1]-xr[0]+1
-;	sl2d_h = yr[1]-yr[0]+1
-;	sl = reform(slopevec)
-;	sl = sl[0:nsub*2-1]
-;	sx = sl[0:*:2]
-;	sy = sl[1:*:2]
-;	s2d = fltarr(fr_sz,fr_sz)
-;	sl_2d = fltarr(sl2d_w*2, sl2d_h)
-;	s2d[indpup[*,mypup]] = sx
-;	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-;	s2d[indpup[*,mypup]] = sy
-;	s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-;	sl_2d = [s2d_tmpA,s2d_tmpB]
-;	return, sl_2d
-;end
-
-;function scramble_slopes_exp2syn, slopevec, synmask, expmask
-;	idx  = where(synmask, nsub)
-;	idx1 = where(expmask,nsub1)
-;	sl1 = reform(slopevec)
-;	sl1 = sl1[0:nsub1*2-1]
-;	sx1 = sl1[0:*:2]
-;	sy1 = sl1[1:*:2]
-;	s2d = fltarr(30,30)
-;	s2d[idx1] = sx1
-;	sx = s2d[idx]
-;	s2d[idx1] = sy1
-;	sy = s2d[idx]
-;	sl = [-sx,sy]
-;	return, sl
-;end
 
 function AOsyncalib::modeShapes
     IF (OBJ_VALID(self._modeShapes)) THEN return, self._modeShapes else return, obj_new()

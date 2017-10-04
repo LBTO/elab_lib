@@ -64,7 +64,7 @@ pro delay_optics_gain_estimation, trckn, mode_idx=mode_idx, smw=smw, optvars=opt
 	; take the data with elab_lib
 	e = getaoelab(trckn)
 	freq = (e->modes())->freq()
-	fs = ((e->wfs_status())->ccd39())->framerate()
+	fs = ((e->wfs_status())->camera())->framerate()
 	; check the modes on which it must determines the WFS gains (one for each mode)
 	; and the delay (only one!)
 	if  keyword_set(mode_idx) then begin

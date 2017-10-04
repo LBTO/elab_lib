@@ -9,7 +9,7 @@ function AOtel::Init, root, fitsfile
 
 
 	angle_arcsec = float(aoget_fits_keyword(hdr, 'tel.ROTATOR.ANGLE'))
-	if angle_arcsec ne -9999. then self._rot_angle = (angle_arcsec/206264.806)*(180./!PI) else $
+	if angle_arcsec ne -9999. then self._rot_angle = (angle_arcsec/206264.806)*!CONST.RtoD else $
 								   self._rot_angle = !VALUES.F_NAN
 
 	az = double(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
@@ -19,10 +19,10 @@ function AOtel::Init, root, fitsfile
 	if el ne -9999. then self._el = el else self._el = !VALUES.F_NAN
 
     dec =  double(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
-	if dec ne -9999. then self._dec = dec * 180d/!pi else self._dec = !VALUES.F_NAN
+	if dec ne -9999. then self._dec = dec * !CONST.RtoD else self._dec = !VALUES.F_NAN
 
     ra  =  double(aoget_fits_keyword(hdr, 'tel.TEL.RA'))
-	if ra ne -9999. then self._ra = ra * 180d/!pi/15 else self._ra = !VALUES.F_NAN
+	if ra ne -9999. then self._ra = ra * !CONST.RtoD/15 else self._ra = !VALUES.F_NAN
 
     istracking = long(aoget_fits_keyword(hdr, 'tel.TEL.ISTRACKING'))
 	if istracking ne -9999 then self._istracking = istracking else self._istracking = -1L

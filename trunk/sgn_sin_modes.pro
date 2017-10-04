@@ -26,7 +26,7 @@ function sgn_sin_modes, delta_mat, VISU=VISU, WIN_ID=win_id, N_TERMS_FIT=n_terms
 
   ; Compute histogram of estimated delay (delta_mat)
   ;  NOTE: In general, two lobes separated by !PI
-  bin 	= 2.0/180.0*!PI
+  bin 	= 2.0*!CONST.DtoR
   n_bin = round(2*!DPI/bin)
   hist 	= histogram(delta_mat, LOC=binx, MIN=-!DPI, MAX=!DPI, NBINS=n_bin, OMIN=omin, OMAX=omax)
   bin 	= binx[1]-binx[0]

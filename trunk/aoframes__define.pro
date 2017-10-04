@@ -149,7 +149,7 @@ end
 
 function AOframes::dark, dark_ok=dark_ok
 	dark_ok = 1B
-	dark_fname = (*self._wfs_status->ccd39())->dark_fname()
+	dark_fname = (*self._wfs_status->camera())->dark_fname()
 
 	if not file_test(dark_fname) then begin
 		message, 'CCD39 dark file not found: '+dark_fname, /info
@@ -181,7 +181,7 @@ end
 ;-
 function AOframes::frames, DARK_SUBTRACTED=DARK_SUBTRACTED
 	if keyword_set(DARK_SUBTRACTED) then begin
-;		dark = (*self._wfs_status->ccd39())->dark()
+;		dark = (*self._wfs_status->camera())->dark()
 		dark = self->dark(dark_ok=dark_ok)
 		if not dark_ok then return,-1
         endif
@@ -226,7 +226,7 @@ pro AOframes::calc_number_photons
 	self._nph_per_int_rms = stddev(adu_per_int) * self._photons_per_ADU
 
 	; Estimate the averaged number of photons in the pupil per second
-	self._nph_per_sec_av = self._nph_per_int_av * (*self._wfs_status->ccd39())->framerate()
+	self._nph_per_sec_av = self._nph_per_int_av * (*self._wfs_status->camera())->framerate()
 
 	; Estimate the averaged number of photons per subaperture per integration time
 	nsub   = (*self._wfs_status->pupils())->nsub()
@@ -257,7 +257,7 @@ function AOframes::ron_roi
 	frw = self->frame_w()
 	frh = self->frame_h()
 	roi = lonarr(frw,frh)
-	bin = (*self._wfs_status->ccd39())->binning()
+	bin = (*self._wfs_status->camera())->binning()
 	px = 1 ;pixels from border
 	if bin eq 1 then begin
 		roi[px:px+1,px:px+1] = 1
@@ -310,6 +310,7 @@ function AOframes::pup_diameter
 end
 
 function AOframes::pup_image
+; if (*self._wfs_status->camera())->sensorSide() eq 240 ....
 ;sensorSide = 80
 sensorSide = 240
     f = total(self->frames(/dark),3)

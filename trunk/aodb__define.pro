@@ -71,6 +71,10 @@ function aodb::Init, SYSTEM_ID, recompute=recompute
         {name:'wfs_status.ccd39.framerate',         type:'real'}, $
         {name:'wfs_status.ccd39.binning',           type:'integer'}, $
         {name:'wfs_status.ccd39.readout_speed',     type:'real'}, $
+        {name:'wfs_status.ocam2k.framerate',        type:'real'}, $
+        {name:'wfs_status.ocam2k.binning',          type:'integer'}, $
+        {name:'wfs_status.ocam2k.mode',             type:'integer'}, $
+        {name:'wfs_status.ocam2k.gain',             type:'real'}, $
         {name:'wfs_status.filtw1.name',             type:'string'}, $
         {name:'wfs_status.filtw2.name',             type:'string'}, $
         {name:'adsec_status.fsm_state',             type:'string'}, $
@@ -466,7 +470,8 @@ pro test_aodb
     tracknums=['20100622_083355', '20100621_040247', '20100621_052151', '20100621_035214', '20100604_034224']
     db->insert, tracknums
     print, db->property_names()
-    tracks = db->query('wfs_status.ccd39.framerate', 'in', [10.,500])
+    ;tracks = db->query('wfs_status.ccd39.framerate', 'in', [10.,500])
+    tracks = db->query('wfs_status.ocam2k.framerate', 'in', [10.,500])
     db->save
     stop
     db->remove, '20100621_035214'

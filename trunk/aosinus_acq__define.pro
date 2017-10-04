@@ -111,7 +111,7 @@ pro AOsinus_acq::show, meas, WIN_ID = WIN_ID
    endif
    if n_elements(win_id) eq 0 then window, 10 else wset, WIN_ID
 
-   aohistoplot, (self->delta())[*,meas]*180d/!dPI, /fill, bin=2, mininput=-200, maxinput=200, $
+   aohistoplot, (self->delta())[*,meas]*!CONST.RtoD, /fill, bin=2, mininput=-200, maxinput=200, $
                 xtitle='delay between c(t) and s(t) [degrees]', $
                 title='mode'+strtrim((self->modes())[meas],2)+', '+ strtrim(string((self->freqs())[meas],format='(f7.2)'),2)+'Hz'
 

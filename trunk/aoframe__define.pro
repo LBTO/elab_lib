@@ -221,15 +221,7 @@ end
 ; and create a background mask with circular holes
 function AOframe::background_mask, xc, yc,  nsup=nsup, borderpix=borderpix, mask_ok=mask_ok
 	if n_params() ne 2 then message, 'Syntax: ...->background_mask(xc,yc)'
-	;if not keyword_set(nsup) then nsup = 40.	;maximum radius to ensure all star light is in.
-	;dsup = ao_pupil_diameter() / nsup
-    ;if not finite(self->pixelscale()) or not finite(self->lambda()) then begin
-    ; 	mask_ok=0B
-    ;	return, -1
-    ;endif
-	;control_diam_pix = self->lambda() / dsup / 4.85e-6 / self->pixelscale()
 	np = max([self._frame_w, self._frame_h])
-	;diaratio = control_diam_pix/float(np)
 	diaratio = self._object_size/float(np)
 	if diaratio gt 1 then begin
 		mask_ok=0B

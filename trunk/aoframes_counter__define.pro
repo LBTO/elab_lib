@@ -10,8 +10,8 @@ function AOframes_counter::Init, frames_counter_file, wfs_status_obj
     endif
 
     if not obj_valid(wfs_status_obj) then return, 0
-    if not obj_valid(wfs_status_obj->ccd39()) then return, 0
-    self._framerate=(wfs_status_obj->ccd39())->framerate()
+    if not obj_valid(wfs_status_obj->camera()) then return, 0
+    self._framerate=(wfs_status_obj->camera())->framerate()
 ;    self->compute
 	frames_counter = readfits(frames_counter_file, header, /SILENT)
     self._nframes = n_elements(frames_counter)
@@ -21,7 +21,7 @@ function AOframes_counter::Init, frames_counter_file, wfs_status_obj
     self._header = ptr_new(header, /no_copy)
 ;    dfc = (*self._fc-shift(*self._fc,1) ) [1:*]
 ;    self._decimation = min(dfc)-1
-;    self._deltat = 1. / ( (wfs_status_obj->ccd39())->framerate() ) * (self._decimation+1)
+;    self._deltat = 1. / ( (wfs_status_obj->camera())->framerate() ) * (self._decimation+1)
 ;    self._lost_frames_idx =  ptr_new( where(dfc gt self._decimation+1, cnt), /no_copy)
 ;    self._n_jumps = cnt
 ;    if self._n_jumps gt 0 then self._lost_frames  =  ptr_new( dfc[*self._lost_frames_idx]/(self._decimation+1) - 1, /no_copy)

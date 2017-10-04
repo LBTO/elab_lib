@@ -156,7 +156,7 @@ if n_elements(hz)			eq 0 then hz		= 1000.				; frequency of the oversampling loo
 ; Derived parameters
 ;*************************************************************
 r_0 		 = 0.9759*0.5/(seeing*4.85)				; r0 @500nm 			[m]
-angle_coef   = [cos(angle_wind*!PI/180.), sin(angle_wind*!PI/180.)]
+angle_coef   = [cos(angle_wind*!CONST.DtoR), sin(angle_wind*!CONST.DtoR)]
 t_int		 = 1. / hz								; sampling time			[s/step]
 sample_size  = Diam / Dpix							; sample size			[m/pix]
 scr_size_m_x = (v_wind*t_int*n_steps)*angle_coef[0]	; screen dimension 		[m]

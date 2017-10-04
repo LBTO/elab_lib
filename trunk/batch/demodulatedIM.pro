@@ -3,11 +3,10 @@ function demodulatedIM, set, plot=plot
 ; use first TN to determine common parameters
 ee=getaoelab(set->get(pos=0))
     
-;sensorSide = 80
-sensorSide = 240
+sensorSide = ((ee->wfs_status())->camera())->sensorSide()
 ; in SOUL the slopes become 2848
 ;n_slopes = 1600
-n_slopes = 2848
+n_slopes = (ee->slopes())->Nslopes()
 
 idxslo = where(total((ee->slopes())->slopes(),1) ne 0., nslopes)
 ;nslopes = (ee->slopes())->nspectra()
@@ -24,7 +23,7 @@ for i = 0, set->count()-1 do begin
         ; demodule (need slopes and disturb) 
         f0 = (ee->disturb())->sin_freq(j)
         eps = 0.001
-        pp = (ee->slopes())->phase( (indgen(n_slopes))[idxslo], from=f0-eps, to=f0+eps, /average) * 180/ !pi
+        pp = (ee->slopes())->phase( (indgen(n_slopes))[idxslo], from=f0-eps, to=f0+eps, /average) * !CONST.RtoD
         ;plot, pp, psym=4
 
         ; determine phase shift between disturb and slopes
@@ -37,7 +36,7 @@ for i = 0, set->count()-1 do begin
         histo=histogram(pptmp, binsize=binsize)
         dum=max(histo, idx)
         sfasa=idx[0]*binsize
-        print, 'mode '+strtrim(modeno,2)+' : phase shift '+strtrim(sfasa*!pi/180,2)
+        print, 'mode '+strtrim(modeno,2)+' : phase shift '+strtrim(sfasa*!CONST.DtoR,2)
         ; use phase shift to determine the sign of slopes  
         ; maledetti angoli!
         if sfasa gt 90 then  $

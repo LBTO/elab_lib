@@ -13,6 +13,8 @@ function AOpupils::Init, wfs_header, wunit
 
 	; Get pupil indexes
 	;-----------------------------------------------------------------------------
+
+	; SOUL: update this path, it has changed
 	pups_subdir	= ['wfs_calib_'+wunit,'ccd39','LUTs']
 	pups_path   = filepath(root=ao_datadir(), sub=pups_subdir,  '') + $
 				  strmid(pp,1) + path_sep()
@@ -126,10 +128,10 @@ function AOpupils::indpup
 end
 
 function AOpupils::single_mask
-;sensorSide = 80
-sensorSide = 240
+        sensorSide = 240
         hdr = *(self._header)
-        bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        ;bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        bin = fix(aoget_fits_keyword(hdr, 'ocam2k.BINNING'))
         npix = sensorSide/bin
 	frame = intarr(npix, npix)
         frame[ (self->indpup())[*,2]] =1
@@ -137,10 +139,10 @@ sensorSide = 240
 end
 
 function AOpupils::complete_mask
-;sensorSide = 80
-sensorSide = 240
+        sensorSide = 240
         hdr = *(self._header)
-        bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        ;bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
+        bin = fix(aoget_fits_keyword(hdr, 'ocam2k.BINNING'))
         npix = sensorSide/bin
 	frame = intarr(npix, npix)
         frame[ self->indpup()] =1

@@ -40,7 +40,7 @@ function res_scales_est, variables
 	
 	; build the candidate varaince
     turb_var = dblarr(n_elements(param.mode_idx))
-    rad2arcsec = 3600.d*180.d/!dpi
+    rad2arcsec = 3600.d*!CONST.RtoD
     L0norm = L0 / param.D
     scale = (param.D/r0)^(5.d/3.d)
     for i=0,n_elements(param.mode_idx)-1 do turb_var[i] = 4* !pi^2 * scale * von_covar(param.mode_idx(i), param.mode_idx(i), L0norm, /double)

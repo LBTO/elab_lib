@@ -300,7 +300,7 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   	tip_ang=a1
   	if verbose then begin
   	  print, a1, b1, c1
-  	  print, 'TIP angle = '+strtrim(tip_ang/!pi*180.,2)
+  	  print, 'TIP angle = '+strtrim(tip_ang*!CONST.RtoD, 2)
   	  print, 'error std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
   	                                              -plane1[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   	  print, 'TIP std = '+strtrim(sqrt(variance(surf1[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
@@ -332,7 +332,7 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   	tilt_ang=a2
   	if verbose then begin
   	  print, a2, b2, c2
-  	  print, 'TILT angle = '+strtrim(tilt_ang/!pi*180.,2)
+  	  print, 'TILT angle = '+strtrim(tilt_ang*!CONST.RtoD, 2)
   	  print, 'error std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL]$
   	                                             -plane2[((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))
   	  print, 'TILT std = '+strtrim(sqrt(variance(surf2[0,((self._root_obj->adsec_status())->struct_adsec()).ACT_W_CL])))

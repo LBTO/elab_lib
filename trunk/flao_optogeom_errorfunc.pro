@@ -4,7 +4,7 @@ pro show_sigs, synsx, synsy, expsx, expsy
 
 	pupobj = ((scobj->imobj())->wfs_status())->pupils()
 	indpup = (pupobj->indpup())
-	fr_sz =80L		;pixels
+	fr_sz =  (((scobj->imobj())->wfs_status())->camera())->sensorSide()		;pixels
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]
