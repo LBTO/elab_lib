@@ -8,6 +8,8 @@ function AOccd39::Init, wfs_header, wunit
 	self._header = wfs_header
 	hdr = *(self._header)
 
+        self._sensorSide = 80L
+        self._mode = 1L
 	self._framerate     = float(aoget_fits_keyword(hdr, 'ccd39.FRAMERATE'))
 	self._readout_speed = float(aoget_fits_keyword(hdr, 'ccd39.READOUT_SPEED'))
 	self._binning 		= long(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
@@ -27,6 +29,46 @@ function AOccd39::Init, wfs_header, wunit
     self->addMethodHelp, "dark_fname()", "filename of dark frame"
 
     return, 1
+end
+
+function AOccd39::computeDelay
+	fs = self._framerate
+	binning = self._binning
+	T = 1/fs
+	;FLAO computation time (slope computation not parallelized)
+	comp_time = 0.72e-3
+	; ASM set time
+	dm_set = 1e-3
+	;CCD39 characteristics for binning [1,2,3,4]
+	ReadOutSpeed = [0.95, 1.56, 0.89, 0.68]*1e-3
+	CCD_speed = ReadOutSpeed[binning-1]
+	; delay in seconds
+	delay = T/2. + CCD_speed + comp_time + dm_set/2. + T/2.
+	return, delay
+end
+
+function AOccd39::idealPupilDistance
+	return 36L
+end
+
+function AOccd39::mode
+	return, self._mode
+end
+
+function AOocam2k::binnedSensorSideX
+        return, self._sensorSide/self._binning
+end
+
+function AOocam2k::binnedSensorSideY
+        return, self._sensorSide/self._binning
+end
+
+function AOccd39::sensorSideX
+	return, self._sensorSide
+end
+
+function AOccd39::sensorSideY
+	return, self._sensorSide
 end
 
 function AOccd39::framerate
@@ -88,6 +130,8 @@ pro AOccd39__define
         _framerate     : 0.0	, $
         _readout_speed : 0.0	, $
         _binning       : 0L	    , $
+        _mode          : 0L     , $
+        _sensorSide    : 0L     , $
         _dark_filename : ''     , $
         _status		   : ''		, $
         INHERITS    AOhelp  $

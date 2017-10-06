@@ -338,7 +338,6 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 
 	pupobj = ((self->imobj())->wfs_status())->pupils()
 	indpup = (pupobj->indpup())
-	fr_sz = (((self->imobj())->wfs_status())->camera())->sensorSide() ; 240L		;pixels
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]
@@ -348,7 +347,9 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 	sl2d_w = xr[1]-xr[0]+1
 	sl2d_h = yr[1]-yr[0]+1
 
-	s2d = fltarr(fr_sz,fr_sz)
+	fr_sz_x = (((self->imobj())->wfs_status())->camera())->sensorSideX()
+	fr_sz_y = (((self->imobj())->wfs_status())->camera())->sensorSideY()
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = expsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = expsy
@@ -357,7 +358,7 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 	window,0, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='experimental'
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = synsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = synsy
@@ -366,7 +367,7 @@ pro AOsyncalib::compare_sigs, mode, anglerot=anglerot, shiftval=shiftval
 	window,1, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='synthetic'
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = expsx - synsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = expsy - synsy
@@ -451,7 +452,8 @@ pro AOsyncalib::export_synmat, anglerot, shiftval, export_date=export_date, nmod
 		sxaddpar, hdr, 'W_UNIT', 	aoget_fits_keyword(exp_hdr, 'W_UNIT')
 		aoadd_fits_keyword, hdr, 'tt.LAMBDA_D', (self->syn_pyr()).amp_mod
 		aoadd_fits_keyword, hdr, 'ccd39.BINNING', aoget_fits_keyword(exp_hdr, 'ccd39.BINNING')
-		aoadd_fits_keyword, hdr, 'ocam2k.BINNING', aoget_fits_keyword(exp_hdr, 'ocam2k.BINNING')
+		aoadd_fits_keyword, hdr, 'ocam2.BINNING', aoget_fits_keyword(exp_hdr, 'ocam2.BINNING')
+		aoadd_fits_keyword, hdr, 'ocam2.MODE', aoget_fits_keyword(exp_hdr, 'ocam2.MODE')
 		aoadd_fits_keyword, hdr, 'sc.PUPILS', aoget_fits_keyword(exp_hdr, 'sc.PUPILS')
 		writefits, filepath(root=self->syndata_dir(), export_fname), matinter1, hdr
 	endfor

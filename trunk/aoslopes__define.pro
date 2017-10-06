@@ -156,8 +156,6 @@ end
 
 ; return remapped signal vector
 function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
-	sensorSide = ((self->wfs_status())->camera())->sensorSide()
-    binning = ((self->wfs_status())->camera())->binning()
 	; in SOUL the slopes become 2848
 	; n_slopes = 1600
     ; SOUL: debug this
@@ -169,8 +167,6 @@ function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 	mypup = 0	;use this pupil info to remap signals
 	nsub = ((self->wfs_status())->pupils())->nsub()
 	indpup = ((self->wfs_status())->pupils())->indpup()
-	fr_sz = sensorSide/binning		;pixels
-
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
 	rad = (((self->wfs_status())->pupils())->radius())[mypup]
@@ -182,7 +178,9 @@ function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 	sx = self->sx(iter_idx=iter_idx, slopevec=slopevec)
 	sy = self->sy(iter_idx=iter_idx, slopevec=slopevec)
 
-	s2d = fltarr(fr_sz,fr_sz)
+	fr_sz_x = ((self->wfs_status())->camera())->binnedSensorSideX()
+	fr_sz_y = ((self->wfs_status())->camera())->binnedSensorSideY()
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	sl_2d = fltarr(sl2d_w*2, sl2d_h, niter)
 	for kk=0L, long(niter)-1 do begin
 		if n_elements(slopevec) eq 0 then s2d[indpup[*,mypup]] = sx[kk,*] else $

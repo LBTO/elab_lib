@@ -8,13 +8,27 @@ function AOocam2k::Init, wfs_header, wunit
 	self._header = wfs_header
 	hdr = *(self._header)
 
-	self._framerate     = float(aoget_fits_keyword(hdr, 'ocam2k.FRAMERATE'))
-	self._readout_speed = float(aoget_fits_keyword(hdr, 'ocam2k.READOUT_SPEED'))
-	self._binning 		= long(aoget_fits_keyword(hdr, 'ocam2k.BINNING'))
-	self._status  		= aoget_fits_keyword(hdr, 'ocam2k.STATUS')
+        self._sensorSideX = 240L
+        self._sensorSideY = 240L
+        
+	self._framerate     = float(aoget_fits_keyword(hdr, 'ocam2.FRAMERATE'))
+	self._readout_speed = float(aoget_fits_keyword(hdr, 'ocam2.READOUT_SPEED'))
+	self._binning 		= long(aoget_fits_keyword(hdr, 'ocam2.BINNING'))
+	self._mode 		= long(aoget_fits_keyword(hdr, 'ocam2.MODE'))
 
-	dark_filename 		= aoget_fits_keyword(hdr,'ocam2k.DARK_FILENAME')
-	dark_subdir 		= ['wfs_calib_'+wunit,'ocam2k','backgrounds','bin'+strtrim(self._binning,2)]
+    IF self._mode eq 1 THEN BEGIN
+		self_.sensorSideX = 200
+		self_.sensorSideY = 200
+	ENDIF
+        IF self._mode eq 2 THEN BEGIN
+            self_.sensorSideX = 240
+            self_.sensorSideY = 120
+	ENDIF
+
+        self._status  		= aoget_fits_keyword(hdr, 'ocam2.STATUS')
+
+	dark_filename 		= aoget_fits_keyword(hdr,'ocam2.DARK_FILENAME')
+	dark_subdir 		= ['wfs_calib_'+wunit,'ocam2','backgrounds','bin'+strtrim(self._binning,2)]
 	self._dark_filename = filepath(root=ao_datadir(), sub=dark_subdir,  dark_filename)
 
     ; initialize help object and add methods and leafs
@@ -27,6 +41,48 @@ function AOocam2k::Init, wfs_header, wunit
     self->addMethodHelp, "dark_fname()", "filename of dark frame"
 
     return, 1
+end
+
+function AOocam2k::computeDelay
+        fs = self._framerate
+        T = 1/fs
+        ; SOUL computation time (slope computation not parallelized)
+        comp_time = 0.66e-3
+        ; SOUL computation time (slope computation parallelized)
+        ; comp_time = 0.42e-3
+        ; ASM set time
+        dm_set = 1e-3
+        ;ocam2k characteristics for mode [1,2,3,4,5]
+        ReadOutSpeed = [0.48, 0.24, 0.24, 0.20, 0.16]*1e-3
+        CCD_speed = ReadOutSpeed[self._mode-1]
+        ; delay in seconds
+        delay = T/2. + CCD_speed + comp_time + dm_set/2. + T/2.
+        return, delay
+end
+
+function AOocam2k::idealPupilDistance
+	; SOUL: what is the correct value for this ?
+	return 60L
+end
+
+function AOocam2k::mode
+        return, self._mode
+end
+
+function AOocam2k::binnedSensorSideX
+        return, self._sensorSideX/self._binning
+end
+
+function AOocam2k::binnedSensorSideY
+        return, self._sensorSideY/self._binning
+end
+
+function AOocam2k::sensorSideX
+        return, self._sensorSideX
+end
+
+function AOocam2k::sensorSideY
+        return, self._sensorSideY
 end
 
 function AOocam2k::framerate
@@ -85,11 +141,14 @@ end
 pro AOocam2k__define
     struct = { AOocam2k, $
         _header        : ptr_new(), $
-        _framerate     : 0.0	, $
-        _readout_speed : 0.0	, $
-        _binning       : 0L	    , $
-        _dark_filename : ''     , $
-        _status		   : ''		, $
+        _framerate     : 0.0	  , $
+        _readout_speed : 0.0	  , $
+        _binning       : 0L	  , $
+        _mode          : 0L       , $
+        _sensorSideX   : 0L       , $
+        _sensorSideY   : 0L       , $
+        _dark_filename : ''       , $
+        _status		   : ''	  , $
         INHERITS    AOhelp  $
     }
 end

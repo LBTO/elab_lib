@@ -4,7 +4,6 @@ pro show_sigs, synsx, synsy, expsx, expsy
 
 	pupobj = ((scobj->imobj())->wfs_status())->pupils()
 	indpup = (pupobj->indpup())
-	fr_sz =  (((scobj->imobj())->wfs_status())->camera())->sensorSide()		;pixels
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]
@@ -16,7 +15,9 @@ pro show_sigs, synsx, synsy, expsx, expsy
 
 	range = minmax([synsx,synsy,expsx,expsy])
 
-	s2d = fltarr(fr_sz,fr_sz)
+	fr_sz_x =  (((scobj->imobj())->wfs_status())->camera())->sensorSideX()		;pixels
+	fr_sz_y =  (((scobj->imobj())->wfs_status())->camera())->sensorSideY()		;pixels
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = expsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = expsy
@@ -25,7 +26,7 @@ pro show_sigs, synsx, synsy, expsx, expsy
 	wset,0
 	image_show, sl_2d, /as,/sh, title='experimental', min_value=range[0], max_val=range[1]
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = synsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = synsy
@@ -34,7 +35,7 @@ pro show_sigs, synsx, synsy, expsx, expsy
 	wset,1
 	image_show, sl_2d, /as,/sh, title='synthetic', min_value=range[0], max_val=range[1]
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = expsx - synsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = expsy - synsy

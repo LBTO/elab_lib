@@ -3,7 +3,6 @@ function demodulatedIM, set, plot=plot
 ; use first TN to determine common parameters
 ee=getaoelab(set->get(pos=0))
     
-sensorSide = ((ee->wfs_status())->camera())->sensorSide()
 ; in SOUL the slopes become 2848
 ;n_slopes = 1600
 n_slopes = (ee->slopes())->Nslopes()
@@ -74,7 +73,9 @@ return, im
 end
 
 function reform_slopes2d, imvect, indpup
-    frame=fltarr (sensorSide,sensorSide)
+	sensorSideX = ((ee->wfs_status())->camera())->sensorSideX()
+	sensorSideY = ((ee->wfs_status())->camera())->sensorSideY()
+    frame=fltarr (sensorSideX,sensorSideY)
     nsubap = n_elements(indpup[*,0])
     frame[indpup[*,0]] = imvect[ 0:nsubap*2-1:2]
     frame[indpup[*,1]] = imvect[ 1:nsubap*2-1:2]

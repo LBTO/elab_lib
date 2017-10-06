@@ -3,9 +3,11 @@
 ;
 ;-
 
-function AOpupils::Init, wfs_header, wunit
+function AOpupils::Init, wfs_header, camera, wunit
 
 	self._header = wfs_header
+	self._camera = camera
+
 	hdr = *(self._header)
 
 	pp = aoget_fits_keyword(hdr, 'sc.PUPILS')
@@ -128,23 +130,17 @@ function AOpupils::indpup
 end
 
 function AOpupils::single_mask
-        sensorSide = 240
-        hdr = *(self._header)
-        ;bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
-        bin = fix(aoget_fits_keyword(hdr, 'ocam2k.BINNING'))
-        npix = sensorSide/bin
-	frame = intarr(npix, npix)
+        npix_x = self._camera->binnedSensorSideX()
+        npix_y = self._camera->binnedSensorSideY()
+	frame = intarr(npix_x, npix_y)
         frame[ (self->indpup())[*,2]] =1
-	return, frame[0:npix/2-1, 0:npix/2-1]
+	return, frame[0:npix_x/2-1, 0:npix_y/2-1]
 end
 
 function AOpupils::complete_mask
-        sensorSide = 240
-        hdr = *(self._header)
-        ;bin = fix(aoget_fits_keyword(hdr, 'ccd39.BINNING'))
-        bin = fix(aoget_fits_keyword(hdr, 'ocam2k.BINNING'))
-        npix = sensorSide/bin
-	frame = intarr(npix, npix)
+        npix_x = self._camera->binnedSensorSideX()
+        npix_y = self._camera->binnedSensorSideY()
+	frame = intarr(npix_x, npix_y)
         frame[ self->indpup()] =1
 	return, frame
 end
@@ -243,6 +239,7 @@ pro AOpupils__define
         _real_side     : fltarr(4)	, $
         _diffx         : fltarr(4)	, $
         _diffy         : fltarr(4)	, $
+        _camera        : obj_new(), $
         INHERITS    AOhelp  $
     }
 end

@@ -51,7 +51,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     endif else begin
 		self._camera  = obj_new('AOccd39',  self._header, self._wunit)
     endelse
-    self._pupils = obj_new('AOpupils', self._header, self._wunit)
+    self._pupils = obj_new('AOpupils', self._header, self._camera, self._wunit)
     self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
     self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2')
 

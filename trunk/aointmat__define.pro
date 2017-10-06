@@ -179,16 +179,12 @@ end
 
 ; remaps IM in 2D
 pro AOintmat::im2d
-    ; (*self._wfs_status->camera())->sensorSide()
-;sensorSide = 80
-        sensorSide = 240
 	mypup = 0	;use this pupil info to remap signals
 	sx = self->sx()
 	sy = self->sy()
 	nm = max(self->modes_idx())+1
 	indpup = ((self->wfs_status())->pupils())->indpup()
 	nsub   = ((self->wfs_status())->pupils())->nsub()
-	fr_sz =sensorSide/((self->wfs_status())->camera())->binning()	;pixels
 
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
@@ -198,7 +194,9 @@ pro AOintmat::im2d
 	im2d_w = xr[1]-xr[0]+1
 	im2d_h = yr[1]-yr[0]+1
 
-	s2d  = fltarr(fr_sz,fr_sz)
+        fr_sz_x = (*self._wfs_status->camera())->binnedSensorSideX()
+        fr_sz_y = (*self._wfs_status->camera())->binnedSensorSideY()
+	s2d  = fltarr(fr_sz_x,fr_sz_y)
 	sx2d = fltarr(im2d_w,im2d_h,nm)
 	sy2d = fltarr(im2d_w,im2d_h,nm)
 	for ii=0, nm-1 do begin

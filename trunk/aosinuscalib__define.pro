@@ -387,8 +387,6 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	pupobj  = (imobj->wfs_status())->pupils()
 	puptrn  = pupobj->pup_tracknum()
 	indpup = (pupobj->indpup())
-	fr_sz = ((imobj->wfs_status())->camera())->sensorSide() ; pixels
-	; 240L		
 	mypup = 0	;use this pupil info to remap signals
 	cx  = (pupobj->cx())[mypup]
 	cy  = (pupobj->cy())[mypup]
@@ -399,7 +397,9 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	sl2d_h = yr[1]-yr[0]+1
 
     ; sinus
-	s2d = fltarr(fr_sz,fr_sz)
+	fr_sz_x = ((imobj->wfs_status())->camera())->sensorSideX()
+	fr_sz_y = ((imobj->wfs_status())->camera())->sensorSideY()
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = sinsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = sinsy
@@ -417,7 +417,7 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	refsx = reform(imobj->sx(REFMODE))
 	refsy = reform(imobj->sy(REFMODE))
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = refsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = refsy
@@ -426,7 +426,7 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	window,0, XSIZE=550, YSIZE=216
 	image_show, sl_2d, /as,/sh, title='reference IM'
 
-	s2d = fltarr(fr_sz,fr_sz)
+	s2d = fltarr(fr_sz_x,fr_sz_y)
 	s2d[indpup[*,mypup]] = refsx - sinsx
 	s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
 	s2d[indpup[*,mypup]] = refsy - sinsy

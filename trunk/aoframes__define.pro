@@ -310,13 +310,14 @@ function AOframes::pup_diameter
 end
 
 function AOframes::pup_image
-; if (*self._wfs_status->camera())->sensorSide() eq 240 ....
-;sensorSide = 80
-sensorSide = 240
+
+    ; SOUL: this works for the ccd39, to be updated for the ocam2k
+
+    binning = (*self._wfs_status->camera())->binning()
+
     f = total(self->frames(/dark),3)
     dimx = n_elements(f[*,0])
     dimy = n_elements(f[0,*])
-    binning = sensorSide/dimx
     cx = dimx/2
     cy = dimy/2
     cx1 = cx+2/binning
@@ -328,7 +329,7 @@ sensorSide = 240
     b = f[cx1:cx1+dim-1, cy1-dim:cy1-1]
     c = f[cx1-dim:cx1-1, cy1:cy1+dim-1]
     d = f[cx1:cx1+dim-1, cy1:cy1+dim-1]
-    side=36/binning
+    side = (*self._wfs_status->camera())->idealPupilDistance()/binning
 
     a += shift( b, dim-side, 0)
     a += shift( c, 0, dim-side)
