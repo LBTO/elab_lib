@@ -310,9 +310,11 @@ end
 
 function AOsyncalib::scramble_syn2exp, synmat
 
-    ; in SOUL the slopes become 2848
-    ;n_slopes = 1600
-    n_slopes = 2848
+    if ((self->imobj())->wfs_status())->isSoul() then begin
+        n_slopes = 2848
+    endif else begin
+        n_slopes = 1600
+    endelse
 
 	nsub1 = (size(synmat,/dim))[1] / 2L
 	nmode = (size(synmat,/dim))[0]

@@ -450,14 +450,17 @@ end
 ;--------------------------------------------------------------------------------------------------------------
 pro AOsinuscalib::export, nmodes=nmodes, this_dir=this_dir, fname = fname, REC = REC
 
-	matinter = self->sin_intmat()
-	max_nmodes = max(self->modes())+1
-    ; in SOUL the slopes become 2848
-    ;n_slopes = 1600
-    n_slopes = 2848
-    
-	;If requested, export an IM with a lower number of modes
-	if n_elements(nmodes) eq 0 then nmodes = [max_nmodes]
+    matinter = self->sin_intmat()
+    max_nmodes = max(self->modes())+1
+
+    if (ao->wfs_status())->isSoul() then begin 
+        n_slopes = 2848
+    endif else begin
+        n_slopes = 1600
+    endelse
+
+    ;If requested, export an IM with a lower number of modes
+    if n_elements(nmodes) eq 0 then nmodes = [max_nmodes]
 
     ; Generate tracknum
     caldat, systime(/julian), m,d,y,hh,mm,ss

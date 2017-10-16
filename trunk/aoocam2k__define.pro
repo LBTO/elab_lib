@@ -16,13 +16,13 @@ function AOocam2k::Init, wfs_header, wunit
 	self._binning 		= long(aoget_fits_keyword(hdr, 'ocam2.BINNING'))
 	self._mode 		= long(aoget_fits_keyword(hdr, 'ocam2.MODE'))
 
-    IF self._mode eq 1 THEN BEGIN
-		self_.sensorSideX = 200
-		self_.sensorSideY = 200
-	ENDIF
+        IF self._mode eq 1 THEN BEGIN
+            self._sensorSideX = 200L
+            self._sensorSideY = 200L
+        ENDIF
         IF self._mode eq 2 THEN BEGIN
-            self_.sensorSideX = 240
-            self_.sensorSideY = 120
+            self._sensorSideX = 240L
+            self._sensorSideY = 120L
 	ENDIF
 
         self._status  		= aoget_fits_keyword(hdr, 'ocam2.STATUS')
@@ -62,7 +62,7 @@ end
 
 function AOocam2k::idealPupilDistance
 	; SOUL: what is the correct value for this ?
-	return 60L
+	return, 60L
 end
 
 function AOocam2k::mode

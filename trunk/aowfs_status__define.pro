@@ -46,10 +46,10 @@ function AOwfs_status::Init, root_obj, fitsfile
     self._optg = float(aoget_fits_keyword(self->header(), 'sc.OPTG'))
     self._ncpa_trigger = byte(fix(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER')))
     
-    if strpos(self._wunit, 'SOUL') ge 0 then begin
-        self._camera  = obj_new('AOocam2k',  self._header, self._wunit)
+    if self.isSoul() then begin
+        self._camera  = obj_new('AOocam2k', self._header, self._wunit)
     endif else begin
-		self._camera  = obj_new('AOccd39',  self._header, self._wunit)
+        self._camera  = obj_new('AOccd39',  self._header, self._wunit)
     endelse
     self._pupils = obj_new('AOpupils', self._header, self._camera, self._wunit)
     self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
@@ -93,6 +93,10 @@ end
 
 function AOwfs_status::camera
 	return, self._camera
+end
+
+function AOwfs_status::isSoul
+	return, strpos(self._wunit, 'SOUL') ge 0 
 end
 
 function AOwfs_status::pupils

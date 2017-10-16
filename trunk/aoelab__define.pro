@@ -164,6 +164,11 @@ function AOelab::Init, tracknum, $
     self._frames_counter = obj_new('AOframes_counter', frames_counter_file, self._wfs_status)
 	if not obj_valid(self._frames_counter) then message, 'Warning: FramesCounter object not initialized!', /info ;return,0
 
+    ; create frames counter leaf
+    valid_pixels_file = filepath(root=self._datadir,  'ValidPixels_'+tracknum+'.fits')
+    self._valid_pixels = obj_new('AOvalid_pixels', valid_pixels_file, self._wfs_status)
+	if not obj_valid(self._valid_pixels) then message, 'Warning: ValidPixels object not initialized, it is OK for pre-SOUL data.', /info
+    
     ; loop_delay
     self._delay = obj_new('AOdelay', self)
 
@@ -353,6 +358,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck, 'sanity_check'
     if obj_valid(self._control) then self->addleaf, self._control, 'control'
     if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter, 'frames_counter'
+    if obj_valid(self._valid_pixels) then self->addleaf, self._valid_pixels, 'valid_pixels'
     if obj_valid(self._delay) then self->addleaf, self._delay, 'delay'
     if obj_valid(self._slopes) then self->addleaf, self._slopes, 'slopes'
     if obj_valid(self._modal_rec) then self->addleaf, self._modal_rec, 'modal_rec'
@@ -390,6 +396,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "sanitycheck()", "reference to loop sanity check (AOsanitycheck)"
     self->addMethodHelp, "control()", "reference to control filter object (AOcontrol)"
     self->addMethodHelp, "frames_counter()", "reference to frames counter object (AOframes_counter)"
+    self->addMethodHelp, "valid_pixels()", "reference to valid pixels object (AOvalid_pixels)"
     self->addMethodHelp, "slopes()", "reference to slopes object (AOslopes)"
     self->addMethodHelp, "residual_modes()", "reference to residual modes object (AOresidual_modes)"
     self->addMethodHelp, "modes()", "reference to integrated modes object (AOmodes)"
@@ -616,6 +623,7 @@ pro AOelab::fullsummary
     if obj_valid(self._sanitycheck) then if obj_hasmethod(self._sanitycheck, 'summary') then self._sanitycheck->summary
     if obj_valid(self._control) then if obj_hasmethod(self._control, 'summary') then self._control->summary
     if obj_valid(self._frames_counter) then if obj_hasmethod(self._frames_counter, 'summary') then self._frames_counter->summary
+    if obj_valid(self._valid_pixels) then if obj_hasmethod(self._valid_pixels, 'summary') then self._valid_pixels->summary
     if obj_valid(self._delay) then if obj_hasmethod(self._delay, 'summary') then self._delay->summary
     if obj_valid(self._slopes) then if obj_hasmethod(self._slopes, 'summary') then self._slopes->summary
     if obj_valid(self._modal_rec) then if obj_hasmethod(self._modal_rec, 'summary') then self._modal_rec->summary
@@ -844,6 +852,10 @@ function AOelab::frames_counter
     IF (OBJ_VALID(self._frames_counter)) THEN return, self._frames_counter else return, obj_new()
 end
 
+function AOelab::valid_pixels
+    IF (OBJ_VALID(self._valid_pixels)) THEN return, self._valid_pixels else return, obj_new()
+end
+
 function AOelab::frames
 	IF (OBJ_VALID(self._frames)) THEN return, self._frames else return, obj_new()
 end
@@ -1025,6 +1037,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._wfs_status )) THEN  self._wfs_status->free
     IF (OBJ_VALID(self._control )) THEN  self._control->free
     IF (OBJ_VALID(self._frames_counter)) THEN  self._frames_counter->free
+    IF (OBJ_VALID(self._valid_pixels)) THEN  self._valid_pixels->free
     IF (OBJ_VALID(self._delay)) THEN  self._delay->free
     IF (OBJ_VALID(self._slopes)) THEN  self._slopes->free
     IF (OBJ_VALID(self._residual_modes)) THEN  self._residual_modes->free
@@ -1064,6 +1077,7 @@ pro AOelab::Cleanup
     obj_destroy, self._sanitycheck
     obj_destroy, self._control
     obj_destroy, self._frames_counter
+    obj_destroy, self._valid_pixels
     obj_destroy, self._delay
     obj_destroy, self._slopes
     obj_destroy, self._residual_modes
@@ -1111,6 +1125,7 @@ pro AOelab__define
         _sanitycheck       : obj_new(), $
         _control           : obj_new(), $
         _frames_counter    : obj_new(), $
+        _valid_pixels      : obj_new(), $
         _delay             : obj_new(), $
         _slopes            : obj_new(), $
         _residual_modes    : obj_new(), $

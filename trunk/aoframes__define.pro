@@ -312,6 +312,7 @@ end
 function AOframes::pup_image
 
     ; SOUL: this works for the ccd39, to be updated for the ocam2k
+    ; might work already
 
     binning = (*self._wfs_status->camera())->binning()
 

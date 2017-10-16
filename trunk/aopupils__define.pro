@@ -16,8 +16,12 @@ function AOpupils::Init, wfs_header, camera, wunit
 	; Get pupil indexes
 	;-----------------------------------------------------------------------------
 
-	; SOUL: update this path, it has changed
-	pups_subdir	= ['wfs_calib_'+wunit,'ccd39','LUTs']
+        if strpos(wunit, 'SOUL') ge 0 then begin
+            pups_subdir     = ['calib', 'wfs', wunit,'ocam2','LUTs']
+        endif else begin
+            pups_subdir   = ['wfs_calib_' + wunit,'ccd39','LUTs']
+        endelse
+
 	pups_path   = filepath(root=ao_datadir(), sub=pups_subdir,  '') + $
 				  strmid(pp,1) + path_sep()
 
