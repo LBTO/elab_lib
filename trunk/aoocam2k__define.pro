@@ -28,7 +28,7 @@ function AOocam2k::Init, wfs_header, wunit
         self._status  		= aoget_fits_keyword(hdr, 'ocam2.STATUS')
 
 	dark_filename 		= aoget_fits_keyword(hdr,'ocam2.DARK_FILENAME')
-	dark_subdir 		= ['wfs_calib_'+wunit,'ocam2','backgrounds','bin'+strtrim(self._binning,2)]
+	dark_subdir 		= ['wfs_calib_'+wunit,'ocam2','backgrounds','mode'+strtrim(self._mode,2)]
 	self._dark_filename = filepath(root=ao_datadir(), sub=dark_subdir,  dark_filename)
 
     ; initialize help object and add methods and leafs
@@ -36,6 +36,7 @@ function AOocam2k::Init, wfs_header, wunit
     self->addMethodHelp, "framerate()", "frame rate [Hz] (float)"
     self->addMethodHelp, "readout_speed ()", "readout speed [kpix/s] (float)"
     self->addMethodHelp, "binning()", "binning (long)"
+    self->addMethodHelp, "mode()", "mode (long)"
     self->addMethodHelp, "status()", "status (string)"
 ;    self->addMethodHelp, "dark()", "dark frame"
     self->addMethodHelp, "dark_fname()", "filename of dark frame"
@@ -113,6 +114,7 @@ pro AOocam2k::test
     d = self->framerate()
     d = self->readout_speed()
     d = self->binning()
+    d = self->mode()
     d = self->status()
 ;    d = self->dark()
     d = self->dark_fname()

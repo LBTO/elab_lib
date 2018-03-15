@@ -48,7 +48,7 @@ function AOccd39::computeDelay
 end
 
 function AOccd39::idealPupilDistance
-	return 36L
+	return, 36L
 end
 
 function AOccd39::mode

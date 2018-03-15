@@ -335,6 +335,29 @@ pro AOfiltw::filtw_data, wunit, fw_number
 		 ENDCASE
 	ENDCASE
 
+   endif else if wunit eq 'W1SOUL' then begin
+
+        CASE fw_number OF
+
+;               NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;                     the TRANSMITTED light goes towards the CCD39
+        '1': CASE self._fw_pos OF
+                       0: data_struct = CREATE_STRUCT("name", 'Window' , $
+                                                                          "R"   ,0.05                           , $
+                                                                          "T"   ,0.95                           , $
+                                                                          "CW"  ,!VALUES.F_INFINITY , $
+                                                                          "BW"  ,!values.F_INFINITY     )
+
+                 ENDCASE
+        '2': CASE self._fw_pos OF
+                       0: data_struct = CREATE_STRUCT("name", 'Window' , $
+                                                                          "R"   ,0.05                           , $
+                                                                          "T"   ,0.95                           , $
+                                                                          "CW"  ,!VALUES.F_INFINITY , $
+                                                                          "BW"  ,!values.F_INFINITY     )
+
+                 ENDCASE
+        ENDCASE
 
 
     endif else if wunit eq 'LBTIDX' then begin

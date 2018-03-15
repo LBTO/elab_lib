@@ -46,7 +46,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self._optg = float(aoget_fits_keyword(self->header(), 'sc.OPTG'))
     self._ncpa_trigger = byte(fix(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER')))
     
-    if self.isSoul() then begin
+    if self->isSoul() then begin
         self._camera  = obj_new('AOocam2k', self._header, self._wunit)
     endif else begin
         self._camera  = obj_new('AOccd39',  self._header, self._wunit)

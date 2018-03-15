@@ -17,7 +17,7 @@ function AOframes::Init, root_obj, frames_file, antidrift_fname
 	self._ron				= -1.0
 
 	; number of photons per ADU
-	self._photons_per_ADU = 0.5
+	self._photons_per_ADU = 1
 
 	; filename
     self._filename = frames_file
@@ -240,7 +240,7 @@ pro AOframes::calc_ron
 	if file_test(self._rondata_fname) then begin
 		restore, self._rondata_fname
 	endif else begin
-		fr  = self->frames(/DARK_SUB)
+		fr  = self->frames()
 		if n_elements(fr) eq 1 then return
 		roi = self->ron_roi()
 		np = n_elements(roi)
