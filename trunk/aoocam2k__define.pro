@@ -15,6 +15,7 @@ function AOocam2k::Init, wfs_header, wunit
 	self._readout_speed = float(aoget_fits_keyword(hdr, 'ocam2.READOUT_SPEED'))
 	self._binning 		= long(aoget_fits_keyword(hdr, 'ocam2.BINNING'))
 	self._mode 		= long(aoget_fits_keyword(hdr, 'ocam2.MODE'))
+	self._emGain 		= long(aoget_fits_keyword(hdr, 'ocam2.EM_GAIN'))
 
         IF self._mode eq 1 THEN BEGIN
             self._sensorSideX = 200L
@@ -37,6 +38,7 @@ function AOocam2k::Init, wfs_header, wunit
     self->addMethodHelp, "readout_speed ()", "readout speed [kpix/s] (float)"
     self->addMethodHelp, "binning()", "binning (long)"
     self->addMethodHelp, "mode()", "mode (long)"
+    self->addMethodHelp, "emGain()", "EM gain (long)"
     self->addMethodHelp, "status()", "status (string)"
 ;    self->addMethodHelp, "dark()", "dark frame"
     self->addMethodHelp, "dark_fname()", "filename of dark frame"
@@ -98,6 +100,10 @@ function AOocam2k::binning
 	return, self._binning
 end
 
+function AOocam2k::emGain
+	return, self._emGain
+end
+
 function AOocam2k::status
 	return, self._status
 end
@@ -147,6 +153,7 @@ pro AOocam2k__define
         _readout_speed : 0.0	  , $
         _binning       : 0L	  , $
         _mode          : 0L       , $
+        _emGain        : 0L       , $
         _sensorSideX   : 0L       , $
         _sensorSideY   : 0L       , $
         _dark_filename : ''       , $
