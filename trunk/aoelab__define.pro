@@ -487,6 +487,8 @@ function AOelab::isOK, cause=cause
     		    imok*=0B
     		    cause += ' - Pyramid modulation mismatch'
     	    endif
+            if OBJ_VALID(self->wfs_status()) && OBJ_VALID((self->wfs_status())->pupils()) && $
+               OBJ_VALID((self->intmat())->wfs_status()) && OBJ_VALID(((self->intmat())->wfs_status())->pupils()) then begin
     	    if ((self->wfs_status())->pupils())->pup_tracknum() ne (((self->intmat())->wfs_status())->pupils())->pup_tracknum() then begin
     		    ; TODO UGLY PATCH BECAUSE OF DIGITAL SHIFT OF THE PUPILS DONE IN June 2011 RUN
                 ; Here we should have families of pupils that belongs to the same set and are just shifted to optimize
@@ -497,6 +499,7 @@ function AOelab::isOK, cause=cause
     		        cause += ' - Pupils mismatch'
                 endif
 			endif
+           endif
     	endif
     if OBJ_VALID(self->wfs_status()) then imok *= (self->wfs_status())->isok(cause=cause)
     if OBJ_VALID(self->irtc()) then imok *= (self->irtc())->isok(cause=cause)
