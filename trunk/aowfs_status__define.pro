@@ -96,7 +96,9 @@ function AOwfs_status::camera
 end
 
 function AOwfs_status::isSoul
-	return, strpos(self._wunit, 'SOUL') ge 0 
+        ;; SOUL detection: we are SOUL if we have an ocam
+        test = aoget_fits_keyword(self->header(), 'ocam2.MODE')
+        return, test ne ""
 end
 
 function AOwfs_status::pupils
