@@ -45,13 +45,16 @@ function AOwfs_status::Init, root_obj, fitsfile
 
     self._optg = float(aoget_fits_keyword(self->header(), 'sc.OPTG'))
     self._ncpa_trigger = byte(fix(aoget_fits_keyword(self->header(), 'sc.NCPA_TRIGGER')))
+
+    self._pixels_decimation = byte(fix(aoget_fits_keyword(self->header(), 'sc.PIXELS_DECIMATION')))
+    self._slopes_decimation = byte(fix(aoget_fits_keyword(self->header(), 'sc.SLOPES_DECIMATION')))
     
     if self->isSoul() then begin
         self._camera  = obj_new('AOocam2k', self._header, self._wunit)
     endif else begin
         self._camera  = obj_new('AOccd39',  self._header, self._wunit)
     endelse
-    self._pupils = obj_new('AOpupils', self._header, self._camera, self._wunit)
+    self._pupils = obj_new('AOpupils', self._header, self._camera, self._wunit, isSoul = self->isSoul())
     self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
     self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2')
 
@@ -161,6 +164,14 @@ function AOwfs_status::slopes_null_fname
 	return, self._slopes_null_fname
 end
 
+function AOwfs_status::slopes_decimation
+	return, self._slopes_decimation
+end
+
+function AOwfs_status::pixels_decimation
+	return, self._pixels_decimation
+end
+
 function AOwfs_status::optg
   return, self._optg
 end
@@ -248,6 +259,8 @@ pro AOwfs_status__define
         _ncpa_trigger   : 0b,        $
         _wunit          : ""	   , $
         _slopes_null_fname : ""    , $
+        _pixels_decimation : 0L,     $
+        _slopes_decimation : 0L,     $
         INHERITS    AOhelp  $
     }
 

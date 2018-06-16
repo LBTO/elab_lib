@@ -3,7 +3,7 @@
 ;
 ;-
 
-function AOpupils::Init, wfs_header, camera, wunit
+function AOpupils::Init, wfs_header, camera, wunit, isSoul = isSoul
 
 	self._header = wfs_header
 	self._camera = camera
@@ -16,8 +16,9 @@ function AOpupils::Init, wfs_header, camera, wunit
 	; Get pupil indexes
 	;-----------------------------------------------------------------------------
 
-        if strpos(wunit, 'SOUL') ge 0 then begin
-            pups_subdir     = ['calib', 'wfs', wunit,'ocam2','LUTs']
+        if keyword_set(isSoul) then begin
+            ;pups_subdir     = ['calib', 'wfs', wunit,'ocam2','LUTs']
+            pups_subdir   = ['wfs_calib_' + wunit,'ocam2','LUTs']
         endif else begin
             pups_subdir   = ['wfs_calib_' + wunit,'ccd39','LUTs']
         endelse
@@ -93,6 +94,8 @@ function AOpupils::Init, wfs_header, camera, wunit
                     float(aoget_fits_keyword(hdr, 'pup1.DIFFY')), $
                     float(aoget_fits_keyword(hdr, 'pup2.DIFFY')), $
                     float(aoget_fits_keyword(hdr, 'pup3.DIFFY'))]
+
+    self._path = pups_path
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOpupils', 'Represent WFS pupils') then return, 0
@@ -193,6 +196,10 @@ function AOpupils::pup_tracknum
 	return, self._pup_tracknum
 end
 
+function AOpupils::path
+	return, self._path
+end
+
 pro AOpupils::test
     d=self->indpup()
     d=self->nsub()
@@ -244,6 +251,7 @@ pro AOpupils__define
         _diffx         : fltarr(4)	, $
         _diffy         : fltarr(4)	, $
         _camera        : obj_new(), $
+        _path          : "",        $
         INHERITS    AOhelp  $
     }
 end

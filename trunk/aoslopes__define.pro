@@ -170,28 +170,27 @@ function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
 	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
 	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
 	rad = (((self->wfs_status())->pupils())->radius())[mypup]
-	xr = [floor(cx-rad),ceil(cx+rad)]
+	xr = [floor(cx-rad),ceil(cx+rad)] 
 	yr = [floor(cy-rad),ceil(cy+rad)]
-	sl2d_w = xr[1]-xr[0]+1
-	sl2d_h = yr[1]-yr[0]+1
+    xr -= xr[0]
+    yr -= yr[0]
 
-	sx = self->sx(iter_idx=iter_idx, slopevec=slopevec)
-	sy = self->sy(iter_idx=iter_idx, slopevec=slopevec)
+    pupPath = ((self->wfs_status())->pupils())->path()
+    tx = read_ascii(pupPath +"slopex")
+    tx = tx.field1
+    tx_nonzero = where(tx ne -1)
 
 	fr_sz_x = ((self->wfs_status())->camera())->binnedSensorSideX()
 	fr_sz_y = ((self->wfs_status())->camera())->binnedSensorSideY()
+
+    if n_elements(slopevec) gt 0 then slopes = slopevec $
+                                 else slopes = (self->slopes())[iter_idx,*]
+
+    sl = slopes[ tx[tx_nonzero]]
 	s2d = fltarr(fr_sz_x,fr_sz_y)
-	sl_2d = fltarr(sl2d_w*2, sl2d_h, niter)
-	for kk=0L, long(niter)-1 do begin
-		if n_elements(slopevec) eq 0 then s2d[indpup[*,mypup]] = sx[kk,*] else $
-			s2d[indpup[*,mypup]] = sx
-		s2d_tmpA = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-		if n_elements(slopevec) eq 0 then s2d[indpup[*,mypup]] = sy[kk,*] else $
-			s2d[indpup[*,mypup]] = sy
-		s2d_tmpB = s2d[xr[0]:xr[1],yr[0]:yr[1]]
-		sl_2d[*,*,kk] = [s2d_tmpA,s2d_tmpB]
-	endfor
-	return, sl_2d
+    s2d[tx_nonzero] = sl
+    return, s2d
+      
 end
 
 ;Replay the slopes in 2D
