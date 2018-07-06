@@ -37,6 +37,7 @@ function AOmodalpositions::Init, root_obj
     self->addMethodHelp, "modalpositions()",  "mirror position modes matrix [nmodes,niter]"
     self->addMethodHelp, "plotjitter, from_freq=from_freq, to_freq=to_freq",  "Plots TT cum PSDs"
     self->addMethodHelp, "ts_surf_rms()",  "Thin Shell Surface RMS [m]"
+    self->addMethodHelp, "residual_wf()",  "Residual wavefront RMS, Tip-Tilt subtracted, only with RR [m]"
     self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
     return, 1
@@ -65,6 +66,15 @@ end
 function AOmodalpositions::nmodes
     return, self->AOtime_series::nseries()
 end
+
+function AOmodalpositions::residual_wf
+    if self._root_obj->operation_mode() eq 'RR' then begin
+        return, 4.0*sqrt(total( self->time_variance(findgen(670)+2) ) ) 
+    endif else begin
+        return, -1
+    endelse
+end
+
 
 ; to be implemented in AOtime_series subclasses
 function AOmodalpositions::GetDati
