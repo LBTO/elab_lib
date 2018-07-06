@@ -20,7 +20,7 @@ function AOolmodes::Init, root_obj
   self._nnMin  =  4L
   self._r0	 =  -1.
 
-  if not total(self._decimation eq [0,1,2]) then begin
+  if not total(self._decimation eq [0,1,2,3]) then begin
     message, 'OLmodes cannot be reconstructed: decimation unknown.',/info
     return, 0
   endif
