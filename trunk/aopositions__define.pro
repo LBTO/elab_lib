@@ -51,6 +51,7 @@ pro AOpositions::datiProducer
     endif else begin
         positions = readfits(self._fname, /SILENT)
         positions = transpose(temporary(positions))
+        positions = clean_outliers( positions, THRESHOLD=10e-6)
         positions  = interpolate_with_frames_counter(positions, self._fc_obj)
         save, positions, file=self._store_fname
     endelse
