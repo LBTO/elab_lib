@@ -74,7 +74,6 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
         valid_exptime = 0B
     endif
 
-
     ;Framerate:
 	framerate =  1./exptime  ; TODO 
 
