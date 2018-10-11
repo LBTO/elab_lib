@@ -70,6 +70,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "pupils()", "reference to pupils object"
     self->addMethodHelp, "filtw1()", "reference to filter wheel 1 object"
     self->addMethodHelp, "filtw2()", "reference to filter wheel 2 object"
+    self->addMethodHelp, "isSoul()", "have we got a SOUL or not"
     self->addMethodHelp, "modulation()",  "TT modulation (lambda/D)"
     self->addMethodHelp, "rerotator()",  "rirotator angle (degrees)"
     self->addMethodHelp, "camera_lens()", "Position [x,y] of camera lens (mm)"
