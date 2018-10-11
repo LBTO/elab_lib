@@ -660,7 +660,10 @@ end
 ;                                  PLOTS and SHORTCUTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
+pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, thick=thick, _extra=ex, clvar=clvar, olvar=olvar
+
+    if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
+
     if self->operation_mode() eq "RR" then begin
 		nmodes = (self->modalpositions())->nmodes()
 		clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
@@ -672,15 +675,15 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 			endif
     	endif
         if not keyword_set(OVERPLOT) then  begin
-		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
-						 title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
+		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+						 title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
+		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
         endelse
 		if obj_valid(self._disturb) then begin
 			if (self->adsec_status())->disturb_status() ne 0 then begin
-				oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
-				legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+                oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
+				legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right, thick=thick
 			endif
 		endif
 	endif else begin
@@ -692,12 +695,12 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, _extra=ex
 		olvar  = olvar[modes_idx]
    		yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(OVERPLOT) then  begin
-			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8, charsize=1.2, ytitle='nm rms wf', xtitle='mode number', $
-						 title=self._obj_tracknum->tracknum(), yrange=yrange, _extra=ex
+			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+						 title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-		    oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=0.8,COLOR=COLOR
+		    oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
 		endelse
-		oplot, modes_idx+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
+		oplot, modes_idx+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
 	endelse
 end
 

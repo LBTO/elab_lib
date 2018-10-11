@@ -318,7 +318,7 @@ function AOcontrol::ttdirections, plot=plot, verbose=verbose
   	  adsec_save=(self._root_obj->adsec_status())->struct_adsec(), ADSEC_SHELL_SAVE=(self._root_obj->adsec_status())->struct_adsec_shell(), $
   	  SC_SAVE=(self._root_obj->adsec_status())->struct_sc(), GR_SAVE=(self._root_obj->adsec_status())->struct_gr() ,rot=0., /no_number
   	endif
-	; creates two surfaces, the second one have only the 'good' actuators
+	; creates two surfaces, the second one has only the 'good' actuators
   	surf2=fltarr(3,672)
 	; (self->m2c())[0,*] is a tilt in actuators' space
   	surf2[0,*]=(self->m2c())[1,*]

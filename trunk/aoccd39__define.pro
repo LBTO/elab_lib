@@ -40,7 +40,10 @@ function AOccd39::computeDelay
 	; ASM set time
 	dm_set = 1e-3
 	;CCD39 characteristics for binning [1,2,3,4]
-	ReadOutSpeed = [0.95, 1.56, 0.89, 0.68]*1e-3
+        if fs gt 600. then ReadOutSpeed = [0.95, 0.81, 0.89, 0.68]*1e-3
+        if fs le 600. and fs gt 423. then ReadOutSpeed = [0.95, 1.56, 0.89, 0.68]*1e-3
+        if fs le 423. then ReadOutSpeed = [2.3, 1.56, 0.89, 0.68]*1e-3
+
 	CCD_speed = ReadOutSpeed[binning-1]
 	; delay in seconds
 	delay = T/2. + CCD_speed + comp_time + dm_set/2. + T/2.

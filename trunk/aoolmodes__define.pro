@@ -83,7 +83,8 @@ pro AOolmodes::datiProducer
   if file_test(self._store_fname) then begin
     restore, self._store_fname
   endif else begin
-    rmodes = (self._root_obj->residual_modes())->mistmatch_factor() * (self._root_obj->residual_modes())->modes()
+    rmodes = (self._root_obj->residual_modes())->modes()
+    if (self._root_obj->wfs_status())->optg() eq 0 then rmodes *= (self._root_obj->residual_modes())->mistmatch_factor()
     imodes = (self._root_obj->modes())->modes()
     sz = size(rmodes,/dim)
     nframes = sz[0]
@@ -519,6 +520,57 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
 
   return, directions
 end
+
+
+pro AOolmodes::tf, idx, mtf=mtf, theoric=theoric, gain=gain, mtf_theoric=mtf_theoric, smooth_factor=smooth_factor
+    freq = self->freq()
+    psd_res = (self._root_obj->residual_modes())->psd() 
+    psd_ol = self->psd() 
+    mtf = sqrt( psd_res / psd_ol )
+
+    if n_elements(smooth_factor) gt 0 then for i=0,n_elements(mtf[0,*])-1 do mtf[*,i] = smooth(reform(mtf[*,i]),smooth_factor,/edge_tru)
+
+    ;window, /free, xs=640, ys=480
+    ;plot_io, findgen(n_elements(mtf[0,*])), mtf[0,*], tit='!3'+(self._root_obj->obj_tracknum())->tracknum()+'!17', xtit='!17mode number!17', ytit='!17amplitude at min. freq.', /xst
+
+    window, /free, xs=640, ys=480
+    plot_oo, freq, mtf[*,idx], tit='!3'+(self._root_obj->obj_tracknum())->tracknum()+'!17 TF (mode '+strtrim(round(idx),2)+')', xtit='!17frequency !4[!17Hz!4]!17', ytit='!17amplitude', /xst
+    oplot, minmax(freq), [1,1], line=2
+    
+    if keyword_set(theoric) then begin
+        if n_elements(gain) eq 0 then gainTF = ((self._root_obj->control())->gain())[idx] else gainTF = gain
+        ff = 1
+        fs = ((self._root_obj->wfs_status())->camera())->framerate()
+        delay = (self._root_obj->delay())->delay()*fs
+
+        iir = int_iir([((self._root_obj->control())->gain())[idx],gainTF], ff=ff)
+        if delay ge 2 then dm_delay = 1. else dm_delay = delay - fix(delay)
+        wfs_delay = delay - dm_delay 
+
+        ;; DM tf
+        tf_dm = discrete_delay_tf(dm_delay)
+        nm = tf_dm[*,0]
+        dm = tf_dm[*,1]
+        ;; WFS tf
+        tf_wfs = discrete_delay_tf(wfs_delay)
+        nw = tf_wfs[*,0]
+        dw = tf_wfs[*,1]
+        plot_iir_tf, iir, fs, [0], nm=nm, dm=dm, nw=nw, dw=dw, /no, freq=freq, ytmtf=mtf_theoric0
+
+        oplot, freq, mtf_theoric0, col=255l, thick=2
+        if n_elements(gain) ne 0 then begin
+            plot_iir_tf, iir, fs, [1], nm=nm, dm=dm, nw=nw, dw=dw, /no, freq=freq, ytmtf=mtf_theoric1
+            oplot, freq, mtf_theoric1, col=255l*256l, thick=2
+            mtf_theoric = mtf_theoric1
+           al_legend, ['data MTF','theor. MTF','th. MTF (g='+strtrim(string(gainTF,format='(f9.2)'),2)+')'], $
+               col=[1l,255l,255*256l], line=[0,0,0], thick=2, /bottom, /right, /clear, charsize=1.5
+        endif else begin
+           mtf_theoric = mtf_theoric0
+           al_legend, ['data MTF','theor. MTF'], col=[1l,255l], line=[0,0], thick=2, /bottom, /right, /clear, charsize=1.5
+        endelse
+    endif
+end
+
 
 pro AOolmodes::free
   if ptr_valid(self._modes) then ptr_free, self._modes

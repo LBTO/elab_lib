@@ -19,6 +19,18 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     ;Camera
     self._camera_name= strtrim(aoget_fits_keyword(fitsheader, 'CAMERA'),2)
 
+    ; ROI
+    roi_str = strtrim(aoget_fits_keyword(fitsheader, 'DATASEC'))
+    roi = fltarr(4)
+    p0 = strpos(roi_str,':')
+    p1 = strpos(roi_str,',')
+    p2 = strpos(strmid(roi_str,p0+1),':')+p0+1
+    roi[0] = strmid(roi_str,1,p0-1)
+    roi[1] = strmid(roi_str,p0+1,p1-p0-1)
+    roi[2] = strmid(roi_str,p1+1,p2-p1-1)
+    roi[3] = strmid(roi_str,p2+1,strlen(roi_str)-1)
+    self->setroi, roi
+
     ; Pixelscale:
     pixelscale = 0.0149
 
@@ -112,6 +124,7 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
 	; initialize PSF object
     if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
     	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
+    self->setroi, roi
 
     ; Override obstruction
     self._oc = 0.314
