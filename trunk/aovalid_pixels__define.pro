@@ -43,7 +43,7 @@ pro AOvalid_pixels::compute
     self._original_frames_idx = ptr_new( vpo, /no_copy)
     self._original_frames = cnto
 
-    self._decimation = (cnti+cnto) / (cnto) 
+    self._decimation = (cnti+cnto) / (cnto) -1
     self._deltat = 1. / self._framerate  * (self._decimation+1)
 end
 
