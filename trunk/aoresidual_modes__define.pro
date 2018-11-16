@@ -53,6 +53,7 @@ function AOresidual_modes::Init, root_obj, slopes_obj, modal_rec_obj, store_labe
     if not self->AOhelp::Init('AOresidual_modes', 'Modal wavefront residue') then return, 0
     self->addMethodHelp, "modes()", "modal residue (m rms, surface) [niter, nmodes]"
     self->addMethodHelp, "nmodes()", "number of residual modes"
+    self->addMethodHelp, "residual_wf_wfs()", "Residual wavefront RMS from wfs slopes [m]"
     ;if obj_valid(self._wf) then self->addleaf, self._wf, 'wf'
     self->AOwf::addHelp, self
     self->AOtime_series::addHelp, self
@@ -85,6 +86,18 @@ end
 function AOresidual_modes::nmodes
     return, self->AOtime_series::nseries()
 end
+
+
+function AOresidual_modes::residual_wf_wfs
+
+;    if self._root_obj->operation_mode() eq 'RR' then begin
+;        return, 4.0*sqrt(total( self->time_variance(findgen(670)+2) ) )
+;    endif else begin
+;        return, -1
+;    endelse
+
+end
+
 
 pro AOresidual_modes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, overplot=overplot
     coeff2arcsec = self._root_obj->reflcoef() * 4 / ao_pupil_diameter() / 4.848d-6 * self._mistmatch_factor

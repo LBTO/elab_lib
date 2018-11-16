@@ -1,8 +1,6 @@
 
 function clean_outliers, data, THRESHOLD=THRESHOLD
 
-    return, data
-
     n_frames = n_elements(data[*,0])
     n_acts   = n_elements(data[0,*])
 

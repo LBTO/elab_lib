@@ -49,7 +49,7 @@ pro AOframes_counter::compute
 ;    self._header = ptr_new(header, /no_copy)
 ;    self._nframes = n_elements(*self._fc)
     dfc = (*self._fc-shift(*self._fc,1) ) [1:*]
-    self._decimation = min(dfc)-1
+    self._decimation = median(dfc)-1
     self._deltat = 1. / self._framerate  * (self._decimation+1)
     self._lost_frames_idx =  ptr_new( where(dfc gt self._decimation+1, cnt), /no_copy)
     self._n_jumps = cnt

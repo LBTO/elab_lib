@@ -28,6 +28,15 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 ;
 ; LEFT and RIGHT, if specified, will force the rootdir and elabdir directories to end in "left" or "right" respectively
 
+    ; Special case for Arcetri local directories
+    if FILE_TEST('/home/elab') then begin
+        print, 'Found /home/elab, setting Arcetri elab paths'
+
+        rootdir = '/home/elab/LBT_data_left'
+        elabdir = '/home/elab/elab_left'
+        phasemapsdir = '/home/elab/phase_maps'
+    endif
+
     if not keyword_set(rootdir) then begin
         if getenv('ADOPT_MEAS') ne '' then rootdir = getenv('ADOPT_MEAS') else $
 			message, 'Root dir not specified. Is environment variable ADOPT_MEAS set?'

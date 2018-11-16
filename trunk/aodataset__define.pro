@@ -7,9 +7,12 @@
 ;
 ;-
 
-function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, recompute = recompute, check=check
+function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, lastminute=lastminute, $
+                          recompute = recompute, check=check, SILENT=SILENT
     ;if not self->AOlist::Init() then return, 0
     self._nelems = 0
+
+    self._silent = (keyword_set(SILENT)) ? 1b : 0b
 
 	if n_elements(tracknumlist) eq 0 then begin
 	    if (keyword_set(from_tracknum) eq 0) and (keyword_set(to_tracknum) eq 0) then return, 1
@@ -57,13 +60,21 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
         endelse
 
     	tracknums = file_basename(file_search(ao_datadir()+path_sep()+'adsec_data'+path_sep()+searchdirregexp+path_sep()+'Data_*', /TEST_DIRECTORY))
+
+        ; Remove fake gopt TNs
+        WHILE 1 DO begin
+            idx = where( strmid(tracknums,14) eq '250000', count)
+            if count eq 0 then break
+            remove, idx[0], tracknums
+        ENDWHILE
+
     	for i=0L, n_elements(tracknums)-1 do tracknums[i]  = strmid(tracknums[i], 5)
 
     	for i=0L, n_elements(tracknums)-1 do begin
         	o_track = obj_new('AOtracknum', tracknums[i])
         	if (o_track->julday() ge from_julday) and (o_track->julday() le to_julday) then begin
         	    if keyword_set(check) then begin
-        	        tmp = getaoelab(tracknums[i])
+        	        tmp = getaoelab(tracknums[i], SILENT=self._silent)
         	        if not obj_valid(tmp) then continue
         	    endif
             	self->add, tracknums[i]
@@ -75,7 +86,7 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 		for ii=0, n_elements(tracknumlist)-1 do begin
 			if not stregex(tracknumlist[ii], '^[0-9]{8}_[0-9]{6}$', /bool) then continue
 			if keyword_set(check) then begin
-			    tmp = getaoelab(tracknumlist[ii])
+			    tmp = getaoelab(tracknumlist[ii], SILENT=self._silent)
 			    if not obj_valid(tmp) then continue
 			endif
 			self->add, tracknumlist[ii]
@@ -83,7 +94,7 @@ function AOdataset::Init, tracknumlist, from=from_tracknum, to=to_tracknum, last
 	endelse
 
     if keyword_set(recompute) then begin
-        for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
+        for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute, SILENT=self._silent)
     endif
 
     if not self->AOhelp::Init('AOdataset', 'Represent a list of AO measurements') then return, 0
@@ -181,7 +192,7 @@ end
 pro AOdataset::free
     tns = self->Get()
     for i=0L, self->Count()-1 do begin
-        ee = getaoelab(tns[i])
+        ee = getaoelab(tns[i], SILENT=self._silent)
         if obj_valid(ee) eq 0 then begin
             message, tns[i] + ' skipped because it lacks required data', /info
             continue
@@ -206,7 +217,7 @@ function AOdataset::value, cmd, set_out=set_out, VERBOSE=VERBOSE
            now = systime(/sec)
 
 		catch, error
-		if error eq 0 then tmpobj=getaoelab(objref[i]) else begin
+		if error eq 0 then tmpobj=getaoelab(objref[i], SILENT=self._silent) else begin
             catch, /cancel
             if keyword_set(verbose) then print, format='(%"%s skipped. %d:%s ")', objref[i], error, !error_state.msg
             continue
@@ -309,7 +320,7 @@ function AOdataset::where, cmd, operand, reference_value, ptrdata=ptrdata, verbo
 
     for i=0L, nel-1 do begin
     	catch, error
-		if error eq 0 then tmpobj = getaoelab(objref[i]) else begin
+		if error eq 0 then tmpobj = getaoelab(objref[i], SILENT=self._silent) else begin
             catch, /cancel
             if keyword_set(verbose) then print, format='(%"%s skipped. %d:%s ")', objref[i], error, !error_state.msg
             continue
@@ -453,7 +464,7 @@ pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
     if keyword_set(average) then begin
         init_progress, self->count()
         for ii=0, self->count()-1 do begin
-            ao = getaoelab(self->get(pos=ii))
+            ao = getaoelab(self->get(pos=ii), SILENT=self._silent)
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
             if n_elements(clvar) eq 0 then clvar = (ao->modalpositions())->time_variance()*0
@@ -485,7 +496,7 @@ pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
         init_progress, self->count()
         first=1
 	    for ii=0, self->count()-1 do begin
-		    ao = getaoelab(self->get(pos=ii))
+		    ao = getaoelab(self->get(pos=ii), SILENT=self._silent)
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
 		    if first eq 1 then ao->modalplot, _extra=ex, title='' else $
@@ -562,12 +573,12 @@ end
 
 pro aodataset::aohelp, metodo, idx=idx
 	if n_elements(idx) eq 0 then idx=0
-	ao = getaoelab(self->get(pos=idx))
+	ao = getaoelab(self->get(pos=idx), SILENT=self._silent)
 	ao->help, metodo
 end
 
 pro AOdataset::recompute
-    for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute)
+    for i=0L, self->Count()-1 do ee = getaoelab(self->Get(pos=i),/recompute, SILENT=self._silent)
 end
 
 function AOdataset::group, cmd
@@ -594,6 +605,7 @@ pro AOdataset__define
         _values         : ptr_new() , $
         _nelems         : 0L, $
         _allocated_size : 0L, $
+        _silent         : 0b, $
         INHERITS    AOhelp $
          ;inherits  AOlist $
     }

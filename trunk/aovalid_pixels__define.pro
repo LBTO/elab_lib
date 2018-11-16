@@ -18,7 +18,7 @@ function AOvalid_pixels::Init, valid_pixels_file, wfs_status_obj
 
     self._vp = ptr_new(valid_pixels, /no_copy)
     self._header = ptr_new(header, /no_copy)
-    self._decimation = -1
+    self._decimation = wfs_status_obj->pixels_decimation()
     self._deltat = -1
 
     ; initialize help object and add methods and leafs
@@ -43,7 +43,10 @@ pro AOvalid_pixels::compute
     self._original_frames_idx = ptr_new( vpo, /no_copy)
     self._original_frames = cnto
 
-    self._decimation = (cnti+cnto) / (cnto) -1
+    ; TODO this information now comes from the header, but it may
+    ; be missing from some earlier TNs
+    ;self._decimation = (cnti+cnto) / (cnto) -1
+
     self._deltat = 1. / self._framerate  * (self._decimation+1)
 end
 

@@ -1,6 +1,7 @@
-function aomultiton_elab::Init
+function aomultiton_elab::Init, SILENT=SILENT
     self._tag_list = ptr_new([''])
     self._obj_list = obj_new('IDL_Container')
+    self._silent = (keyword_set(SILENT)) ? 1b : 0b
     return, 1
 end
 
@@ -33,10 +34,10 @@ function aomultiton_elab::getobj, tn, recompute=recompute, _extra=ex
         endelse
     endif
     
-    message, 'Getting tracknum '+tn, /info
-    oo = obj_new('aoelab', tn, recompute=recompute, _extra=ex)
+    if not self._silent then message, 'Getting tracknum '+tn, /info
+    oo = obj_new('aoelab', tn, recompute=recompute, SILENT=self._silent,_extra=ex)
     if not obj_valid(oo) then begin
-        message, 'Could not initialize aoelab '+tn, /info
+        if not self._silent then message, 'Could not initialize aoelab '+tn, /info
         return, obj_new()
     endif
     
@@ -78,7 +79,8 @@ end
 pro aomultiton_elab__define
     struct = { aomultiton_elab, $
         _tag_list   : ptr_new() ,$
-        _obj_list   : obj_new()  $
+        _obj_list   : obj_new() ,$
+        _silent     : 0b $
     }
 end
 
@@ -87,14 +89,14 @@ function getaoelab, tracknum, $
             recompute = recompute, $
             dark_fname=dark_fname, $
             modal_reconstructor_file=modal_reconstructor_file, $       ; this is used in case of kalman filter
-            freeall=freeall
+            freeall=freeall, SILENT=SILENT
 
     ;on_error, 2
     defsysv, "!ao_env", EXISTS=exists
     if not exists then message, 'Call ao_init first!'
     defsysv, "!aomultiton_elab", EXISTS=exists
     if not exists then begin
-        aomultiton_elab = obj_new('aomultiton_elab')
+        aomultiton_elab = obj_new('aomultiton_elab', SILENT=SILENT)
         defsysv, "!aomultiton_elab", aomultiton_elab
     endif
     if keyword_set(freeall) then begin

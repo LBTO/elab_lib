@@ -4,8 +4,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
-           "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
-           "| *notes* "+$
+           "| *emGain* | *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
+           "| *skip* | *notes* "+$
            "| "
 
     print, hdr
@@ -56,7 +56,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         endif
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -68,6 +68,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->camera())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
             obj_valid(ee->wfs_status()) ?  round(((ee->wfs_status())->camera())->framerate()) : -1, $
+            obj_valid(ee->wfs_status()) ?  (obj_isa( (ee->wfs_status())->camera(),'aoocam2k') ? ((ee->wfs_status())->camera())->emGain() : -1 ) : -1, $
             obj_valid(ee->control()) ? (ee->control())->ttgain() : -1 , $
             obj_valid(ee->control()) ? (ee->control())->mogain() : -1 , $
             obj_valid(ee->control()) ? (ee->control())->hogain() : -1 , $
@@ -80,6 +81,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     		obj_valid(instr) ? instr->nframes() : -1 , $
 			disturb,  $
             sn_fname, $
+            obj_valid(ee->sanitycheck()) ? (ee->sanitycheck())->skippedFrames() : -1, $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
 

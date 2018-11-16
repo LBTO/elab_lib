@@ -7,7 +7,8 @@
 function AOelab::Init, tracknum, $
             recompute = recompute, $
             modal_reconstructor_file = modal_reconstructor_file, $	; this is used in case of kalman filter
-            dark_fname = dark_fname								    ; override IRTC/PISCES dark filename
+            dark_fname = dark_fname, $   								    ; override IRTC/PISCES dark filename
+            SILENT=SILENT
 
     self._recompute = keyword_set(recompute)
 
@@ -16,11 +17,19 @@ function AOelab::Init, tracknum, $
     self._elabdir = filepath(root=ao_elabdir(), sub=[date, 'Data_'+tracknum], '')
 
 
-	;verify that the datadir exists before anything.
-	if not FILE_TEST(self._datadir, /DIR) then begin
-		print, 'data directory does not exist: Data_'+tracknum
-		return, 0
-	endif
+    ;verify that the datadir exists before anything.
+    if not FILE_TEST(self._datadir, /DIR) then begin
+        if not keyword_set(SILENT) then print, 'data directory does not exist: Data_'+tracknum
+        return, 0
+    endif
+
+    ;Skip empty directories
+    dummy = FILE_SEARCH(self._datadir+path_sep()+'*', count=count)
+    if count eq 0 then begin
+        if not keyword_set(SILENT) then print, 'data directory is empty: Data_'+tracknum
+        return, 0
+    endif
+   
 
     ; Detect measurement type
     typefile = filepath(root=self._datadir,'type.fits')
@@ -569,6 +578,9 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
     if obj_valid(self->olmodes()) then begin
     	TEXT = [TEXT, string(format='(%"| %-30s | %f |")','seeing from OL modes', (self->olmodes())->seeing() )]
     endif
+    if obj_valid(self->sanitycheck()) then begin
+    	TEXT = [TEXT, string(format='(%"| %-30s | %d |")','number of skipped framess', (self->sanitycheck())->skippedFrames() )]
+    endif
     if not keyword_set(PARAMS_ONLY) then begin
     	;TEXT = [TEXT, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
     	if obj_valid(self->irtc()) then begin
@@ -660,48 +672,61 @@ end
 ;                                  PLOTS and SHORTCUTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, thick=thick, _extra=ex, clvar=clvar, olvar=olvar
+pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
+                       WFRESIDUALS=WFRESIDUALS, $
+                       thick=thick, _extra=ex, clvar=clvar, olvar=olvar
 
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
 
     if self->operation_mode() eq "RR" then begin
-		nmodes = (self->modalpositions())->nmodes()
-		clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
-		yrange = sqrt(minmax(clvar))
-    	if obj_valid(self._disturb) then begin
-			if (self->adsec_status())->disturb_status() ne 0 then begin
-    			olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
-    			yrange = sqrt(minmax([clvar,olvar]))
-			endif
-    	endif
-        if not keyword_set(OVERPLOT) then  begin
-		    plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
-						 title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
+        nmodes = (self->modalpositions())->nmodes()
+        clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
+        yrange = sqrt(minmax(clvar))
+        if obj_valid(self._disturb) then begin
+            if (self->adsec_status())->disturb_status() ne 0 then begin
+                olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
+                yrange = sqrt(minmax([clvar,olvar]))
+            endif
+        endif
+        if keyword_set(WFRESIDUALS) then begin
+            wfres = (self->residual_modes())->modes() * (self->residual_modes())->norm_factor()
+            wfres = rms(wfres,dim=1)
+            yrange = minmax([yrange, minmax(wfres)])
+        endif
+        if not keyword_set(OVERPLOT) then begin
+            plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+                                                     title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-		    oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
+            oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
         endelse
-		if obj_valid(self._disturb) then begin
-			if (self->adsec_status())->disturb_status() ne 0 then begin
+        if obj_valid(self._disturb) then begin
+            if (self->adsec_status())->disturb_status() ne 0 then begin
                 oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
-				al_legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right, thick=thick
-			endif
-		endif
-	endif else begin
-;		nmodes = (self->residual_modes())->nmodes()
-		clvar  = (self->residual_modes())->time_variance() * ((self->residual_modes())->norm_factor())^2.
-		olvar  = (self->olmodes())->time_variance() * ((self->olmodes())->norm_factor())^2.
-		modes_idx = (self->modal_rec())->modes_idx()
-		clvar  = clvar[modes_idx]
-		olvar  = olvar[modes_idx]
-   		yrange = sqrt(minmax([clvar,olvar]))
+                al_legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right, thick=thick
+            endif
+        endif
+        if keyword_set(WFRESIDUALS) then begin
+            print, 'WFS residual minmax:', minmax(wfres)
+            oplot, lindgen(nmodes)+1, wfres, psym=-4, symsize=0.8, color='ff00ff'x
+        endif
+
+    ;; End of 'RR', begin 'ONSKY'
+    endif else begin
+;       nmodes = (self->residual_modes())->nmodes()
+        clvar  = (self->residual_modes())->time_variance() * ((self->residual_modes())->norm_factor())^2.
+        olvar  = (self->olmodes())->time_variance() * ((self->olmodes())->norm_factor())^2.
+        modes_idx = (self->modal_rec())->modes_idx()
+        clvar  = clvar[modes_idx]
+        olvar  = olvar[modes_idx]
+        yrange = sqrt(minmax([clvar,olvar]))
         if not keyword_set(OVERPLOT) then  begin
-			plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
-						 title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
+            plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+                                               title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-		    oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
-		endelse
-		oplot, modes_idx+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
-	endelse
+            oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
+        endelse
+        oplot, modes_idx+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
+    endelse
 end
 
 
@@ -820,8 +845,21 @@ function AOelab::mag
     if obj_valid(self->frames()) then $
         if obj_valid(self->wfs_status()) then $
             if obj_valid( (self->wfs_status())->camera() ) then $
-	            return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
-							((self->wfs_status())->camera())->framerate() )
+
+                if (self->wfs_status())->isSoul() then begin
+
+                    t = ((self->wfs_status())->filtw1())->transmissivity()
+
+                    return, tell_me_the_mag_ocam((self->frames())->nphsub_per_int_av()/t, $
+                                                 ((self->wfs_status())->camera())->framerate(), $
+                                                 ((self->wfs_status())->camera())->binning(), $
+                                                 ((self->wfs_status())->camera())->emGain())
+
+                endif else begin
+                    return, tell_me_the_mag((self->frames())->nph_per_int_av(), $
+                                            ((self->wfs_status())->camera())->framerate() )
+                endelse
+
     message, 'impossible to compute the magnitude', /info
     return, !values.f_nan
 end

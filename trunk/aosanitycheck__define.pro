@@ -24,6 +24,7 @@ function AOSanityCheck::Init, $
     self._fltimeout         = -1L
     self._pendingcounter    = -1L
     self._skipcounter       = -1L
+    self._skippedFrames     = -1L
     self._timestamp         = -1L
     self._wfsglobaltimeout  = -1L
     self._isok = -2
@@ -148,6 +149,19 @@ function AOSanityCheck::SkipCounter
 end
 
 ; 
+; Return the number of skipped frames during this loop
+; -1.0 is returned if skip counter file does not exists 
+; 
+function AOSanityCheck::skippedFrames
+    if self._skippedFrames eq -1L then begin
+	    if not file_test(self._skipcounter_fname) then return, -1L
+        ret = readfits(self._skipcounter_fname, /silent)
+        self._skippedFrames = max(ret)-min(ret)
+    endif
+    return, self._skippedFrames
+end
+
+; 
 ; Return the timestamp 
 ; Should be always 0.0
 ; -1.0 is returned if timestamp file does not exists 
@@ -204,6 +218,7 @@ pro AOSanityCheck__define
         _fltimeout                  : 0L, $ 
         _pendingcounter             : 0L, $ 
         _skipcounter                : 0L, $ 
+        _skippedFrames              : 0L, $
         _timestamp                  : 0L, $ 
         _wfsglobaltimeout           : 0L, $ 
         _isok                       : 0, $ 

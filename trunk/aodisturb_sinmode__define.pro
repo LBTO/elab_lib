@@ -35,7 +35,8 @@ function AOdisturb_sinmode::Init, root_obj
 
 	loopfreq = float(aoget_fits_keyword(hdr, 'LOOPFREQ'))
 	if round(loopfreq) ne round(self->dist_freq()) then begin
-    	message, 'Framerate mistmach: disturbance designed to operate @ '+strtrim(string(loopfreq,format='(f7.1)'),2), /INFO
+    	message, 'Framerate mismatch: disturbance designed to operate @ '+strtrim(string(round(loopfreq),format='(f7.1)'),2)+' Hz', /INFO
+    	message, 'but detected loop frequency is '+strtrim(string(round(self->dist_freq()),format='(f7.1)'),2)+' Hz', /INFO
     	self._sin_freq_mismatch = 1B
     endif
 
