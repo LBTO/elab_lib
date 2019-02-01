@@ -252,6 +252,19 @@ pro AOtime_series::set_fftwindow, fftwindow
 	endelse
 end
 
+pro AOtime_series::set_nwindow, nwindow
+	if n_params() ne 1 then begin
+		message, 'Missing parameter: Usage: (...)->set_nwindow, nwindow', /info
+		return
+	endif
+	if nwindow lt 1 then begin
+		message, "no windows should be greater than 0", /info
+		return
+	endif
+    self._nwindow = nwindow
+    self->AOtime_series::ForceCompute
+end
+
 function AOtime_series::nwindows
 	return, self._nwindows
 end
