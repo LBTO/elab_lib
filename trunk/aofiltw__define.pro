@@ -444,29 +444,30 @@ pro AOfiltw::filtw_data, wunit, fw_number
 									  "CW"	,!VALUES.F_INFINITY , $
 									  "BW"	,!values.F_INFINITY	)
 
-			1: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
+                        1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
+                                                                          "R"   ,0.05                           , $
+                                                                          "T"   ,0.95                           , $
+                                                                          "CW"  ,550    , $
+                                                                          "BW"  ,300    )
 
-			2: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
+                        2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.001                          , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
 
-			3: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
-									  "R"	,0.0				, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
+                        3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.01                           , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
 
-			4: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,550 	, $
-									  "BW"	,300	)
+                        4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.1                            , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
+
 
 			5: data_struct = CREATE_STRUCT("name", 'Blank'	, $		; lambda>950nm to CCD39
 									  "R"	, 0.0		, $
