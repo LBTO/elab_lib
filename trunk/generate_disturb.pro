@@ -82,7 +82,7 @@ function modalif_to_zonalif, mirmodes_file, idx_mask=idx_mask
   return, IFmatrix
 end
 
-function restore_modalif, mirmodes_file, idx_mask=idx_mask, mm2c=mm2c
+function restore_modalif, mirmodes_file, idx_mask=idx_mask, mm2c=mm2c, dpix=dpix
   ; Restore MMmatrix and mm2c
   restore, mirmodes_file
   return, MMmatrix
@@ -303,11 +303,13 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	;inv_IFmat = disturb_dir+'inv_IFmatrix_flao2.sav'
 	;inv_IFmat = disturb_dir+'inv_MMmatrix_mag585.sav'
 	inv_IFmat = filepath(root=disturb_dir,'inv_'+file_basename(mirmodes_file))
+  
 	if file_test(inv_IFmat) then begin
 		undefine, IFmatrix
 		restore, inv_IFmat
 	endif else begin
-		if n_elements(IFmatrix) eq 0 then IFmatrix = restore_modalif(mirmodes_file, idx_mask=idx_mask, mm2c=mm2c)
+		if n_elements(IFmatrix) eq 0 then IFmatrix = restore_modalif(mirmodes_file, idx_mask=idx_mask, mm2c=mm2c, dpix=mmdpix)
+        if mmdpix ne Dpix then message, 'Dpix should be equal to '+strtrim(mmdpix)+', that is the number of pixel of '+mirmodes_file
 		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE, N_MODES_TO_DROP=1)
 		save, inv_IFmatrix, Dpix, idx_mask, mm2c, filename=inv_IFmat, /compress
 		undefine, IFmatrix
