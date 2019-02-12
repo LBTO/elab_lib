@@ -452,13 +452,15 @@ end
 ;+
 ;
 ;-
-pro aodataset::modalplot, average = average, overplot = overplot, _extra=ex
+pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _extra=ex
 	tr = self->tracknums()
-	case self->count() of
-	  1: cols = [!P.COLOR]
-	  2: cols = [!P.COLOR, 250L]
-	  else: cols = [[!P.COLOR],comp_colors(self->count()-1)]
-	endcase
+	if n_elements(cols) eq 0 then begin
+      case self->count() of
+	    1: cols = [!P.COLOR]
+	    2: cols = [!P.COLOR, 250L]
+	    else: cols = [[!P.COLOR],comp_colors(self->count()-1,/color_table)]
+	  endcase
+    endif
 
     n=0
     if keyword_set(average) then begin
