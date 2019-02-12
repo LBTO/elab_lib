@@ -673,7 +673,7 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
-                       WFRESIDUALS=WFRESIDUALS, $
+                       WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, $
                        thick=thick, _extra=ex, clvar=clvar, olvar=olvar
 
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
@@ -702,12 +702,13 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
         if obj_valid(self._disturb) then begin
             if (self->adsec_status())->disturb_status() ne 0 then begin
                 oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
-                al_legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right, thick=thick
+                al_legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick
             endif
         endif
         if keyword_set(WFRESIDUALS) then begin
+            if n_elements(WFCOLOR) eq 0 then WFCOLOR = 'ff00ff'x
             print, 'WFS residual minmax:', minmax(wfres)
-            oplot, lindgen(nmodes)+1, wfres, psym=-4, symsize=0.8, color='ff00ff'x
+            oplot, lindgen(nmodes)+1, wfres, psym=-4, symsize=0.8, color=WFCOLOR
         endif
 
     ;; End of 'RR', begin 'ONSKY'
