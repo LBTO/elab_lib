@@ -42,7 +42,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         if ee->operation_mode() eq 'RR' then begin
             disturb='OFF'
         	if obj_valid(ee->disturb()) then if obj_valid(ee->adsec_status()) then if (ee->adsec_status())->disturb_status() eq 1 then  disturb='ON'
-            if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
+            ;if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
         endif else disturb='ONSKY'
 
 		if obj_valid(ee->frames()) then ad_status = (ee->frames())->antidrift_status() ? 'ON':'OFF'
@@ -55,7 +55,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             if sn_fname eq 'NO' then sn_fname = bname
         endif
 
-        isSoul = (self->wfs_status())->isSoul()
+        isSoul = (ee->wfs_status())->isSoul()
         if isSoul then ADU2nph = 30.0/((ee->wfs_status())->camera())->emGain() else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
