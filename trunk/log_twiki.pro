@@ -4,7 +4,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
-           "| *emGain* | *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
+           "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
            "| *skip* | *notes* "+$
            "| "
 
@@ -55,6 +55,9 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             if sn_fname eq 'NO' then sn_fname = bname
         endif
 
+        isSoul = (self->wfs_status())->isSoul()
+        if isSoul then ADU2nph = 30.0/((ee->wfs_status())->camera())->emGain() else ADU2nph=0.5
+
         VALID = [VALID, ee->tracknum()]
         str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
@@ -73,7 +76,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->control()) ? (ee->control())->mogain() : -1 , $
             obj_valid(ee->control()) ? (ee->control())->hogain() : -1 , $
             obj_valid(ee->wfs_status()) ? round( (ee->wfs_status())->modulation() ) : -1, $
-            obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av()) : -1, $
+            obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av())*ADU2nph : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
             obj_valid(instr) ? instr->filter_name() : '?' , $
