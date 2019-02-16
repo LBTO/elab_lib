@@ -79,6 +79,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "cube_angle()",  "cube rotator angle (degree)"
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "slopes_null_fname()",  "slopesnull vector fitsfile name (string)"
+    self->addMethodHelp, "zeromag_flux()", "Flux for a zero-magnitude star (counts/second/subap)"
     self->addMethodHelp, "summary", "Summary of WFS status"
     if obj_valid(self._camera) then self->addleaf, self._camera, 'camera'
     if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
@@ -93,6 +94,20 @@ end
 
 function AOwfs_status::fitsfile
     return, self._fitsfile
+end
+
+function AOwfs_status::transmissivity
+
+    ; For now this is just the filterwheel #1 transmissivity,
+    ; but when instruments like Shark-VIS will change the WFS
+    ; transparency, the calculation should be added here
+
+    if obj_valid(self->filtw1()) then begin
+        t = (self->filtw1())->transmissivity()
+    endif else begin
+        t = !VALUES.F_NAN
+    endelse
+    return, t
 end
 
 function AOwfs_status::camera
@@ -175,6 +190,21 @@ end
 
 function AOwfs_status::optg
   return, self._optg
+end
+
+function AOwfs_status::zeromag_flux
+
+   case self._wunit of
+      'W1'     : f = 4.707e8 * 692  ;; 2.97E6 for mag 5.5
+      'W1SOUL' : f = 2.647e8 * 692  ;; 1.67E6 for mag 5.5
+      'W2'     : f = 4.707e8 * 692  ;; 2.97E6 for mag 5.5
+      'LBTIDX' : f = 4.707e8 * 1188 ;; 2.97E6 for mag 5.5
+      'LBTISX' : f = 2.647e8 * 1188 ;; 1.67E6 for mag 5.5
+   else: message, 'AOwfs_status: magnitude conversion for unit '+self._wunit+' is not possible!'
+   endcase
+
+   return, f
+
 end
 
 pro AOwfs_status::summary, COMPREHENSIVE=COMPREHENSIVE

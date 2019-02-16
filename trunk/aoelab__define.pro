@@ -849,12 +849,12 @@ function AOelab::mag
 
                 if (self->wfs_status())->isSoul() then begin
 
-                    t = ((self->wfs_status())->filtw1())->transmissivity()
+                    t = (self->wfs_status())->transmissivity()
 
-                    return, tell_me_the_mag_ocam((self->frames())->nphsub_per_int_av()/t, $
+                    return, tell_me_the_mag_ocam((self->frames())->nph_per_int_av()/t, $
                                                  ((self->wfs_status())->camera())->framerate(), $
-                                                 ((self->wfs_status())->camera())->binning(), $
-                                                 ((self->wfs_status())->camera())->emGain())
+                                                 ((self->wfs_status())->camera())->emGain(), $
+                                                 (self->wfs_status())->zeromag_flux())
 
                 endif else begin
                     return, tell_me_the_mag((self->frames())->nph_per_int_av(), $

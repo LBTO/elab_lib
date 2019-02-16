@@ -1,22 +1,18 @@
 
 ; Find equivalent OCAM magnitude
 ;
-; countsPerSubap:  average ADU counts per subaperture
+; countsPerFrame:  average ADU counts per frame (whole pupil)
 ; framerate     :  Ocam framerate in Hz
 ; emGain        :  EM gain
-; binning       :  Ocam binning
+; zeromag_flux  :  calibrated flux for a zero-magnite star
 
-function tell_me_the_mag_ocam, countsPerSubap, framerate, binning, emGain
+function tell_me_the_mag_ocam, countsPerFrame, framerate, emGain, zeromag_flux
 
-;; Zero point
-ref_mag  = 5.5
-ref_flux = 1.67E6
+    flux = countsPerFrame * 30.0/emGain * framerate
 
-flux = countsPerSubap * 30.0/emGain * framerate / (binning*binning)
+    ;Equivalent magnitude:
+    mag =  2.5 * alog10( zeromag_flux / flux )
 
-;Equivalent magnitude:
-mag =  2.5 * alog10( ref_flux / flux ) + ref_mag
-
-return,mag
+    return,mag
 
 end
