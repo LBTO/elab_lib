@@ -65,7 +65,7 @@ end
 
 function AOocam2k::idealPupilDistance
 	; SOUL: what is the correct value for this ?
-	return, 60L
+	return, 48L
 end
 
 function AOocam2k::mode
