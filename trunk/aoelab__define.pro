@@ -676,6 +676,9 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
                        WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, $
                        thick=thick, _extra=ex, clvar=clvar, olvar=olvar
 
+    ; search al_legend
+    if ROUTINE_FILEPATH("AL_LEGEND") ne '' then use_al_legend = 1B else use_al_legend = 0B
+
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
 
     if self->operation_mode() eq "RR" then begin
@@ -702,7 +705,9 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
         if obj_valid(self._disturb) then begin
             if (self->adsec_status())->disturb_status() ne 0 then begin
                 oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
-                al_legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick
+                if use_al_legend then $
+                    al_legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick $
+                        else legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick
             endif
         endif
         if keyword_set(WFRESIDUALS) then begin
@@ -733,6 +738,9 @@ end
 
 pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 
+    ; search al_legend
+    if ROUTINE_FILEPATH("AL_LEGEND") ne '' then use_al_legend = 1B else use_al_legend = 0B
+    
 	if n_params() ne 1 then begin
 		message, 'Missing parameter. Usage: ...->modalSpecPlot, modenum', /info
 		return
@@ -783,7 +791,9 @@ pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 			, title=self._obj_tracknum->tracknum()+', mode '+strtrim(modenum,2), yrange=yrange, ytickformat='(e9.1)', _extra=ex
 		if n_elements(olfreq) ne 0 then begin
 			oplot, olfreq[1:*], sqrt(olpsd[1:*,modenum]), color=250
-			al_legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
+            if use_al_legend then $
+                al_legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom $
+                    else legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
 		endif
 	endif else oplot, freq[1:*], sqrt(psd[1:*,modenum]), COLOR=COLOR, _extra=ex
 
