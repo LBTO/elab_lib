@@ -26,6 +26,8 @@ function forces_from_dist, dist_file, adsec_save_file, m2c_file
     forceKL = ff_matrix##actFromModes
 
     output = {forceDist:forceDist, forceDistKL:forceDistKL}
+    
+    return, output
 
 end
 
