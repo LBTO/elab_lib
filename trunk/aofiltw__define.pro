@@ -3,7 +3,7 @@
 ;
 ;-
 
-function AOfiltw::Init, wfs_header, wunit, fw_number
+function AOfiltw::Init, wfs_header, wunit, fw_number, julianday
 
 	hdr = *wfs_header
 
@@ -14,6 +14,7 @@ function AOfiltw::Init, wfs_header, wunit, fw_number
 
 	self._header = wfs_header
 	self._fw_pos = round(float(aoget_fits_keyword(hdr, 'fw'+fw_number+'.POSITION')))
+        self._julianday = julianday
 	self->filtw_data, wunit, fw_number
     self._fw_number = fw_number
 
@@ -43,6 +44,9 @@ end
 ;	BW:		Bandwidth centered on CW
 ;-
 pro AOfiltw::filtw_data, wunit, fw_number
+
+  LBTISX_SOUL_DATE = julday(06, 01, 2018, 0, 0, 0)  ; M,D,Y  h,m,s
+  LBTIDX_SOUL_DATE = julday(02, 28, 2019, 0, 0, 0)  ; M,D,Y, h,m,s
 
   if wunit eq 'W1' then begin	;LBT W1 (FLAO2) 
 	CASE fw_number OF
@@ -430,7 +434,7 @@ pro AOfiltw::filtw_data, wunit, fw_number
         ENDCASE
 
 
-    endif else if wunit eq 'LBTIDX' then begin
+    endif else if ((wunit eq 'LBTIDX') and (self._julianday lt LBTIDX_SOUL_DATE)) then begin
 
 	CASE fw_number OF
 
@@ -530,8 +534,108 @@ pro AOfiltw::filtw_data, wunit, fw_number
 	ENDCASE
 
 
+    endif else if ((wunit eq 'LBTIDX') and (self._julianday ge LBTIDX_SOUL_DATE)) then begin
 
-    endif else if wunit eq 'LBTISX' then begin
+	CASE fw_number OF
+
+;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;		      the TRANSMITTED light goes towards the CCD39
+	'1': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'Blank'	, $
+									  "R"	,0.0 				, $
+									  "T"	,0.0 				, $
+									  "CW"	,!VALUES.F_NAN , $
+									  "BW"	,!values.F_NAN	)
+
+                        1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
+                                                                          "R"   ,0.05                           , $
+                                                                          "T"   ,0.95                           , $
+                                                                          "CW"  ,550    , $
+                                                                          "BW"  ,300    )
+
+                        2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.001                          , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
+
+                        3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.01                           , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
+
+                        4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
+                                                                          "R"   ,0.0                            , $
+                                                                          "T"   ,0.1                            , $
+                                                                          "CW"  ,!VALUES.F_INFINITY     , $
+                                                                          "BW"  ,!VALUES.F_INFINITY     )
+
+
+			5: data_struct = CREATE_STRUCT("name", 'Window'	, $		; lambda>950nm to CCD39
+									  "R"	, 0.05		, $
+									  "T"	, 0.95		, $
+									  "CW"	,!VALUES.F_INFINITY 		, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+
+		 ENDCASE
+
+	'2': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
+									  "R"	,0.0				, $
+									  "T"	,0.003				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
+									  "R"	,0.0		, $
+									  "T"	,0.001				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
+									  "R"	,0.0		, $
+									  "T"	,0.1				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
+									  "R"	,0.0		, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY	    , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
+									  "R"	,0.0	, $
+									  "T"	,0.01				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+		 ENDCASE
+	ENDCASE
+
+
+
+    endif else if ((wunit eq 'LBTISX') and (self._julianday lt LBTISX_SOUL_DATE)) then begin
 
 	CASE fw_number OF
 
@@ -574,6 +678,103 @@ pro AOfiltw::filtw_data, wunit, fw_number
 									  "T"	, 0.0		, $
 									  "CW"	,!VALUES.F_NAN 		, $
 									  "BW"	,!VALUES.F_NAN	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+
+		 ENDCASE
+
+	'2': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
+									  "R"	,0.0				, $
+									  "T"	,0.003				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
+									  "R"	,0.0		, $
+									  "T"	,0.001				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
+									  "R"	,0.0		, $
+									  "T"	,0.1				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
+									  "R"	,0.0		, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY	    , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
+									  "R"	,0.0	, $
+									  "T"	,0.01				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
+									  "R"	,0.0				, $
+									  "T"	,1.0				, $
+									  "CW"	,!VALUES.F_INFINITY , $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
+									  "R"	,!VALUES.F_NAN		, $
+									  "T"	,!VALUES.F_NAN		, $
+									  "CW"	,!VALUES.F_NAN 		, $
+									  "BW"	,!VALUES.F_NAN	)
+		 ENDCASE
+	ENDCASE
+
+    endif else if ((wunit eq 'LBTISX') and (self._julianday ge LBTISX_SOUL_DATE)) then begin
+
+	CASE fw_number OF
+
+;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;		      the TRANSMITTED light goes towards the CCD39
+	'1': CASE self._fw_pos OF
+
+			0: data_struct = CREATE_STRUCT("name", 'Blank'	, $
+									  "R"	,0.0 				, $
+									  "T"	,0.0 				, $
+									  "CW"	,!VALUES.F_NAN , $
+									  "BW"	,!values.F_NAN	)
+
+			1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
+									  "R"	,0.05				, $
+									  "T"	,0.95				, $
+									  "CW"	,550 	, $
+									  "BW"	,300	)
+			2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
+									  "R"	,0.0				, $
+									  "T"	,0.001				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
+									  "R"	,0.0				, $
+									  "T"	,0.01				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
+									  "R"	,0.0				, $
+									  "T"	,0.1				, $
+									  "CW"	,!VALUES.F_INFINITY	, $
+									  "BW"	,!VALUES.F_INFINITY	)
+
+			5: data_struct = CREATE_STRUCT("name", 'Window'	, $		; lambda>950nm to CCD39
+									  "R"	, 0.05		, $
+									  "T"	, 0.95		, $
+									  "CW"	,!VALUES.F_INFINITY 		, $
+									  "BW"	,!VALUES.F_INFINITY	)
 
 			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
 									  "R"	,!VALUES.F_NAN		, $
@@ -709,6 +910,7 @@ pro AOfiltw__define
         _fw_pos  	: 0			, $
         _fw_data	: ptr_new() , $
         _fw_number	: 0         , $
+        _julianday      : 0.0d,         $
         INHERITS    AOhelp  $
     }
 end

@@ -16,13 +16,14 @@ function AOwfs_status::Init, root_obj, fitsfile
 	;  W_UNIT = 'W1' for all tests done before 01 September 2009
 	;  W_UNIT = 'W2' for all tests done after  01 September 2009.
 	wunit = aoget_fits_keyword(self->header(), 'W_UNIT')
+	if obj_isa(root_obj, 'AOelab')   then thisdate = (root_obj->obj_tracknum())->JulDay()
+	if obj_isa(root_obj, 'AOintmat') then begin
+		thisdate = strsplit(aoget_fits_keyword(self->header(), 'DATE'), '-', /extract)
+		thisdate = julday(thisdate[1], thisdate[2], thisdate[0], 00, 00, 00)
+	endif
+        print, 'THISDATE:',thisdate
     if wunit eq '' then begin
     	switch_date = julday(09, 01, 2009, 00, 00, 00)
-		if obj_isa(root_obj, 'AOelab')   then thisdate = (root_obj->obj_tracknum())->JulDay()
-		if obj_isa(root_obj, 'AOintmat') then begin
-			thisdate = strsplit(aoget_fits_keyword(self->header(), 'DATE'), '-', /extract)
-			thisdate = julday(thisdate[1], thisdate[2], thisdate[0], 00, 00, 00)
-		endif
 		if thisdate LT switch_date then wunit='W1' else wunit='W2'
 	endif
 	self._wunit = strtrim(wunit,2)
@@ -55,8 +56,8 @@ function AOwfs_status::Init, root_obj, fitsfile
         self._camera  = obj_new('AOccd39',  self._header, self._wunit)
     endelse
     self._pupils = obj_new('AOpupils', self._header, self._camera, self._wunit, isSoul = self->isSoul())
-    self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1')
-    self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2')
+    self._filtw1 = obj_new('AOfiltw' , self._header, self._wunit, '1', thisdate)
+    self._filtw2 = obj_new('AOfiltw' , self._header, self._wunit, '2', thisdate)
 
     self._slopes_null_fname = string(aoget_fits_keyword(self->header(), 'sc.SLOPENULL'))
 
