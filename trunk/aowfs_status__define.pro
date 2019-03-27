@@ -21,7 +21,6 @@ function AOwfs_status::Init, root_obj, fitsfile
 		thisdate = strsplit(aoget_fits_keyword(self->header(), 'DATE'), '-', /extract)
 		thisdate = julday(thisdate[1], thisdate[2], thisdate[0], 00, 00, 00)
 	endif
-        print, 'THISDATE:',thisdate
     if wunit eq '' then begin
     	switch_date = julday(09, 01, 2009, 00, 00, 00)
 		if thisdate LT switch_date then wunit='W1' else wunit='W2'
