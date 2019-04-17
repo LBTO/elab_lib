@@ -56,7 +56,16 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         endif
 
         isSoul = (ee->wfs_status())->isSoul()
-        if isSoul then ADU2nph = 30.0/((ee->wfs_status())->camera())->emGain() else ADU2nph=0.5
+        if isSoul then begin
+          binning = ((ee->wfs_status())->camera())->binning()
+          case binning of
+            1: ADU2nph = 30.3/((ee->wfs_status())->camera())->emGain()
+            2: ADU2nph = 23.0/((ee->wfs_status())->camera())->emGain()
+            3: ADU2nph = 21.2/((ee->wfs_status())->camera())->emGain()
+            4: ADU2nph = 20.7/((ee->wfs_status())->camera())->emGain()
+            else: ADU2nph = 30.0/((ee->wfs_status())->camera())->emGain()
+          endcase
+        endif else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
         str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
