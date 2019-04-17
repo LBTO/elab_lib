@@ -862,6 +862,7 @@ function AOelab::mag
                     t = (self->wfs_status())->transmissivity()
 
                     return, tell_me_the_mag_ocam((self->frames())->nph_per_int_av()/t, $
+                                                 ((self->wfs_status())->camera())->binning(), $
                                                  ((self->wfs_status())->camera())->framerate(), $
                                                  ((self->wfs_status())->camera())->emGain(), $
                                                  (self->wfs_status())->zeromag_flux())
