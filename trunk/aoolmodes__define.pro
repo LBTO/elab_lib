@@ -127,7 +127,7 @@ pro AOolmodes::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex, over
     	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Cumulated PSD [arcsec rms]', _extra=ex
   	oplot, freq, sqrt(tip), col='0000ff'x
   	oplot, freq, sqrt(tilt), col='00ff00'x
-  	legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x]
+  	elab_legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x]
   endif else begin
    	oplot, freq, sqrt(tip + tilt)
    	oplot, freq, sqrt(tip), col='0000ff'x
@@ -144,6 +144,7 @@ end
 ; Estimate r0 from reconstructed open loop data
 ;-----------------------------------------------------
 function AOolmodes::r0, lambda=lambda, PLOT=PLOT
+  
   if self._r0 eq -1. then self->retrieve_r0
 
   if keyword_set(PLOT) then begin
@@ -160,7 +161,7 @@ function AOolmodes::r0, lambda=lambda, PLOT=PLOT
       ytitle='nm wf rms', xtitle='mode number', title=self._root_obj->tracknum(), yrange=yrange $
       	, xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1
     oplot, lindgen(nmodes)+1, theorms, color=255L
-    legend, ['r0 = '+string(self._r0*1e2, format='(f4.1)')+'cm @ 500nm'], /right, charsize=1.5
+    elab_legend, ['r0 = '+string(self._r0*1e2, format='(f4.1)')+'cm @ 500nm'], /right, charsize=1.5
   endif
 
   if n_elements(lambda) ne 0 then return, self._r0*(lambda/500e-9)^(6./5.) else return, self._r0
@@ -370,6 +371,7 @@ function AOolmodes::ide, mode_idx, visu=visu, only_noise=only_noise
 end
 
 function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep, teldir=teldir
+
   ; teldir return the angle in the telescope coordinates
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
@@ -493,7 +495,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       endif
     endfor
     if plot eq 1 then $
-      legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
+      elab_legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
     angle=( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*!CONST.RtoD
     ; if key then return the angle in the telescope coordinates
     if keyword_set(teldir) then begin
@@ -562,11 +564,11 @@ pro AOolmodes::tf, idx, mtf=mtf, theoric=theoric, gain=gain, mtf_theoric=mtf_the
             plot_iir_tf, iir, fs, [1], nm=nm, dm=dm, nw=nw, dw=dw, /no, freq=freq, ytmtf=mtf_theoric1
             oplot, freq, mtf_theoric1, col=255l*256l, thick=2
             mtf_theoric = mtf_theoric1
-           al_legend, ['data MTF','theor. MTF','th. MTF (g='+strtrim(string(gainTF,format='(f9.2)'),2)+')'], $
-               col=[1l,255l,255*256l], line=[0,0,0], thick=2, /bottom, /right, /clear, charsize=1.5
+            elab_legend, ['data MTF','theor. MTF','th. MTF (g='+strtrim(string(gainTF,format='(f9.2)'),2)+')'], $
+                              col=[1l,255l,255*256l], linest=[0,0,0], thick=2, /bottom, /right, /clear, charsize=1.5
         endif else begin
-           mtf_theoric = mtf_theoric0
-           al_legend, ['data MTF','theor. MTF'], col=[1l,255l], line=[0,0], thick=2, /bottom, /right, /clear, charsize=1.5
+            mtf_theoric = mtf_theoric0
+            elab_legend, ['data MTF','theor. MTF'], col=[1l,255l], linest=[0,0], thick=2, /bottom, /right, /clear, charsize=1.5
         endelse
     endif
 end

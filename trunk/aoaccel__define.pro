@@ -86,7 +86,7 @@ pro AOaccel::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=ex
     title=self._plots_title, xtitle='Freq [Hz]', ytitle='Jitter [arcsec]', _extra=ex
   oplot, freq, sqrt(tip), col='0000ff'x
   oplot, freq, sqrt(tilt), col='00ff00'x
-  legend, ['X+Y', 'X', 'Y'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
+  elab_legend, ['X+Y', 'X', 'Y'],/fill,psym=[6,6,6],colors=['ffffff'x, '0000ff'x, '00ff00'x]
 
   sigmatot2 = max ( tip + tilt)  / 2
   ldmas = 1.6d-6 / ao_pupil_diameter() / 4.848d-6 ; l/D in arcsec
@@ -133,7 +133,8 @@ function AOaccel::RZ
   return, (*self._accel)[*,7]
 end
 
-function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
+function AOaccel::finddirections, from_freq=from_freq, to_freq=to_freq, plot=plot, nfr=nfr, fstep=fstep
+
   IF not keyword_set(plot) THEN plot=0
   IF not keyword_set(fstep) THEN fstep=0.25
   IF not keyword_set(nfr) THEN nfr=5
@@ -248,7 +249,7 @@ function AOolmodes::finddirections, from_freq=from_freq, to_freq=to_freq, plot=p
       endif
     endfor
     if plot eq 1 then $
-      legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
+      elab_legend, strtrim(frvib,2)+'Hz', psym=fltarr(nnn)-1, col=colo
     angle =( (-1)^xy*atan(ab[1,*])+xy*!pi/2 )*!CONST.RtoD
   endif else begin
     frvib = -1

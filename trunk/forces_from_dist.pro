@@ -63,9 +63,7 @@ function forces_from_dist, dist_file, adsec_save_file=adsec_save_file, m2c_file=
               charsize=2, tit='histogram', xtit='force (N)', ytit='occurence'
         oplot, xxKL, resKL, col=255l, thick=2, psym=10
     
-        if ROUTINE_FILEPATH("AL_LEGEND") ne '' then $
-            al_legend, ['disturbance','dist. proj. on KL'], color=[-1l,255l], linest=[0,0], thick=2, /left, /bottom, charsize=2 $
-                else legend, ['disturbance','dist. proj. on KL'], color=[-1l,255l], linest=[0,0], thick=2, /left, /bottom, charsize=2
+        elab_legend, ['disturbance','dist. proj. on KL'], color=[-1l,255l], linest=[0,0], thick=2, /left, /bottom, charsize=2
 
     endif
 
