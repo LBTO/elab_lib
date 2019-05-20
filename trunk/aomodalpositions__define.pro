@@ -95,7 +95,7 @@ pro AOmodalpositions::plotJitter, from_freq=from_freq, to_freq=to_freq, _extra=e
         	title=self._plots_title, xtitle='Freq [Hz]', ytitle='Cumulated PSD [arcsec rms]', _extra=ex
     	oplot, freq, sqrt(tip), col='0000ff'x
     	oplot, freq, sqrt(tilt), col='00ff00'x
-    	legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x], charsize=1.2
+    	elab_legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x], charsize=1.2
 	endif else begin
     	oplot, freq, sqrt(tip + tilt)
     	oplot, freq, sqrt(tip), col='0000ff'x

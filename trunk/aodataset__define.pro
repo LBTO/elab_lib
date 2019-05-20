@@ -453,6 +453,7 @@ end
 ;
 ;-
 pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _extra=ex
+
 	tr = self->tracknums()
 	if n_elements(cols) eq 0 then begin
       case self->count() of
@@ -491,7 +492,7 @@ pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _ex
         endelse
         if (ao->adsec_status())->disturb_status() ne 0 then begin
                 oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=0.8, color='0000ff'x
-                legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
+                elab_legend, ['disturbance','closed-loop'], color=['0000ff'x,!P.color], psym=-[2,1], /right
         endif
         ao->free
     endif else begin
@@ -507,7 +508,7 @@ pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _ex
             progress, ii, ao->tracknum()
             ao->free
 	    endfor
-	    legend, tr, psym=replicate(-1,self->count()), color=cols, /right
+	    elab_legend, tr, psym=replicate(-1,self->count()), color=cols, /right
     endelse
 end
 

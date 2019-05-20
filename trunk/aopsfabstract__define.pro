@@ -420,7 +420,7 @@ pro AOpsfAbstract::plotJitter, from_freq=from_freq, to_freq=to_freq, overplot=ov
     endelse
     oplot, freq, sqrt(tip), col='0000ff'x, psym=psym, _extra=ex
     oplot, freq, sqrt(tilt), col='00ff00'x, psym=psym, _extra=ex
-    legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
+    elab_legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
     sigmatot2 = max( self->power(0, /cum)+self->power(1, /cum) ) * self->norm_factor()^2. / 2
     ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 * 1e3 ; l/D in mas

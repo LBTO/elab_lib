@@ -356,11 +356,11 @@ pro AOsinuscalib::visu_specs, idx
 	ao = getaoelab(self->trn(idx))
 	window,0
 	(ao->modaldisturb())->specplot,self->modes(idx), title='input disturbance, mode'+strtrim(self->modes(idx),2)
-	legend, ['f='+strtrim(string(self->req_freq(idx), format='(f6.2)'),2)+'Hz, Amp='+strtrim(string(self->req_amp(idx)*1e9, format='(f6.2)'),2)+' nm surf'], charsize=1.2
-	if not self->dist_ok(idx) then legend, ['DISTURBANCE ERROR!'], /bottom, charsize=2
+	elab_legend, ['f='+strtrim(string(self->req_freq(idx), format='(f6.2)'),2)+'Hz, Amp='+strtrim(string(self->req_amp(idx)*1e9, format='(f6.2)'),2)+' nm surf'], charsize=1.2
+	if not self->dist_ok(idx) then elab_legend, ['DISTURBANCE ERROR!'], /bottom, charsize=2
 	window,1
 	(ao->modalpositions())->specplot,self->modes(idx),title='modal pos CL, mode '+strtrim(self->modes(idx),2)
-	legend, ['f='+strtrim(string(self->req_freq(idx), format='(f6.2)'),2)+'Hz, Amp='+strtrim(string(self->cl_amp_psd(idx)*1e9, format='(f6.2)'),2)+' nm surf'], charsize=1.2, /bottom
+	elab_legend, ['f='+strtrim(string(self->req_freq(idx), format='(f6.2)'),2)+'Hz, Amp='+strtrim(string(self->cl_amp_psd(idx)*1e9, format='(f6.2)'),2)+' nm surf'], charsize=1.2, /bottom
 	;window,2
 	;plot, sc->cl_amp_psd()*1e9, sc->cl_amp_dem()*1e9, psym=1, charsize=1.2, xtitle='CL amps from PSD', ytitle='CL amps from demodulation'
 	;oplot, [0,1e4], [0,1e4], linestyle=1
@@ -440,7 +440,7 @@ pro AOsinuscalib::compare_sigs, mode, REFMODE=REFMODE, slo_out=slo_out, compIM_t
 	plot, [sinsx,sinsy],yrange=minmax([sinsx,sinsy,refsx,refsy])
 	oplot, [refsx,refsy], color=255L
 	oplot, diff, color=255L*250L
-	legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
+	elab_legend, ['sin','ref','diff'], linestyle=[0,0,0], color=[0,255L,255L*250L]
 	print, 'diff crit.: ', strtrim(total((diff*1e-6)^2.),2)
     data_out =[[[sinsx,sinsy]], [[refsx,refsy]], [diff]]
 end
