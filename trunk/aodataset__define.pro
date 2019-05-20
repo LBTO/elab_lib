@@ -452,10 +452,10 @@ end
 ;+
 ;
 ;-
-pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _extra=ex
-
-	tr = self->tracknums()
-	if n_elements(cols) eq 0 then begin
+pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, argoscal=argoscal, _extra=ex
+	
+      tr = self->tracknums()
+      if n_elements(cols) eq 0 then begin
       case self->count() of
 	    1: cols = [!P.COLOR]
 	    2: cols = [!P.COLOR, 250L]
@@ -502,8 +502,8 @@ pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, _ex
 		    ao = getaoelab(self->get(pos=ii), SILENT=self._silent)
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
-		    if first eq 1 then ao->modalplot, _extra=ex, title='' else $
-		    			       ao->modalplot, /OVERPLOT, COLOR=cols[ii]
+		    if first eq 1 then ao->modalplot, argoscal=argoscal, _extra=ex, title='' else $
+		    			       ao->modalplot, /OVERPLOT, argoscal=argoscal, COLOR=cols[ii]
             first=0
             progress, ii, ao->tracknum()
             ao->free

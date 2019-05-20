@@ -261,7 +261,7 @@ pro AOtime_series::set_nwindow, nwindow
 		message, "no windows should be greater than 0", /info
 		return
 	endif
-    self._nwindow = nwindow
+    self._nwindows = nwindow
     self->AOtime_series::ForceCompute
 end
 
