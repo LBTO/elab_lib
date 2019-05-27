@@ -38,6 +38,9 @@ function AOwfs_status::Init, root_obj, fitsfile
 
     self._camera_lens[0] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_X'))
     self._camera_lens[1] = float(aoget_fits_keyword(self->header(), 'lens.POSITION_Y'))
+    
+    self._adc[0] = float(aoget_fits_keyword(self->header(), 'adc1.POSITION'))
+    self._adc[1] = float(aoget_fits_keyword(self->header(), 'adc2.POSITION'))
 
     self._lamp = float(aoget_fits_keyword(self->header(), 'lamp.INTENSITY'))
     self._cuberot   = float(aoget_fits_keyword(self->header(), 'cuberot.POSITION'))
@@ -48,7 +51,7 @@ function AOwfs_status::Init, root_obj, fitsfile
 
     self._pixels_decimation = byte(fix(aoget_fits_keyword(self->header(), 'sc.PIXELS_DECIMATION')))
     self._slopes_decimation = byte(fix(aoget_fits_keyword(self->header(), 'sc.SLOPES_DECIMATION')))
-    
+
     if self->isSoul() then begin
         self._camera  = obj_new('AOocam2k', self._header, self._wunit)
     endif else begin
@@ -74,6 +77,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "modulation()",  "TT modulation (lambda/D)"
     self->addMethodHelp, "rerotator()",  "rirotator angle (degrees)"
     self->addMethodHelp, "camera_lens()", "Position [x,y] of camera lens (mm)"
+    self->addMethodHelp, "adc()", "Position [alpha1,aplha2] of ADC (deg)"
     self->addMethodHelp, "stages()", "Position [x,y,z] of stages (mm)"
     self->addMethodHelp, "lamp_intensity()",  "lamp intensity (a.u.)"
     self->addMethodHelp, "cube_angle()",  "cube rotator angle (degree)"
@@ -148,6 +152,10 @@ function AOwfs_status::camera_lens
 	return, self._camera_lens
 end
 
+function AOwfs_status::adc
+	return, self._adc
+end
+
 function AOwfs_status::stages
 	return, self._stages
 end
@@ -218,6 +226,7 @@ pro AOwfs_status::summary, COMPREHENSIVE=COMPREHENSIVE
     if keyword_set(COMPREHENSIVE) then begin
 	    print, string(format='(%"%-30s %f")','Rerotator', self->rerotator() )
     	print, string(format='(%"%-30s %f  %f")','Camera lens', self->camera_lens() )
+    	print, string(format='(%"%-30s %f  %f")','ADC', self->adc() )
     	print, string(format='(%"%-30s %f  %f  %f")','Stages XYZ', self->stages() )
     	print, string(format='(%"%-30s %f")','Lamp', self->lamp_intensity() )
     	print, string(format='(%"%-30s %f")','Cube angle', self->cube_angle() )
@@ -237,6 +246,7 @@ pro AOwfs_status::test
     d = self->modulation()
     d = self->rerotator()
     d = self->camera_lens()
+    d = self->adc()
     d = self->stages()
     d = self->lamp_intensity()
     d = self->cube_angle()
@@ -281,6 +291,7 @@ pro AOwfs_status__define
         _cubestage      : 0d,    $
         _stages         : [0.0, 0.0, 0.0],    $
         _camera_lens    : [0.0, 0.0],    $
+        _adc            : [0.0, 0.0],    $
         _header         : ptr_new(), $
         _camera          : obj_new(), $
         _pupils         : obj_new(), $
