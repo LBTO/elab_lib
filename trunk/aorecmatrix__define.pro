@@ -34,10 +34,21 @@ function AOrecmatrix::fname
 end
 
 function AOrecmatrix::rec
-    rec = readfits(ao_datadir()+path_sep()+self->fname(), /SILENT)
+    rec = readfits(ao_datadir()+path_sep()+self->fname(), hdr_rec, /SILENT)
+    if aoget_fits_keyword(hdr_rec, 'MODEIDXN') ne '' then $
+        hdr_rec_to_iir_params, hdr_rec, orig_rec_fname, num_mat, den_mat, modes_idx, ff_no_excluded_modes, ff_min_value, ff_exp, nmodes_filter
+  
     if not ptr_valid(self._modes_idx) then begin
     	self._modes_idx = ptr_new(where(total(rec^2.,1) ne 0, t_nmodes), /no_copy)
     	if t_nmodes eq 0 then message, 'Null rec matrix '+self->fname()
+        if n_elements(nmodes_filter) gt 0 then begin
+            if max(max(*self._modes_idx)) gt nmodes_filter then begin
+                modes_idx = *self._modes_idx
+                modes_idx = modes_idx[where(modes_idx lt nmodes_filter)]
+                t_nmodes = n_elements(modes_idx)
+                self._modes_idx = ptr_new(modes_idx, /no_copy)
+            endif            
+        endif
     	self._nmodes   = t_nmodes
     	self._lastmode = max(*self._modes_idx)
     endif

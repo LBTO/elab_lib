@@ -12,6 +12,11 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self._gain_fname  = gain_fname
     self._adsec_sav_fname = adsec_sav_fname
 
+	if self->a_delay_fname() ne "" then begin
+    	header = headfits(ao_datadir()+path_sep()+self->a_delay_fname(), /SILENT, errmsg=errmsg)
+        if errmsg ne ''  then message, ao_datadir()+path_sep()+self->a_delay_fname()+ ': '+ errmsg, /info
+    	self._a_delay_fitsheader = ptr_new(header, /no_copy)
+    endif
 	if self->b0_a_fname() ne "" then begin
     	header = headfits(ao_datadir()+path_sep()+self->b0_a_fname(), /SILENT, errmsg=errmsg)
         if errmsg ne ''  then message, ao_datadir()+path_sep()+self->b0_a_fname()+ ': '+ errmsg, /info
@@ -28,6 +33,7 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     	self._gain_fitsheader = ptr_new(header, /no_copy)
     endif
 
+    self._iir        = aoget_fits_keyword(self->a_delay_header(), 'MODEIDXN') eq '' ? 0B : 1B
     self._kalman     = aoget_fits_keyword(self->b0_a_header(), 'KFMODES') eq '' ? 0B : 1B
 
     if self->isKalman() then begin
@@ -54,6 +60,7 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     self->addMethodHelp, "m2c()", "m2c matrix (modal -> zonal) "
     self->addMethodHelp, "c2m()", "c2m matrix (zonal -> modal) "
     self->addMethodHelp, "gain()", "gain vector"
+    self->addMethodHelp, "ff()", "forgettin factors vector"
     self->addMethodHelp, "maxgain()", "max of gain vector"
     self->addMethodHelp, "mingain()", "min of gain vector"
     self->addMethodHelp, "zerogain()", "zero gain means open loop (boolean)"
@@ -67,11 +74,17 @@ function AOcontrol::Init, root_obj, b0_a_fname, a_delay_fname, b_delay_a_fname, 
     ;self->addMethodHelp, "nmodes()", "number of non-null row in b0_a matrix"
     ;self->addMethodHelp, "modes_idx()", "index vector of non-null row in b0_a matrix"
     ;self->addMethodHelp, "rec()", "reconstructor matrix (not b0_a() in case of Kalman filter)"
+    self->addMethodHelp, "a_delay_header()",     "header of a_dealy fitsfile (strarr)"
     self->addMethodHelp, "b0_a_header()",     "header of b0_a fitsfile (strarr)"
     self->addMethodHelp, "c_header()",      "header of c fitsfile (strarr)"
     ;self->addMethodHelp, "m2c_header()", "header of m2c fitsfile (tipically = c_header) (strarr)"
     self->addMethodHelp, "gain_header()",     "header of gain fitsfile (strarr)"
     self->addMethodHelp, "isKalman()",     "tell if Kalman filter is used"
+    self->addMethodHelp, "isIIR()",     "tell if IIR filters are used"
+    self->addMethodHelp, "IIR_mode_idx()",     "if isIIR, return index of modes with IIR filters (other have int.)"
+    self->addMethodHelp, "IIR_num_mat()",     "if isIIR, return their numerator coeff. mat."
+    self->addMethodHelp, "IIR_den_mat()",     "if isIIR, return their denominator coeff. mat."
+    self->addMethodHelp, "IIR_ff()",     "if isIIR, return forg. factors for modes with integrator control"
     self->addMethodHelp, "intmat_fname()",     "interaction matrix filename (from which b0_a has been derived)"
     self->addMethodHelp, "TTdirections()",     "return TIP TILT direction [rad] in respect to the coordinate system of the telescope"
     return, 1
@@ -159,6 +172,10 @@ function AOcontrol::gain
         self._gain = ptr_new(g_gain, /no_copy)
     endif
     return, *self._gain
+end
+
+function AOcontrol::ff
+    if self->isIIR() then return, self->IIR_ff() else return, diag_matrix((self->a_delay())[*,*,0])
 end
 
 function AOcontrol::maxgain
@@ -261,6 +278,10 @@ end
 ;    ;; eventually store it into self._g_gain_a
 ;end
 
+function AOcontrol::a_delay_header
+    if ptr_valid(self._a_delay_fitsheader) then return, *(self._a_delay_fitsheader) else return, ""
+end
+
 function AOcontrol::b0_a_header
     if ptr_valid(self._b0_a_fitsheader) then return, *(self._b0_a_fitsheader) else return, ""
 end
@@ -275,6 +296,46 @@ end
 
 function AOcontrol::isKalman
     return, self._kalman
+end
+
+function AOcontrol::isIIR
+    return, self._iir
+end
+
+function AOcontrol::IIR_mode_idx
+    if self->isIIR() then begin
+        hdr_rec_to_iir_params, self->a_delay_header(), orig_rec_fname, num_mat, den_mat, modes_idx, ff_no_excluded_modes, ff_min_value, ff_exp, nmodes_filter
+        return, modes_idx
+    endif else return, -1
+end
+
+function AOcontrol::IIR_num_mat
+    if self->isIIR() then begin
+        hdr_rec_to_iir_params, self->a_delay_header(), orig_rec_fname, num_mat, den_mat, modes_idx, ff_no_excluded_modes, ff_min_value, ff_exp, nmodes_filter
+        return, num_mat
+    endif else return, -1
+end
+
+function AOcontrol::IIR_den_mat
+    if self->isIIR() then begin
+        hdr_rec_to_iir_params, self->a_delay_header(), orig_rec_fname, num_mat, den_mat, modes_idx, ff_no_excluded_modes, ff_min_value, ff_exp, nmodes_filter
+        return, den_mat
+    endif else return, -1
+end
+
+function AOcontrol::IIR_ff
+    if self->isIIR() then begin
+        hdr_rec_to_iir_params, self->a_delay_header(), orig_rec_fname, num_mat, den_mat, modes_idx, ff_no_excluded_modes, ff_min_value, ff_exp, nmodes_filter
+        nmodes_int = nmodes_filter - n_elements(modes_idx)
+        idxModesInt = setdifference(findgen(nmodes_filter), modes_idx)
+        ff = fltarr(nmodes_filter)
+        zern_degree, findgen(nmodes_int)+2, rd, af
+        imode = 50
+        for i=0,nmodes_int-1 do ff[idxModesInt[i]] = $
+            min([1, 1 - (1-ff_min_value) * ( float(rd[i]-rd[ff_no_excluded_modes])/float(max(rd)-rd[ff_no_excluded_modes]) )^ff_exp ])
+        ff[modes_idx] = -1
+        return, ff
+    endif else return, -1
 end
 
 function AOcontrol::intmat_fname
@@ -364,6 +425,7 @@ pro AOcontrol::free
 end
 
 pro AOcontrol::Cleanup
+    if ptr_valid(self._a_delay_fitsheader) then ptr_free, self._a_delay_fitsheader
     if ptr_valid(self._b0_a_fitsheader) then ptr_free, self._b0_a_fitsheader
     if ptr_valid(self._c_fitsheader) 	then ptr_free, self._c_fitsheader
     if ptr_valid(self._gain_fitsheader) then ptr_free, self._gain_fitsheader
@@ -385,6 +447,7 @@ pro AOcontrol__define
         _c_fname                  : "", $
         _m2c_fname                : "", $
         _gain_fname               : "", $
+        _a_delay_fitsheader      : ptr_new(), $
         _b0_a_fitsheader         : ptr_new(), $
         _c_fitsheader            : ptr_new(), $
         _gain_fitsheader         : ptr_new(), $
@@ -394,6 +457,7 @@ pro AOcontrol__define
         _zeroed_modes			 : ptr_new(), $
         _group_gain				 : ptr_new(), $
         _group_first_mode		 : ptr_new(), $
+        _iir                     : 0B, $
         _kalman                  : 0B, $
         _intmat_fname            : "", $
         INHERITS AOhelp $
