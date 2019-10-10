@@ -103,6 +103,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "gaussfit()",  		"return reference to psf gaussfit object (AOgaussfit)"
     obj->addMethodHelp, "oc()",  		    "return camera obstruction (0..1)"
     obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
+    obj->addMethodHelp, "sr_se_cube()", 	    "Strehl ratio estimated from each single frame of the image"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
     obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
     obj->addMethodHelp, "prof_dist()", 		"profile distance vector in arcsec"
@@ -234,6 +235,20 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima, psf_dl_ima=psf_dl_ima
     	endelse
     endif
     return, self._sr_se
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio for each frame
+function AOpsfAbstract::sr_se_cube
+
+    lc = (self->gaussfit())->center() 
+
+    cube = self->imageCube()
+    sr_cube = fltarr((size(cube,/dim))[2])
+    for i=0,(size(cube,/dim))[2]-1 do sr_cube[i] = self->sr_se(ima=cube[*,*,i])
+    
+    return, sr_cube
+
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
