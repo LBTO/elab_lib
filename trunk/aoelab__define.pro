@@ -674,14 +674,14 @@ end
 
 pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
                        WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, $
-                       thick=thick, _extra=ex, clvar=clvar, olvar=olvar
+                       thick=thick, _extra=ex, clvar=clvar, olvar=olvar, argosCalUnit=argosCalUnit
 
     ; search al_legend
     if ROUTINE_FILEPATH("AL_LEGEND") ne '' then use_al_legend = 1B else use_al_legend = 0B
 
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
 
-    if self->operation_mode() eq "RR" then begin
+    if self->operation_mode() eq "RR" or keyword_set(argosCalUnit) then begin
         nmodes = (self->modalpositions())->nmodes()
         clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
         yrange = sqrt(minmax(clvar))
