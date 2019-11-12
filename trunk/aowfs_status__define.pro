@@ -84,6 +84,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "slopes_null_fname()",  "slopesnull vector fitsfile name (string)"
     self->addMethodHelp, "zeromag_flux()", "Flux for a zero-magnitude star (counts/second/subap)"
+    self->addMethodHelp, "optg()", "optical gain value used to normalize slopes"
     self->addMethodHelp, "summary", "Summary of WFS status"
     if obj_valid(self._camera) then self->addleaf, self._camera, 'camera'
     if obj_valid(self._pupils) then self->addleaf, self._pupils, 'pupils'
