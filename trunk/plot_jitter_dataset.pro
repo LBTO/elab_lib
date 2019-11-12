@@ -49,7 +49,8 @@ pro plot_jitter_dataset, data, rec = rec, from=from_freq, to=to_freq, xlog = xlo
   for i = 0, ndata-1 do begin
     cur_data = getaoelab(tns[i])
     
-    norm = 4 ; surf from wfs to real wf rms 
+    norm = 4 ; surf from wfs to real wf rms
+    if (cur_data->wfs_status())->optg() lt 1 then norm /= 2 
     
     coeff2mas = norm * 4 / ao_pupil_diameter() / 4.848d-6 * 1e3
 
