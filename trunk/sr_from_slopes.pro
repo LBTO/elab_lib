@@ -1,9 +1,10 @@
-function sr_from_slopes, data, lambda_
+function sr_from_slopes, data, lambda_, fitting=fitting
 
   ;SR computation from the residual slopes (using Marechal's approximation).
   ;
   ;data: aoelab object, aodataset object or vector of TNs
   ;lambda: Wvelength in nm. Default = 1650 nm.
+  ;fitting: (keyword) if set use DIMM SEEING to add fitting error
   
   if size(data,/type) eq 11 then begin
     if obj_class(data) eq 'AOELAB' then tns = data->tracknum()
@@ -39,7 +40,22 @@ function sr_from_slopes, data, lambda_
     endif
     norm_fact_wfs = (cur_data->residual_modes())->norm_factor()/2 ;division by 2 to take into account the active Gopt
     clvar  = total((cur_data->residual_modes())->time_variance() * norm_fact_wfs^2.)
-    tab_sr[i] = exp(-clvar*nm2torad2)
+
+    if keyword_set(fitting) then begin
+        if obj_valid(ee->tel()) and obj_valid(ee->modal_rec()) then begin
+            if obj_valid((ee->tel())->dimm_seeing()) then begin
+                rad2asec = 3600.d*180.d/!dpi
+                asec2rad = 1.d/rad2asec
+                seeing_rad = (ee->tel())->dimm_seeing()*asec2rad
+                r0500 = 0.98d*0.5d-6/seeing_rad ; Fried's r0 @ 500 nm
+                r0LAM = r0500*(lambda/500.d)^(6.d/5.d)
+                fitting_error = 0.2778d*(ee->modal_rec())->nmodes()^(-0.9d) * (8.222d / r0LAM)^(5.d/3.d) 
+            endif
+        endif
+        if n_elements(fitting_error) eq 0 then message, 'fitting error can not be computed', /info
+    endif else fitting_error = 0.
+
+    tab_sr[i] = exp(-(clvar*nm2torad2+fitting_error))
   endfor
   
   return, tab_sr
