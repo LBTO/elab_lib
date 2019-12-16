@@ -717,7 +717,9 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
     ;; End of 'RR', begin 'ONSKY'
     endif else begin
 ;       nmodes = (self->residual_modes())->nmodes()
-        clvar  = (self->residual_modes())->time_variance() * ((self->residual_modes())->norm_factor())^2.
+        clvar  = (self->residual_modes())->time_variance()
+        if (self->wfs_status())->optg() eq 0 then clvar *= ((self->residual_modes())->norm_factor())^2. $
+            else clvar *= ((self->olmodes())->norm_factor())^2.
         olvar  = (self->olmodes())->time_variance() * ((self->olmodes())->norm_factor())^2.
         modes_idx = (self->modal_rec())->modes_idx()
         clvar  = clvar[modes_idx]
