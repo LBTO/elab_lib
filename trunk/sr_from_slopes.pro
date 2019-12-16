@@ -53,7 +53,9 @@ function sr_from_slopes, data, lambda_, fitting=fitting
             endif
         endif
         if n_elements(fitting_error) eq 0 then message, 'fitting error can not be computed', /info
-    endif else fitting_error = 0.
+    endif 
+    
+    if n_elements(fitting_error) eq 0 then fitting_error = 0.
 
     tab_sr[i] = exp(-(clvar*nm2torad2+fitting_error))
   endfor
