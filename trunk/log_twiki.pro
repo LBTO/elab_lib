@@ -4,8 +4,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
-           "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *SR (from slopes)* | *filter* | *exp* | *#frames* "+$
-           "| *disturb* | *SN* | *notes* "+$
+           "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *AntiDrift* | *SR* | *SR (from slopes)* | *filter* | *exp* "+ $
+           "| *#frames* | *disturb* | *SN* | *skip* | *notes* "+$
            "| "
 
     print, hdr
