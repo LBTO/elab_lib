@@ -4,8 +4,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
-           "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *AntiDrift* | *SR* | *filter* | *exp* | *#frames* | *disturb* | *SN* "+$
-           "| *skip* | *notes* "+$
+           "| *gain* | *mod* | *nph* | *AntiDrift* | *SR* | *SR (from slopes)* | *filter* | *exp* | *#frames* "+$
+           "| *disturb* | *SN* | *notes* "+$
            "| "
 
     print, hdr
@@ -68,7 +68,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         endif else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %d | %s | %6.1f | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -88,6 +88,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av())*ADU2nph : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
+            obj_valid(ee->residual_modes()) ? sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.)*100 : -1, $
             obj_valid(instr) ? instr->filter_name() : '?' , $
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
     		obj_valid(instr) ? instr->nframes() : -1 , $
