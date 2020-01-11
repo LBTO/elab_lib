@@ -20,6 +20,7 @@ function AOelab::Init, tracknum, $
     ;verify that the datadir exists before anything.
     if not FILE_TEST(self._datadir, /DIR) then begin
         if not keyword_set(SILENT) then print, 'data directory does not exist: Data_'+tracknum
+        if not keyword_set(SILENT) then print, 'complete path is:'+self._datadir
         return, 0
     endif
 
@@ -579,7 +580,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
     	TEXT = [TEXT, string(format='(%"| %-30s | %f |")','seeing from OL modes', (self->olmodes())->seeing() )]
     endif
     if obj_valid(self->sanitycheck()) then begin
-    	TEXT = [TEXT, string(format='(%"| %-30s | %d |")','number of skipped framess', (self->sanitycheck())->skippedFrames() )]
+    	TEXT = [TEXT, string(format='(%"| %-30s | %d |")','number of skipped frames', (self->sanitycheck())->skippedFrames() )]
     endif
     if not keyword_set(PARAMS_ONLY) then begin
     	;TEXT = [TEXT, string(format='(%"%-30s %f")','SR@H  FQP',self->sr_from_positions())
@@ -676,9 +677,6 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
                        WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, $
                        thick=thick, _extra=ex, clvar=clvar, olvar=olvar, argosCalUnit=argosCalUnit
 
-    ; search al_legend
-    if ROUTINE_FILEPATH("AL_LEGEND") ne '' then use_al_legend = 1B else use_al_legend = 0B
-
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
 
     if self->operation_mode() eq "RR" or keyword_set(argosCalUnit) then begin
@@ -738,9 +736,6 @@ end
 
 pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 
-    ; search al_legend
-    if ROUTINE_FILEPATH("AL_LEGEND") ne '' then use_al_legend = 1B else use_al_legend = 0B
-    
 	if n_params() ne 1 then begin
 		message, 'Missing parameter. Usage: ...->modalSpecPlot, modenum', /info
 		return

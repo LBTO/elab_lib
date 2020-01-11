@@ -9,7 +9,7 @@ function AOccd39::Init, wfs_header, wunit
 	hdr = *(self._header)
 
         self._sensorSide = 80L
-        self._mode = 1L
+        self._mode = 1L  ; fake mode for compatibility with ocam2k
 	self._framerate     = float(aoget_fits_keyword(hdr, 'ccd39.FRAMERATE'))
 	self._readout_speed = float(aoget_fits_keyword(hdr, 'ccd39.READOUT_SPEED'))
 	self._binning 		= long(aoget_fits_keyword(hdr, 'ccd39.BINNING'))

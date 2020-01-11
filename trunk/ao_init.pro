@@ -81,6 +81,13 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 
 defsysv, "!ao_env", ao_env
 
+; IDL8 defines !CONST, but IDL7 does not
+defsysv, "!CONST", EXISTS=exists
+if not exists then begin
+    consts = { RtoD: 180.0d/!PI, DtoR: !PI/180.0d }
+    defsysv, "!CONST", consts
+endif
+
 name = ['DATASET', 'AOELAB', 'BIPBIP']
 fmt  = ['Dataset error: %s.', 'AOelab error: %s.', 'Road Runner not captured.']
 DEFINE_MSGBLK, PREFIX = 'AO_OAA_', 'ELAB', name, fmt , /IGNORE_DUPLICATE

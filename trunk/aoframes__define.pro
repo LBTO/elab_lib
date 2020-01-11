@@ -316,7 +316,12 @@ function AOframes::pup_image
 
     binning = (*self._wfs_status->camera())->binning()
 
-    f = total(self->frames(/dark),3)
+    frames = self->frames(/dark)
+    if n_elements(frames) eq 1 then begin
+        print,'Warning: no background available'
+        frames = self->frames()
+    endif
+    f = total(frames,3)
     dimx = n_elements(f[*,0])
     dimy = n_elements(f[0,*])
     cx = dimx/2
