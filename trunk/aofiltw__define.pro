@@ -43,798 +43,178 @@ end
 ;	CW:		Central wavelength
 ;	BW:		Bandwidth centered on CW
 ;-
+function AOfiltw::filters_LUT, wunit, fw_number, pos
+
+
+;  Structure definition, also works for invalid lookups
+
+  INVALID = {filtw, name:'UNKNOWN', R:!VALUES.F_NAN, T:!VALUES.F_NAN, CW:!VALUES.F_NAN, BW:!VALUES.F_NAN} 
+
+;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
+;		      the TRANSMITTED light goes towards the CCD39
+
+  W1_FW1 = replicate(INVALID, 6)
+  W1_FW1[0] = {filtw, 'Dichroic 600-1000 nm',   0.05,  0.95,  800., 400.}
+  W1_FW1[1] = {filtw, 'Dichroic 700-1000 nm',   0.05,  0.95,  850., 300.}
+  W1_FW1[2] = {filtw, 'R = 50%, T= 50%',        0.50,  0.50,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW1[3] = {filtw, 'R = 90%, T= 10%',        0.90,  0.10,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW1[4] = {filtw, 'Silver mirror (R=100%)', 1.00,  0.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW1[5] = {filtw, 'R = 0.4%, T = 99.6%',    0.004, 0.996, !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  W1_FW2 = replicate(INVALID, 6)
+  W1_FW2[0] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW2[1] = {filtw, 'FB850-10',  0.50,  0.50,  850., 10.}
+  W1_FW2[2] = {filtw, 'FB900-10',  0.50,  0.50,  900., 10.}
+  W1_FW2[3] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW2[4] = {filtw, 'FB700-10',  0.50,  0.50,  700., 10.}
+  W1_FW2[5] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  W1SOUL_FW1 = W1_FW1
+
+  W1SOUL_FW2 = replicate(INVALID, 6)
+  W1SOUL_FW2[0] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1SOUL_FW2[1] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1SOUL_FW2[2] = {filtw, 'FB650-10',  0.50,  0.50,  650., 10.}
+  W1SOUL_FW2[3] = {filtw, 'FB900-10',  0.50,  0.50,  900., 10.}
+  W1SOUL_FW2[4] = {filtw, 'FB700-10',  0.50,  0.50,  700., 10.}
+
+  W2_FW1 = replicate(INVALID, 6)
+  W2_FW1[0] = {filtw, 'Dichroic 600-1000 nm',   0.05,  0.95,  800., 400.}
+  W2_FW1[1] = {filtw, 'Dichroic 700-1000 nm',   0.05,  0.95,  850., 300.}
+  W2_FW1[2] = {filtw, 'R = 50%, T= 50%',        0.50,  0.50,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W2_FW1[3] = {filtw, 'R = 90%, T= 10%',        0.90,  0.10,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W2_FW1[4] = {filtw, 'Silver mirror (R=100%)', 1.00,  0.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W1_FW1[5] = {filtw, 'R = 0.4%, T = 99.6%',    0.004, 0.996, !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  W2_FW2 = replicate(INVALID, 6)
+  W2_FW2[0] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W2_FW2[1] = {filtw, 'FB850-10',  0.50,  0.50,  850., 10.}
+  W2_FW2[2] = {filtw, 'FB900-10',  0.50,  0.50,  900., 10.}
+  W2_FW2[3] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  W2_FW2[4] = {filtw, 'FB950-10',  0.50,  0.50,  950., 10.}
+  W2_FW2[5] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  MAG_FW1 = replicate(INVALID, 6)
+  MAG_FW1[0] = {filtw, 'R = 50%, T= 50%',      0.50,  0.50,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW1[1] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW1[2] = {filtw, 'DARK',                 0.00,  0.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW1[3] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW1[4] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW1[5] = {filtw, 'LPF950nm',             !VALUES.F_NAN,  !VALUES.F_NAN,  !VALUES.F_NAN, !VALUES.F_NAN }
+
+  MAG_FW2 = replicate(INVALID, 6)
+  MAG_FW2[0] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  MAG_FW2[1] = {filtw, 'SDSS z',               !VALUES.F_NAN,  0.50,  902., 300. }
+  MAG_FW2[2] = {filtw, 'SDSS r',               !VALUES.F_NAN,  0.70,  625., 150. }
+  MAG_FW2[3] = {filtw, 'SDSS i',               !VALUES.F_NAN,  0.80,  765., 150. }
+  MAG_FW2[4] = {filtw, 'LPF950',               !VALUES.F_NAN,  0.05,  0.981, 200. }  ; TODO the CW seems wrong
+  MAG_FW2[5] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTIDX_OLD_FW1 = replicate(INVALID, 6)
+  LBTIDX_OLD_FW1[0] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTIDX_OLD_FW1[2] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW1[3] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW1[4] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW1[5] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTIDX_OLD_FW2 = replicate(INVALID, 6)
+  LBTIDX_OLD_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW2[1] = {filtw, 'OD=3, T=0.01',     0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW2[2] = {filtw, 'OD=1, T=10%',      0.00,  0.1,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW2[3] = {filtw, 'OPEN',             0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW2[4] = {filtw, 'OD=2, T=1%',       0.00,  0.01,   !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_OLD_FW2[5] = {filtw, 'empty',            0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTIDX_SOUL_FW1 = replicate(INVALID, 6)
+  LBTIDX_SOUL_FW1[0] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTIDX_SOUL_FW1[2] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW1[3] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW1[4] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTIDX_SOUL_FW2 = replicate(INVALID, 6)
+  LBTIDX_SOUL_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW2[1] = {filtw, 'OD=3, T=0.01',     0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW2[2] = {filtw, 'OD=1, T=10%',      0.00,  0.1,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW2[3] = {filtw, 'OPEN',             0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW2[4] = {filtw, 'OD=2, T=1%',       0.00,  0.01,   !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW2[5] = {filtw, 'empty',            0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTISX_OLD_FW1 = replicate(INVALID, 6)
+  LBTISX_OLD_FW1[0] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW1[1] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW1[2] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW1[3] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW1[4] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTISX_OLD_FW1[5] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTISX_OLD_FW2 = replicate(INVALID, 6)
+  LBTISX_OLD_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW2[1] = {filtw, 'OD=3, T=0.01',     0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW2[2] = {filtw, 'OD=1, T=10%',      0.00,  0.1,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW2[3] = {filtw, 'OPEN',             0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW2[4] = {filtw, 'OD=2, T=1%',       0.00,  0.01,   !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_OLD_FW2[5] = {filtw, 'empty',            0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTISX_SOUL_FW1 = replicate(INVALID, 6)
+  LBTISX_SOUL_FW1[0] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTISX_SOUL_FW1[2] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW1[3] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW1[4] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  LBTISX_SOUL_FW2 = replicate(INVALID, 6)
+  LBTISX_SOUL_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW2[1] = {filtw, 'OD=3, T=0.01',     0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW2[2] = {filtw, 'OD=1, T=10%',      0.00,  0.1,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW2[3] = {filtw, 'OPEN',             0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW2[4] = {filtw, 'OD=2, T=1%',       0.00,  0.01,   !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW2[5] = {filtw, 'empty',            0.00,  1.0,    !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+
+  if (wunit eq 'W1') and (fw_number eq 1) then data = W1_FW1 $ 
+  else if (wunit eq 'W1') and (fw_number eq 2) then data = W1_FW2 $
+  else if (wunit eq 'W2') and (fw_number eq 1) then data = W2_FW1 $
+  else if (wunit eq 'W2') and (fw_number eq 2) then data = W2_FW2 $
+  else if (wunit eq 'MAG') and (fw_number eq 1) then data = MAG_FW1 $ 
+  else if (wunit eq 'MAG') and (fw_number eq 2) then data = MAG_FW2 $
+  else if (wunit eq 'W1SOUL') and (fw_number eq 1) then data = W1SOUL_FW1 $
+  else if (wunit eq 'W1SOUL') and (fw_number eq 2) then data = W1SOUL_FW2 $
+  else if (wunit eq 'LBTIDX_OLD') and (fw_number eq 1) then data = LBTIDX_OLD_FW1 $
+  else if (wunit eq 'LBTIDX_OLD') and (fw_number eq 2) then data = LBTIDX_OLD_FW2 $
+  else if (wunit eq 'LBTIDX_SOUL') and (fw_number eq 1) then data = LBTIDX_SOUL_FW1 $
+  else if (wunit eq 'LBTIDX_SOUL') and (fw_number eq 2) then data = LBTIDX_SOUL_FW2 $
+  else if (wunit eq 'LBTISX_OLD') and (fw_number eq 1) then data = LBTISX_OLD_FW1 $
+  else if (wunit eq 'LBTISX_OLD') and (fw_number eq 2) then data = LBTISX_OLD_FW2 $
+  else if (wunit eq 'LBTISX_SOUL') and (fw_number eq 1) then data = LBTISX_SOUL_FW1 $
+  else if (wunit eq 'LBTISX_SOUL') and (fw_number eq 2) then data = LBTISX_SOUL_FW2 $
+  else message, "Invalid WUNIT and/or filterwheel number. Wunit="+wunit+', fw='+strtrim(fw_number,2)
+
+  if (pos lt 0) or (pos ge n_elements(data)) then return, INVALID $
+  else return, data[pos]
+
+end
+
 pro AOfiltw::filtw_data, wunit, fw_number
 
-  LBTISX_SOUL_DATE = julday(06, 01, 2018, 0, 0, 0)  ; M,D,Y  h,m,s
-  LBTIDX_SOUL_DATE = julday(02, 28, 2019, 0, 0, 0)  ; M,D,Y, h,m,s
-
-  if wunit eq 'W1' then begin	;LBT W1 (FLAO2) 
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Dichroic 600-1000 nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,800.				, $
-									  "BW"	,400.				)
-
-			1: data_struct = CREATE_STRUCT("name", 'Dichroic 700-1000 nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,850.				, $
-									  "BW"	,300.				)
-
-			2: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!values.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'R = 90%, T= 10%'	, $
-									  "R"	,0.90				, $
-									  "T"	,0.10				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'Silver mirror (R=100%)'	, $
-									  "R"	,1.0				, $
-									  "T"	,0.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'R = 0.4%, T = 99.6%'	, $
-									  "R"	,0.004				, $
-									  "T"	,0.996				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'FB850-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,850. 				, $
-									  "BW"	,10.	)
-
-			2: data_struct = CREATE_STRUCT("name", 'FB900-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,900. 				, $
-									  "BW"	,10.	)
-
-			3: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'FB700-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,700. 				, $
-									  "BW"	,10.	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-    endif else if wunit eq 'W2' then begin	;LBT W2 (FLAO1) 
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Dichroic 600-1000 nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,800.				, $
-									  "BW"	,400.				)
-
-			1: data_struct = CREATE_STRUCT("name", 'Dichroic 700-1000 nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,850.				, $
-									  "BW"	,300.				)
-
-			2: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!values.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'R = 90%, T= 10%'	, $
-									  "R"	,0.90				, $
-									  "T"	,0.10				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'Silver mirror (R=100%)'	, $
-									  "R"	,1.0				, $
-									  "T"	,0.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'R = 0.4%, T = 99.6%'	, $
-									  "R"	,0.004				, $
-									  "T"	,0.996				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'FB850-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,850. 				, $
-									  "BW"	,10.	)
-
-			2: data_struct = CREATE_STRUCT("name", 'FB900-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,900. 				, $
-									  "BW"	,10.	)
-
-			3: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'FB950-10'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,950. 				, $
-									  "BW"	,10.	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-    endif else if wunit eq 'MAG' then begin
-
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'	, $
-									  "R"	,0.50				, $
-									  "T"	,0.50				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!values.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'empty', $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'DARK', $
-									  "R"	,0.0				, $
-									  "T"	,0.0				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'empty', $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'empty', $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'LPF950nm'	, $		; lambda>950nm to CCD39
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'SDSS z'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,0.50				, $
-									  "CW"	,902. 				, $
-									  "BW"	,300.	)
-
-			2: data_struct = CREATE_STRUCT("name", 'SDSS r'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,0.70				, $
-									  "CW"	,625. 				, $
-									  "BW"	,150.	)
-
-			3: data_struct = CREATE_STRUCT("name", 'SDSS i'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,0.80				, $
-									  "CW"	,765.			    , $
-									  "BW"	,150.	)
-
-			4: data_struct = CREATE_STRUCT("name", 'LPF950'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,0.05				, $
-									  "CW"	,0.981		 		, $
-									  "BW"	,200.	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-   endif else if wunit eq 'W1SOUL' then begin
-
-        CASE fw_number OF
-
-        '1': CASE self._fw_pos OF
-
-                        0: data_struct = CREATE_STRUCT("name", 'Dichroic 600-1000 nm', $
-                                                                          "R"   ,0.05                           , $
-                                                                          "T"   ,0.95                           , $
-                                                                          "CW"  ,800.                           , $
-                                                                          "BW"  ,400.                           )
-
-                        1: data_struct = CREATE_STRUCT("name", 'Dichroic 700-1000 nm', $
-                                                                          "R"   ,0.05                           , $
-                                                                          "T"   ,0.95                           , $
-                                                                          "CW"  ,850.                           , $
-                                                                          "BW"  ,300.                           )
-
-                        2: data_struct = CREATE_STRUCT("name", 'R = 50%, T= 50%'        , $
-                                                                          "R"   ,0.50                           , $
-                                                                          "T"   ,0.50                           , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!values.F_INFINITY     )
-
-                        3: data_struct = CREATE_STRUCT("name", 'R = 90%, T= 10%'        , $
-                                                                          "R"   ,0.90                           , $
-                                                                          "T"   ,0.10                           , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        4: data_struct = CREATE_STRUCT("name", 'Silver mirror (R=100%)' , $
-                                                                          "R"   ,1.0                            , $
-                                                                          "T"   ,0.0                            , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        5: data_struct = CREATE_STRUCT("name", 'R = 0.4%, T = 99.6%'    , $
-                                                                          "R"   ,0.004                          , $
-                                                                          "T"   ,0.996                          , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'     , $
-                                                                          "R"   ,!VALUES.F_NAN          , $
-                                                                          "T"   ,!VALUES.F_NAN          , $
-                                                                          "CW"  ,!VALUES.F_NAN          , $
-                                                                          "BW"  ,!VALUES.F_NAN  )
-
-                 ENDCASE
-
-        '2': CASE self._fw_pos OF
-
-                        0: data_struct = CREATE_STRUCT("name", 'empty'  , $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,1.0                            , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        1: data_struct = CREATE_STRUCT("name", 'empty'  , $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,1.0                            , $
-                                                                          "CW"  ,!VALUES.F_INFINITY , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        2: data_struct = CREATE_STRUCT("name", 'FB650-10'       , $
-                                                                          "R"   ,0.50                           , $
-                                                                          "T"   ,0.50                           , $
-                                                                          "CW"  ,650.                           , $
-                                                                          "BW"  ,10.    )
-
-                        3: data_struct = CREATE_STRUCT("name", 'FB900-10'       , $
-                                                                          "R"   ,0.50                           , $
-                                                                          "T"   ,0.50                           , $
-                                                                          "CW"  ,900.                           , $
-                                                                          "BW"  ,10.    )
-
-                        4: data_struct = CREATE_STRUCT("name", 'FB700-10'       , $
-                                                                          "R"   ,0.50                           , $
-                                                                          "T"   ,0.50                           , $
-                                                                          "CW"  ,700.                           , $
-                                                                          "BW"  ,10.    )
-
-                        ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'     , $
-                                                                          "R"   ,!VALUES.F_NAN          , $
-                                                                          "T"   ,!VALUES.F_NAN          , $
-                                                                          "CW"  ,!VALUES.F_NAN          , $
-                                                                          "BW"  ,!VALUES.F_NAN  )
-
-
-                 ENDCASE
-
-
-        ENDCASE
-
-
-    endif else if ((wunit eq 'LBTIDX') and (self._julianday lt LBTIDX_SOUL_DATE)) then begin
-
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Window'	, $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!values.F_INFINITY	)
-
-                        1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
-                                                                          "R"   ,0.05                           , $
-                                                                          "T"   ,0.95                           , $
-                                                                          "CW"  ,550    , $
-                                                                          "BW"  ,300    )
-
-                        2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.001                          , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.01                           , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.1                            , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-
-			5: data_struct = CREATE_STRUCT("name", 'Blank'	, $		; lambda>950nm to CCD39
-									  "R"	, 0.0		, $
-									  "T"	, 0.0		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
-									  "R"	,0.0				, $
-									  "T"	,0.003				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
-									  "R"	,0.0		, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	    , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
-									  "R"	,0.0	, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-
-    endif else if ((wunit eq 'LBTIDX') and (self._julianday ge LBTIDX_SOUL_DATE)) then begin
-
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Blank'	, $
-									  "R"	,0.0 				, $
-									  "T"	,0.0 				, $
-									  "CW"	,!VALUES.F_NAN , $
-									  "BW"	,!values.F_NAN	)
-
-                        1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
-                                                                          "R"   ,0.05                           , $
-                                                                          "T"   ,0.95                           , $
-                                                                          "CW"  ,550    , $
-                                                                          "BW"  ,300    )
-
-                        2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.001                          , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.01                           , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-                        4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
-                                                                          "R"   ,0.0                            , $
-                                                                          "T"   ,0.1                            , $
-                                                                          "CW"  ,!VALUES.F_INFINITY     , $
-                                                                          "BW"  ,!VALUES.F_INFINITY     )
-
-
-			5: data_struct = CREATE_STRUCT("name", 'Window'	, $		; lambda>950nm to CCD39
-									  "R"	, 0.05		, $
-									  "T"	, 0.95		, $
-									  "CW"	,!VALUES.F_INFINITY 		, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
-									  "R"	,0.0				, $
-									  "T"	,0.003				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
-									  "R"	,0.0		, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	    , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
-									  "R"	,0.0	, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-
-
-    endif else if ((wunit eq 'LBTISX') and (self._julianday lt LBTISX_SOUL_DATE)) then begin
-
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Window'	, $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!values.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
-									  "R"	,0.0				, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,550 	, $
-									  "BW"	,300	)
-
-			5: data_struct = CREATE_STRUCT("name", 'Blank'	, $		; lambda>950nm to CCD39
-									  "R"	, 0.0		, $
-									  "T"	, 0.0		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
-									  "R"	,0.0				, $
-									  "T"	,0.003				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
-									  "R"	,0.0		, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	    , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
-									  "R"	,0.0	, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-    endif else if ((wunit eq 'LBTISX') and (self._julianday ge LBTISX_SOUL_DATE)) then begin
-
-	CASE fw_number OF
-
-;		NOTE: in the case of FW1, the REFLECTED light goes towards the CCD47, and
-;		      the TRANSMITTED light goes towards the CCD39
-	'1': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'Blank'	, $
-									  "R"	,0.0 				, $
-									  "T"	,0.0 				, $
-									  "CW"	,!VALUES.F_NAN , $
-									  "BW"	,!values.F_NAN	)
-
-			1: data_struct = CREATE_STRUCT("name", '400 - 700nm', $
-									  "R"	,0.05				, $
-									  "T"	,0.95				, $
-									  "CW"	,550 	, $
-									  "BW"	,300	)
-			2: data_struct = CREATE_STRUCT("name", 'ND, OD3, T=0.1%', $
-									  "R"	,0.0				, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'ND, OD2, T=1.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'ND, OD1, T=10.0%', $
-									  "R"	,0.0				, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'Window'	, $		; lambda>950nm to CCD39
-									  "R"	, 0.05		, $
-									  "T"	, 0.95		, $
-									  "CW"	,!VALUES.F_INFINITY 		, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-
-		 ENDCASE
-
-	'2': CASE self._fw_pos OF
-
-			0: data_struct = CREATE_STRUCT("name", 'OD=2.5, T=0.3%'	, $
-									  "R"	,0.0				, $
-									  "T"	,0.003				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			1: data_struct = CREATE_STRUCT("name", 'OD=3.0, T=0.01'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.001				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			2: data_struct = CREATE_STRUCT("name", 'OD=1.0, T=10%'	, $
-									  "R"	,0.0		, $
-									  "T"	,0.1				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			3: data_struct = CREATE_STRUCT("name", 'OPEN'	, $
-									  "R"	,0.0		, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY	    , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			4: data_struct = CREATE_STRUCT("name", 'OD=2.0, T=1%'	, $
-									  "R"	,0.0	, $
-									  "T"	,0.01				, $
-									  "CW"	,!VALUES.F_INFINITY	, $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			5: data_struct = CREATE_STRUCT("name", 'empty'	, $
-									  "R"	,0.0				, $
-									  "T"	,1.0				, $
-									  "CW"	,!VALUES.F_INFINITY , $
-									  "BW"	,!VALUES.F_INFINITY	)
-
-			ELSE: data_struct = CREATE_STRUCT("name", 'UNKNOWN'	, $
-									  "R"	,!VALUES.F_NAN		, $
-									  "T"	,!VALUES.F_NAN		, $
-									  "CW"	,!VALUES.F_NAN 		, $
-									  "BW"	,!VALUES.F_NAN	)
-		 ENDCASE
-	ENDCASE
-
-
-
-  ENDIF
-
-	self._fw_data = ptr_new(data_struct, /no_copy)
+    LBTISX_SOUL_DATE = julday(06, 01, 2018, 0, 0, 0)  ; M,D,Y  h,m,s
+    LBTIDX_SOUL_DATE = julday(02, 28, 2019, 0, 0, 0)  ; M,D,Y, h,m,s
+  
+    if wunit eq 'LBTIDX' then begin
+          if self._julianday lt LBTIDX_SOUL_DATE then wunit = 'LBTIDX_OLD' $ 
+          else wunit = 'LBTIDX_SOUL'
+    endif
+
+    if wunit eq 'LBTISX' then begin
+          if self._julianday lt LBTISX_SOUL_DATE then wunit = 'LBTISX_OLD' $
+          else wunit = 'LBTISX_SOUL'
+    endif
+
+    data_struct = self.filters_LUT(wunit, fw_number, self._fw_pos)
+
+    self._fw_data = ptr_new(data_struct, /no_copy)
 
 end
 
