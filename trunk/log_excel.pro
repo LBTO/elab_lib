@@ -88,7 +88,9 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
             if file_test(psf_dl_fname) then sr_tmp = (cur_ee->luci())->sr_se() else sr_tmp = 0
             if not (sr_tmp gt 1 or sr_tmp lt 0) then cur_sr = sr_tmp
           endif
-          cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(cur_ee->luci()) ? (cur_ee->luci())->lambda()*1e9 : 1650.)
+          if obj_valid(cur_ee->tel()) then if finite((cur_ee->tel())->dimm_seeing()) then $
+            cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(cur_ee->luci()) ? $
+            (cur_ee->luci())->lambda()*1e9 : 1650.,/fitting)
           if obj_valid(cur_ee->wfs_status()) then begin
             if obj_valid((cur_ee->wfs_status())->camera()) then begin
               if obj_class((cur_ee->wfs_status())->camera()) ne 'AOCCD39' then $
