@@ -1,4 +1,4 @@
-pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
+pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing = seeing
     if not keyword_set(ref_star) then ref_star='???'
 
     objref =  aodataset->Get()
@@ -88,7 +88,9 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->frames()) ? round((ee->frames())->nphsub_per_int_av())*ADU2nph : -1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
-            obj_valid(ee->residual_modes()) ? (obj_valid(ee->tel()) ? (finite((ee->tel())->dimm_seeing()) ? sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.,/fitting)*100 : -1) : -1) : -1, $
+            obj_valid(ee->residual_modes()) ? (keyword_set(seeing) ? sr_from_slopes(ee, obj_valid(ee->luci()) ? $
+            (ee->luci())->lambda()*1e9 : 1650.,/fitting,seeing = seeing)*100 : (obj_valid(ee->tel()) ? (finite((ee->tel())->dimm_seeing()) ? $
+            sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.,/fitting)*100 : -1) : -1)) : -1, $
             obj_valid(instr) ? instr->filter_name() : '?' , $
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
     		obj_valid(instr) ? instr->nframes() : -1 , $
