@@ -43,7 +43,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting
 
     if keyword_set(fitting) then begin
         if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) then begin
-            if obj_valid((cur_data->tel())->dimm_seeing()) then begin
+            if finite((cur_data->tel())->dimm_seeing()) then begin
                 rad2asec = 3600.d*180.d/!dpi
                 asec2rad = 1.d/rad2asec
                 seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
