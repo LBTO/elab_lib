@@ -545,7 +545,7 @@ pro AOolmodes::tf, idx, mtf=mtf, theoric=theoric, gain=gain, mtf_theoric=mtf_the
         fs = ((self._root_obj->wfs_status())->camera())->framerate()
         delay = (self._root_obj->delay())->delay()*fs
 
-        iir = int_iir([((self._root_obj->control())->gain())[idx],gainTF], ff=ff)
+        iir = elab_int_iir([((self._root_obj->control())->gain())[idx],gainTF], ff=ff)
         if delay ge 2 then dm_delay = 1. else dm_delay = delay - fix(delay)
         wfs_delay = delay - dm_delay 
 

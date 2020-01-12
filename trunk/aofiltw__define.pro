@@ -212,7 +212,7 @@ pro AOfiltw::filtw_data, wunit, fw_number
           else wunit = 'LBTISX_SOUL'
     endif
 
-    data_struct = self.filters_LUT(wunit, fw_number, self._fw_pos)
+    data_struct = self->filters_LUT(wunit, fw_number, self._fw_pos)
 
     self._fw_data = ptr_new(data_struct, /no_copy)
 
