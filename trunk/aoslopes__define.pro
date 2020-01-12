@@ -156,38 +156,27 @@ end
 
 ; return remapped signal vector
 function AOslopes::slopes2d, iter_idx=iter_idx, slopevec=slopevec
-	; in SOUL the slopes become 2848
-	; n_slopes = 1600
-    ; SOUL: debug this
-	n_slopes = self->NSlopes()  ; 2848
 
-	if n_elements(iter_idx) eq 0 then niter = self->niter() else niter=n_elements(iter_idx)
-	if n_elements(slopevec) ne 0 then niter=1
+    n_slopes = self->NSlopes()
 
-	mypup = 0	;use this pupil info to remap signals
-	nsub = ((self->wfs_status())->pupils())->nsub()
-	indpup = ((self->wfs_status())->pupils())->indpup()
-	cx  = (((self->wfs_status())->pupils())->cx())[mypup]
-	cy  = (((self->wfs_status())->pupils())->cy())[mypup]
-	rad = (((self->wfs_status())->pupils())->radius())[mypup]
-	xr = [floor(cx-rad),ceil(cx+rad)] 
-	yr = [floor(cy-rad),ceil(cy+rad)]
-    xr -= xr[0]
-    yr -= yr[0]
+    if n_elements(iter_idx) eq 0 then iter_idx = lindgen(self->niter())
 
     pupPath = ((self->wfs_status())->pupils())->path()
     tx = read_ascii(pupPath +"slopex")
     tx = tx.field1
     tx_nonzero = where(tx ne -1)
 
-	fr_sz_x = ((self->wfs_status())->camera())->binnedSensorSideX()
-	fr_sz_y = ((self->wfs_status())->camera())->binnedSensorSideY()
+    fr_sz_x = ((self->wfs_status())->camera())->binnedSensorSideX()
+    fr_sz_y = ((self->wfs_status())->camera())->binnedSensorSideY()
 
     if n_elements(slopevec) gt 0 then slopes = slopevec $
-                                 else slopes = (self->slopes())[iter_idx,*]
+    else begin
+       slopes = (self->slopes())[iter_idx,*]
+       slopes = total(slopes,1) / n_elements(iter_idx)
+    endelse
 
     sl = slopes[ tx[tx_nonzero]]
-	s2d = fltarr(fr_sz_x,fr_sz_y)
+    s2d = fltarr(fr_sz_x,fr_sz_y)
     s2d[tx_nonzero] = sl
     return, s2d
       

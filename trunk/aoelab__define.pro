@@ -7,8 +7,8 @@
 function AOelab::Init, tracknum, $
             recompute = recompute, $
             modal_reconstructor_file = modal_reconstructor_file, $	; this is used in case of kalman filter
-            dark_fname = dark_fname, $   								    ; override IRTC/PISCES dark filename
-            SILENT=SILENT
+            dark_fname = dark_fname, $                                  ; override IRTC/PISCES dark filename
+            SILENT=SILENT                                               ; Do not print warnings for non-existant TNs
 
     self._recompute = keyword_set(recompute)
 
