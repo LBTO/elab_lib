@@ -17,7 +17,9 @@ function ao_phasemapdir
 end
 
 
-pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEFT, RIGHT=RIGHT
+pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, $
+             LEFT=LEFT, RIGHT=RIGHT, WHITE_PLOTS=WHITE_PLOTS
+
 ; environment string definitions
 ;
 ; rootdir : directory where towerdata is located (can be taken from env variable: ADOPT_MEAS)
@@ -27,6 +29,16 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, LEFT=LEF
 ;													   (can be taken from env variable: ADOPT_PHASEMAPS)
 ;
 ; LEFT and RIGHT, if specified, will force the rootdir and elabdir directories to end in "left" or "right" respectively
+
+    if keyword_set(WHITE_PLOTS) then begin
+        loadct, 3
+        DEVICE, RETAIN=2
+        !p.background=-1
+        !p.color=0
+        !P.CHARTHICK = 1.25
+        !P.THICK = 1.25
+        !P.CHARSIZE = 2.0
+    endif
 
     ; Special case for Arcetri local directories
     if FILE_TEST('/home/elab') then begin

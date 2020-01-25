@@ -57,6 +57,24 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     	'OH1060 clear':   lambda = 1.060e-6
         'Br_gam clear':   lambda = 2.124e-6
         'P_beta clear':   lambda = 1.28e-6
+     	'ND2 J':        lambda = 1.25e-6
+    	'ND2 H2':       lambda = 2.124e-6
+    	'ND2 FeII':     lambda = 1.646e-6
+    	'ND2 H':        lambda = 1.646e-6
+    	'ND2 Pbet':     lambda = 1.283e-6
+    	'ND2 OH1060':   lambda = 1.060e-6
+        'ND2 Br_gam':   lambda = 2.124e-6
+        'ND2 P_beta':   lambda = 1.28e-6
+        'ND2 Ks':       lambda = 2.15e-6
+    	'J ND2':        lambda = 1.25e-6
+    	'H2 ND2':       lambda = 2.124e-6
+    	'FeII ND2':     lambda = 1.646e-6
+    	'FeII H':       lambda = 1.646e-6
+    	'HeI ND2':      lambda = 1.088e-6
+    	'Pbet ND2':     lambda = 1.283e-6
+    	'OH1060 ND2':   lambda = 1.060e-6
+        'Br_gam ND2':   lambda = 2.124e-6
+        'P_beta ND2':   lambda = 1.28e-6
     else: begin
      		lambda = !VALUES.F_NAN
      		msg_temp = 'Unknown luci filter <'+self._filter_name+'>'

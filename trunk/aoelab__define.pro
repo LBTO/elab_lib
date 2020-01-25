@@ -265,6 +265,10 @@ function AOelab::Init, tracknum, $
     antidrift_fname = filepath(root=self._datadir, 'AntiDrift_'+tracknum+'.fits')
     self._frames = obj_new('AOframes', self, frames_fname, antidrift_fname)
 
+    ; system timestamps
+    timestamps_fname = filepath(root=self._datadir,  'SystemTimestamp_'+tracknum+'.fits')
+    self._timestamps = obj_new('AOtimestamps', self, timestamps_fname)
+
     ; TV
     tv_fnames=file_search(filepath(root=self._datadir, 'psf*.fits'))
     self._tv  = obj_new('AOTV', self, tv_fnames)
@@ -383,6 +387,7 @@ function AOelab::Init, tracknum, $
     if obj_valid(self._modalpositions) then self->addleaf, self._modalpositions, 'modalpositions'
     if obj_valid(self._tv ) then self->addleaf, self._tv , 'tv'
     if obj_valid(self._frames) then self->addleaf, self._frames, 'frames'
+    if obj_valid(self._timestamps) then self->addleaf, self._timestamps, 'timestamps'
     if obj_valid(self._disturb) then self->addleaf, self._disturb, 'disturb'
     if obj_valid(self._modaldisturb) then self->addleaf, self._modaldisturb, 'modaldisturb'
     if obj_valid(self._irtc) then self->addleaf, self._irtc, 'irtc'
@@ -425,6 +430,7 @@ function AOelab::Init, tracknum, $
     self->addMethodHelp, "intmat()", "reference to interaction matrix object (AOintmat)"
     self->addMethodHelp, "modeShapes()", "reference to modal shapes object (AOmodeShapes)"
     self->addMethodHelp, "frames()", "reference to WFS frame object (AOframes)"
+    self->addMethodHelp, "timestamps()", "reference to timestamps object (AOtimestamps)"
     self->addMethodHelp, "disturb()", "reference to disturb object (AOdisturb)"
     self->addMethodHelp, "modaldisturb()", "reference to modal disturb object (AOmodaldisturb)"
     self->addMethodHelp, "offloadmodes()", "reference to offload modes object (AOoffloadmodes)"
@@ -654,6 +660,7 @@ pro AOelab::fullsummary
     if obj_valid(self._modalpositions) then if obj_hasmethod(self._modalpositions, 'summary') then self._modalpositions->summary
     if obj_valid(self._tv) then if obj_hasmethod(self._tv, 'summary') then self._tv->summary
     if obj_valid(self._frames) then if obj_hasmethod(self._frames, 'summary') then self._frames->summary
+    if obj_valid(self._timestamps) then if obj_hasmethod(self._timestamps, 'summary') then self._timestamps->summary
     if obj_valid(self._disturb) then if obj_hasmethod(self._disturb, 'summary') then self._disturb->summary
     if obj_valid(self._modaldisturb) then if obj_hasmethod(self._modaldisturb, 'summary') then self._modaldisturb->summary
     if obj_valid(self._irtc) then if obj_hasmethod(self._irtc, 'summary') then self._irtc->summary
@@ -673,13 +680,22 @@ end
 ;                                  PLOTS and SHORTCUTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
-                       WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, $
-                       thick=thick, _extra=ex, clvar=clvar, olvar=olvar, argosCalUnit=argosCalUnit
+; WFRESIDUALS: overplot the residual modes calculated from WFS slopes (for daytime)
+; ARGOSCAL   : adapt to Argos calibration unit: disturbance and residuals computed
+;              as for the RR case, but with single-pass normalization (as for the on-sky case)
+;
+; SYMSIZE    : set to the value for the SYMSIZE keyword in plot instructions
+; CHARSIZE   : set to the value for the CHARSIZE keyword in plot instructions
 
+pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
+                       WFRESIDUALS=WFRESIDUALS, WFCOLOR=WFCOLOR, NOLEGEND=NOLEGEND, $
+                       thick=thick, _extra=ex, clvar=clvar, olvar=olvar, ARGOSCAL=ARGOSCAL
+
+    if n_elements(SYMSIZE) then SYMSIZE=0.8
+    if n_elements(CHARSIZE) then CHARSIZE=1.2
     if n_elements(OLCOLOR) eq 0 then OLCOLOR = '0000ff'x
 
-    if self->operation_mode() eq "RR" or keyword_set(argosCalUnit) then begin
+    if self->operation_mode() eq "RR" or keyword_set(ARGOSCAL) then begin
         nmodes = (self->modalpositions())->nmodes()
         clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
         yrange = sqrt(minmax(clvar))
@@ -697,21 +713,23 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
             yrange = minmax([yrange, minmax(wfres)])
         endif
         if not keyword_set(OVERPLOT) then begin
-            plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+            plot_oo, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=SYMSIZE, charsize=CHARSIZE, ytitle='nm rms wf', xtitle='mode number', $
                                                      title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-            oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
+            oplot, lindgen(nmodes)+1, sqrt(clvar), psym=-1, symsize=SYMSIZE, COLOR=COLOR, thick=thick
         endelse
         if obj_valid(self._disturb) then begin
             if (self->adsec_status())->disturb_status() ne 0 then begin
-                oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
-                elab_legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick
+                oplot, lindgen(nmodes)+1, sqrt(olvar), psym=-2, symsize=SYMSIZE, COLOR=OLCOLOR, thick=thick
+                if ~keyword_set(NOLEGEND) then begin
+                    elab_legend, ['disturbance','closed-loop'], color=[OLCOLOR,!P.color], psym=-[2,1], /right, thick=thick
+                endif
             endif
         endif
         if keyword_set(WFRESIDUALS) then begin
             if n_elements(WFCOLOR) eq 0 then WFCOLOR = 'ff00ff'x
             print, 'WFS residual minmax:', minmax(wfres)
-            oplot, lindgen(nmodes)+1, wfres, psym=-4, symsize=0.8, color=WFCOLOR
+            oplot, lindgen(nmodes)+1, wfres, psym=-4, symsize=SYMSIZE, color=WFCOLOR, thick=thick
         endif
 
     ;; End of 'RR', begin 'ONSKY'
@@ -725,18 +743,18 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
         clvar  = clvar[modes_idx]
         olvar  = olvar[modes_idx]
         yrange = sqrt(minmax([clvar,olvar]))
-        if not keyword_set(OVERPLOT) then  begin
-            plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, charsize=1.5, ytitle='nm rms wf', xtitle='mode number', $
+        if not keyword_set(OVERPLOT) then begin
+            plot_oo, modes_idx+1, sqrt(clvar), psym=-1, symsize=SYMSIZE, charsize=CHARSIZE, ytitle='nm rms wf', xtitle='mode number', $
                                                title=self._obj_tracknum->tracknum(), yrange=yrange, thick=thick, _extra=ex
         endif else begin
-            oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=1.2, COLOR=COLOR, thick=thick
+            oplot, modes_idx+1, sqrt(clvar), psym=-1, symsize=SYMSIZE, COLOR=COLOR, thick=thick
         endelse
-        oplot, modes_idx+1, sqrt(olvar), psym=-4, symsize=1.2, COLOR=OLCOLOR, thick=thick
+        oplot, modes_idx+1, sqrt(olvar), psym=-2, symsize=SYMSIZE, COLOR=OLCOLOR, thick=thick
     endelse
 end
 
 
-pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
+pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, NOLEGEND=NOLEGEND, _extra=ex
 
 	if n_params() ne 1 then begin
 		message, 'Missing parameter. Usage: ...->modalSpecPlot, modenum', /info
@@ -788,7 +806,9 @@ pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, _extra=ex
 			, title=self._obj_tracknum->tracknum()+', mode '+strtrim(modenum,2), yrange=yrange, ytickformat='(e9.1)', _extra=ex
 		if n_elements(olfreq) ne 0 then begin
 		    oplot, olfreq[1:*], sqrt(olpsd[1:*,modenum]), color=250
-                    elab_legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
+            if ~keyword_set(NOLEGEND) then begin
+                elab_legend, ['disturbance','closed-loop'], color=[250,!P.color], linestyle=[0,0], /bottom
+            endif
 		endif
 	endif else oplot, freq[1:*], sqrt(psd[1:*,modenum]), COLOR=COLOR, _extra=ex
 
@@ -909,6 +929,10 @@ end
 
 function AOelab::frames
 	IF (OBJ_VALID(self._frames)) THEN return, self._frames else return, obj_new()
+end
+
+function AOelab::timestamps
+    IF (OBJ_VALID(self._timestamps)) THEN return, self._timestamps else return, obj_new()
 end
 
 function AOelab::delay
@@ -1109,6 +1133,7 @@ pro AOelab::free
     IF (OBJ_VALID(self._modal_rec)) THEN  self._modal_rec->free
     IF (OBJ_VALID(self._modeShapes)) THEN  self._modeShapes->free
     IF (OBJ_VALID(self._frames)) THEN  self._frames->free
+    IF (OBJ_VALID(self._timestamps)) THEN  self._timestamps->free
     IF (OBJ_VALID(self._disturb)) THEN self._disturb->free
     IF (OBJ_VALID(self._modaldisturb)) THEN self._modaldisturb->free
     IF (OBJ_VALID(self._offloadmodes)) THEN  self._offloadmodes->free
@@ -1148,6 +1173,7 @@ pro AOelab::Cleanup
 ;    obj_destroy, self._intmat
 ;	 obj_destroy, self._modeShapes
     obj_destroy, self._frames
+    obj_destroy, self._timestamps
     obj_destroy, self._disturb
     obj_destroy, self._modaldisturb
     obj_destroy, self._offloadmodes
@@ -1196,6 +1222,7 @@ pro AOelab__define
         _intmat			   : obj_new(), $
         _modeShapes		   : obj_new(), $
         _frames            : obj_new(), $
+        _timestamps        : obj_new(), $
         _disturb           : obj_new(), $
         _modaldisturb      : obj_new(), $
         _offloadmodes      : obj_new(), $

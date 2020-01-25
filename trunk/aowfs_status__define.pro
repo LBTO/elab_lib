@@ -63,6 +63,8 @@ function AOwfs_status::Init, root_obj, fitsfile
 
     self._slopes_null_fname = string(aoget_fits_keyword(self->header(), 'sc.SLOPENULL'))
 
+    self._rrmode = byte(fix(aoget_fits_keyword(self->header(), 'RR.MODE')))
+
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('AOwfs_status', 'Represent WFS status') then return, 0
@@ -84,6 +86,7 @@ function AOwfs_status::Init, root_obj, fitsfile
     self->addMethodHelp, "cube_stage()",  "cube stage position (mm)"
     self->addMethodHelp, "slopes_null_fname()",  "slopesnull vector fitsfile name (string)"
     self->addMethodHelp, "zeromag_flux()", "Flux for a zero-magnitude star (counts/second/subap)"
+    self->addMethodHelp, "rr_mode()",  "RR mode enabled on AOS"
     self->addMethodHelp, "optg()", "optical gain value used to normalize slopes"
     self->addMethodHelp, "summary", "Summary of WFS status"
     if obj_valid(self._camera) then self->addleaf, self._camera, 'camera'
@@ -197,6 +200,10 @@ function AOwfs_status::pixels_decimation
 	return, self._pixels_decimation
 end
 
+function AOwfs_status::rrmode
+    return, self._rrmode
+end
+
 function AOwfs_status::optg
   return, self._optg
 end
@@ -300,6 +307,7 @@ pro AOwfs_status__define
         _filtw2         : obj_new(), $
         _optg           : 0.,        $
         _ncpa_trigger   : 0b,        $
+        _rrmode         : 0b,        $
         _wunit          : ""	   , $
         _slopes_null_fname : ""    , $
         _pixels_decimation : 0L,     $

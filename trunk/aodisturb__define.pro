@@ -108,6 +108,8 @@ function AOdisturb::Init, root_obj, fname, recompute=recompute
             END
         'autogain': BEGIN
             END
+        'chirp': BEGIN
+            END
 		'':	message, 'Unknown type of disturbance', /info
 	ENDCASE
 

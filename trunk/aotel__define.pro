@@ -8,21 +8,25 @@ function AOtel::Init, root, fitsfile
     if errmsg ne '' then message, fitsfile+ ': '+ errmsg, /info
 
 
-	angle_arcsec = float(aoget_fits_keyword(hdr, 'tel.ROTATOR.ANGLE'))
-	if angle_arcsec ne -9999. then self._rot_angle = (angle_arcsec/206264.806)*(180./!PI) else $
-								   self._rot_angle = !VALUES.F_NAN
+    angle_arcsec = float(aoget_fits_keyword(hdr, 'tel.ROTATOR.ANGLE'))
+    if angle_arcsec ne -9999. then self._rot_angle = angle_arcsec / 3600.0 $
+                              else self._rot_angle = !VALUES.F_NAN
 
-	az = double(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
-	if az ne -9999. then self._az = az else self._az = !VALUES.F_NAN
+	az_arcsec = double(aoget_fits_keyword(hdr, 'tel.TEL.AZ'))
+	if az_arcsec ne -9999. then self._az = az_arcsec / 3600.0 $
+                           else self._az = !VALUES.F_NAN
 
-	el = double(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
-	if el ne -9999. then self._el = el else self._el = !VALUES.F_NAN
+	el_arcsec = double(aoget_fits_keyword(hdr, 'tel.TEL.EL'))
+	if el_arcsec ne -9999. then self._el = el_arcsec / 3600.0 $
+                           else self._el = !VALUES.F_NAN
 
     dec =  double(aoget_fits_keyword(hdr, 'tel.TEL.DEC'))
-	if dec ne -9999. then self._dec = dec * (180./!PI) else self._dec = !VALUES.F_NAN
+	if dec ne -9999. then self._dec = dec * (180./!PI) $
+                     else self._dec = !VALUES.F_NAN
 
     ra  =  double(aoget_fits_keyword(hdr, 'tel.TEL.RA'))
-	if ra ne -9999. then self._ra = ra * (180./!PI)/15 else self._ra = !VALUES.F_NAN
+	if ra ne -9999. then self._ra = ra * (180./!PI)/15 $
+                    else self._ra = !VALUES.F_NAN
 
     istracking = long(aoget_fits_keyword(hdr, 'tel.TEL.ISTRACKING'))
 	if istracking ne -9999 then self._istracking = istracking else self._istracking = -1L

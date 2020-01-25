@@ -57,11 +57,26 @@ pro demodulate_signals_optg, deltacomm_hist, comm_hist, fdist, fsamp, deltacomm_
     dem_cos = cos(w*t)
     
     ; cumulated demodulated signals
-    ds = total(deltacomm_hist*dem_sin,/cum)/(findgen(nt)+1)
-    dc = total(deltacomm_hist*dem_cos,/cum)/(findgen(nt)+1)
-    cs = total(comm_hist*dem_sin,/cum)/(findgen(nt)+1)
-    cc = total(comm_hist*dem_cos,/cum)/(findgen(nt)+1)
-    
+    ds = fltarr(nt)
+    dc = fltarr(nt)
+    cs = fltarr(nt)
+    cc = fltarr(nt)
+    for j = 1, nt-1 do begin
+        cur_dcom = deltacomm_hist[0:j]-mean(deltacomm_hist[0:j])
+        tilt = (cur_dcom[j]-cur_dcom[0])/j
+        cur_dcom = cur_dcom-tilt*findgen(j+1)-cur_dcom[0]
+        
+        cur_com = comm_hist[0:j]-mean(comm_hist[0:j])
+        tilt = (cur_com[j]-cur_com[0])/j
+        cur_com = cur_com-tilt*findgen(j+1)-cur_com[0]
+        
+        ds(j) = total(cur_dcom*dem_sin[0:j])/(j+1)
+        dc(j) = total(cur_dcom*dem_cos[0:j])/(j+1)
+        cs(j) = total(cur_com*dem_sin[0:j])/(j+1)
+        cc(j) = total(cur_com*dem_cos[0:j])/(j+1)
+
+    endfor
+
     ; square root
     d_dem_temp[*,i] = 2.*sqrt(ds^2.+dc^2.)
     c_dem_temp[*,i] = 2.*sqrt(cs^2.+cc^2.)

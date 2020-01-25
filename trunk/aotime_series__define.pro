@@ -43,12 +43,15 @@ pro AOtime_series::Compute
     ; time average & variance
     timevariance  = fltarr(self._nseries)
     timeaverage   = fltarr(self._nseries)
+    timerms       = fltarr(self._nseries)
     for ii=0L, self._nseries-1 do begin
         timevariance[ii] = variance( (*dati)[*,ii])
         timeaverage[ii] = mean( (*dati)[*,ii])
+        timerms[ii]    =  rms( (*dati)[*,ii])
     endfor
     self._time_variance = ptr_new(timevariance, /no_copy)
     self._time_average  = ptr_new(timeaverage, /no_copy)
+    self._time_rms      = ptr_new(timerms, /no_copy)
 
     ; ensemble average & variance
     ensemblevariance  = fltarr(self._niter)
@@ -144,6 +147,13 @@ function AOtime_series::time_variance, series_idx
 
     if n_elements(series_idx) ne 0 then return, (*self._time_variance)[series_idx] $
     else return, *self._time_variance
+end
+
+function AOtime_series::time_rms, series_idx
+    if not ptr_valid(self._time_rms) then self->AOtime_series::Compute
+
+    if n_elements(series_idx) ne 0 then return, (*self._time_rms)[series_idx] $
+    else return, *self._time_rms
 end
 
 function AOtime_series::ensemble_variance, iter_idx
@@ -618,6 +628,7 @@ end
 pro AOtime_series::addHelp, obj
     obj->addMethodHelp, "niter()",   "number of time steps"
     obj->addMethodHelp, "time_variance(series_idx)", "time-variance of series series_idx"
+    obj->addMethodHelp, "time_rms(series_idx)", "time-RMS of series series_idx"
     obj->addMethodHelp, "ensemble_variance(iter_idx)", "ensemble-variance of iteration iter_idx"
     obj->addMethodHelp, "time_average(series_idx)", "time-average of series series_idx"
     obj->addMethodHelp, "ensemble_average(iter_idx)", "ensemble-average of iteration iter_idx"
@@ -641,6 +652,7 @@ end
 pro AOtime_series::test
     d=self->niter()
     d=self->time_variance()
+    d=self->time_rms()
     d=self->ensemble_variance()
     d=self->time_average()
     d=self->ensemble_average()
@@ -659,6 +671,7 @@ pro AOtime_series::free
     ptr_free, self._psd
     ptr_free, self._phase
     ptr_free, self._time_variance
+    ptr_free, self._time_rms
     ptr_free, self._time_average
     ptr_free, self._ensemble_variance
     ptr_free, self._ensemble_average
@@ -676,6 +689,7 @@ end
 pro AOtime_series::Cleanup
     ;ptr_free, self._dati
     ptr_free, self._time_variance
+    ptr_free, self._time_rms
     ptr_free, self._time_average
     ptr_free, self._ensemble_variance
     ptr_free, self._ensemble_average
@@ -696,6 +710,7 @@ struct = { AOtime_series, $
     _thr_peaks         :  0.    , $
 ;    _nospectra         :  0B       , $
     _time_variance     :  ptr_new()	, $
+    _time_rms          :  ptr_new() , $
     _time_average      :  ptr_new()	, $
     _ensemble_variance :  ptr_new()	, $
     _ensemble_average  :  ptr_new()	, $

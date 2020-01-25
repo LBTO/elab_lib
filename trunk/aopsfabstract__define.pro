@@ -103,7 +103,6 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "gaussfit()",  		"return reference to psf gaussfit object (AOgaussfit)"
     obj->addMethodHelp, "oc()",  		    "return camera obstruction (0..1)"
     obj->addMethodHelp, "sr_se([/PLOT][ima=ima])", 	"Strehl ratio estimated from the image. Ima allows to pass an external image on which compute the SR"
-    obj->addMethodHelp, "sr_se_cube()", 	    "Strehl ratio estimated from each single frame of the image"
     obj->addMethodHelp, "profile()", 		"radially averaged PSF profile"
     obj->addMethodHelp, "profvar()", 		"radially-computed variance of PSF image"
     obj->addMethodHelp, "prof_dist()", 		"profile distance vector in arcsec"
@@ -112,6 +111,7 @@ pro AOpsfAbstract::addHelp, obj
 ;    obj->addMethodHelp, "set_binsize, binsize", "set the bin size [in pixels] used in the computation of the PSF profile"
     obj->addMethodHelp, "sym_psf()",		"radial-symmetrical PSF image"
     obj->addMethodHelp, "show_profile, [/SHOW_RMS, _EXTRA=EX]", "show PSF profile"
+    obj->addMethodHelp, "show_enc_ene, [_EXTRA=EX]", "show Encircled Energy profile"
     obj->addMethodHelp, "enc_ene()",		"encircled energy"
     obj->addMethodHelp, "enc_ene_dist()", 	"circle radius in arcsec"
     obj->addMethodHelp, "enc_ene_dist_lD()","circle radius in lambda/D units"
@@ -119,6 +119,7 @@ pro AOpsfAbstract::addHelp, obj
     obj->addMethodHelp, "centroid()", 		"returns centroids of psf images in PIXELS from longExposure PSF center"
     obj->addMethodHelp, "plotjitter, from_freq=from_freq, to_freq=to_freq",  "Plots TT cum PSDs"
     obj->addMethodHelp, "replay,WAIT=WAIT", "shows the PSF images and the centroid location. WAIT: wait in s"
+    obj->addMethodHelp, "write_movie,FILENAME=FILENAME", "writes an animated GIF movie, filename defaults to TN.gif"
     obj->AOtime_series::addHelp, obj
 end
 
@@ -235,20 +236,6 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima, psf_dl_ima=psf_dl_ima
     	endelse
     endif
     return, self._sr_se
-end
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Strehl Ratio for each frame
-function AOpsfAbstract::sr_se_cube
-
-    lc = (self->gaussfit())->center() 
-
-    cube = self->imageCube()
-    sr_cube = fltarr((size(cube,/dim))[2])
-    for i=0,(size(cube,/dim))[2]-1 do sr_cube[i] = self->sr_se(ima=cube[*,*,i])
-    
-    return, sr_cube
-
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -435,7 +422,7 @@ pro AOpsfAbstract::plotJitter, from_freq=from_freq, to_freq=to_freq, overplot=ov
     endelse
     oplot, freq, sqrt(tip), col='0000ff'x, psym=psym, _extra=ex
     oplot, freq, sqrt(tilt), col='00ff00'x, psym=psym, _extra=ex
-    elab_legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
+    legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
     sigmatot2 = max( self->power(0, /cum)+self->power(1, /cum) ) * self->norm_factor()^2. / 2
     ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 * 1e3 ; l/D in mas
@@ -495,7 +482,9 @@ pro AOpsfAbstract::show_psf, radius=radius, _extra=ex, log=log, peak1=peak1, psf
 end
 
 
-pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysize=ysize, title=title
+pro AOpsfAbstract::show_profile, show_rms=show_rms, xsize=xsize, ysize=ysize, $
+                                title=title, xrange=xrange, xlinear=xlinear, _extra=ex
+
     if not (PTR_VALID(self._psfprofile)) THEN self->compute_profile
 
 	;airy disk:
@@ -507,7 +496,7 @@ pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysiz
     airysep_arcsec = airysep_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
     save, airysep_lD, airysep_arcsec, airyprof, file='/tmp/airyprof.sav'
 
-	prof_xrange_lD = [0.1,1e2]
+	if n_elements(xrange) gt 0 then prof_xrange_lD = xrange else prof_xrange_lD = [0.1,1e2]
 	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
 
 	winsize = get_screen_size()/2
@@ -517,8 +506,13 @@ pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysiz
 	window, /free, xsize=xsize, ysize=ysize, title=title
 	!P.MULTI = [0, 1, 2]
 	!Y.MARGIN = [4,3]
-	plot_oo, *self._psfprof_dist_lD, *self._psfprofile, xtitle='angular separation'+textoidl('(\lambda/D)') $
-	, ytitle='normalized intensity', xrange=prof_xrange_lD, yrange=[1e-5,1], xstyle=8, _extra=ex
+	if keyword_set(xlinear) then begin
+            plot_io, *self._psfprof_dist_lD, *self._psfprofile, xtitle='angular separation'+textoidl('(\lambda/D)') $
+                , ytitle='normalized intensity', xrange=prof_xrange_lD, yrange=[1e-5,1], xstyle=8, _extra=ex 
+    endif else begin
+	    plot_oo, *self._psfprof_dist_lD, *self._psfprofile, xtitle='angular separation'+textoidl('(\lambda/D)') $
+	             , ytitle='normalized intensity', xrange=prof_xrange_lD, yrange=[1e-5,1], xstyle=8, _extra=ex
+    endelse
 	if keyword_set(show_rms) then errplot, *self._psfprof_dist_lD, *self._psfprofile-sqrt(*self._psfprofvar), *self._psfprofile+sqrt(*self._psfprofvar)
 	oplot, airysep_lD, airyprof, linestyle=1
 	axis, xaxis=1, xtitle='angular separation (mas)', /xlog, xrange=prof_xrange_arcsec*1e3, charsize=1.2, xstyle=1
@@ -528,6 +522,54 @@ pro AOpsfAbstract::show_profile, _extra=ex, show_rms=show_rms, xsize=xsize, ysiz
 	image_show, psf_le/max(psf_le) > 0.0001, /as, /log, /inv, xtitle='pixels', _extra=ex
 	image_show, self->sym_psf() > 0.0001, /as, /log, /inv, xtitle='pixels', _extra=ex
 	!P.MULTI = 0
+end
+
+pro AOpsfAbstract::show_enc_ene, _extra=ex, xsize=xsize, ysize=ysize, title=title, $
+			xrange=xrange, yrange=yrangei, log_axes=log_axes
+    if not (PTR_VALID(self._psfprofile)) THEN self->compute_profile
+
+    ;airy disk:
+    airysep_lD = findgen(1000)/(1000.-1.)*100.
+    oc = self->oc()
+    sec2rad = 4.85*1.e-6
+    airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
+
+    airysep_arcsec = airysep_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    save, airysep_lD, airysep_arcsec, airyprof, file='/tmp/airyprof.sav'
+
+    winsize = get_screen_size()/2
+
+    ; compute enc ene from profile
+    ee = (*self._psfprofile)*2*!pi*(*self._psfprof_dist_lD)
+    ee[0] = (*self._psfprofile)[0]*0.25*2*!pi*(*self._psfprof_dist_lD)[0]
+    ee /= total(ee)
+    ee = total(ee,/cum)
+    ; -------------
+
+    ; DL PSF ee
+    ee_dl = airyprof*2*!pi*airysep_lD
+    ee_dl[0] = airyprof[0]*0.25*2*!pi*airysep_lD[0]
+    ee_dl /= total(ee_dl)
+    ee_dl = total(ee_dl,/cum)
+    ; ---------
+    
+    if n_elements(xrange) gt 0 then ee_xrange_lD = xrange else ee_xrange_lD = [1e-1,1e2]
+    if n_elements(yrange) gt 0 then ee_yrange = yrange else ee_yrange = [1e-2,1]
+    ee_xrange_arcsec = ee_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+
+    if not keyword_set(xsize) then xsize= winsize[0]
+    if not keyword_set(ysize) then ysize= winsize[1]
+    if not keyword_set(title) then title= 'PSF profile'
+    window, /free, xsize=xsize, ysize=ysize, title=title
+    if keyword_set(log_axes) then begin
+        plot_oo, *self._psfprof_dist_lD, ee, xtitle='angular separation'+textoidl('(\lambda/D)') $
+               , ytitle='Normalized Encirlced Energy', xrange=ee_xrange_lD, yrange=ee_yrange, xstyle=8, _extra=ex 
+    endif else begin
+        plot, *self._psfprof_dist_lD, ee, xtitle='angular separation'+textoidl('(\lambda/D)') $
+            , ytitle='Normalized Encirlced Energy', xrange=ee_xrange_lD, yrange=ee_yrange, xstyle=8, _extra=ex
+    endelse
+    oplot, airysep_lD, ee_dl, linestyle=1, col=255l
+    axis, xaxis=1, xtitle='angular separation (mas)', xlog=loag_zes, xrange=ee_xrange_arcsec*1e3, charsize=1.2, xstyle=1
 end
 
 
@@ -610,6 +652,15 @@ function AOpsfAbstract::oc
     if self._oc lt 0 then return, ao_pupil_oc()
     return, self._oc
 end
+
+pro AOpsfAbstract::write_movie, FILENAME=FILENAME
+
+    if not keyword_set(FILENAME) then FILENAME= self._plots_title+'.gif'
+    write_anim_gif, self->imageCube()>0.1, FILENAME, /LOG
+
+end
+
+
 
 pro AOpsfAbstract__define
     struct = { AOpsfAbstract			, $

@@ -502,8 +502,8 @@ pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, arg
 		    ao = getaoelab(self->get(pos=ii), SILENT=self._silent)
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
-		    if first eq 1 then ao->modalplot, argoscal=argoscal, _extra=ex, title='' else $
-		    			       ao->modalplot, /OVERPLOT, argoscal=argoscal, COLOR=cols[ii]
+		    if first eq 1 then ao->modalplot, argoscal=argoscal, _extra=ex, title='', /NOLEGEND else $
+		    			       ao->modalplot, /OVERPLOT, argoscal=argoscal, COLOR=cols[ii, /NOLEGEND 
             first=0
             progress, ii, ao->tracknum()
             ao->free
