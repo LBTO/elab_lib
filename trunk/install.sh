@@ -36,6 +36,19 @@ first=`echo $yesno | cut -c 1`
 
 if [ $first = "y" ]; then
 
+    # A little ed magic...
+    VERSIONFILE=/tmp/svnversion.txt
+    echo -n "return,'" > $VERSIONFILE
+    echo -n `svnversion` >> $VERSIONFILE
+    echo "'" >> $VERSIONFILE
+
+    ed -s elab_version.pro <<EOF
+/;;; BEGIN GENERATED/+,/;;; END GENERATED/-d
+/;;; BEGIN GENERATED/ r $VERSIONFILE
+w
+q
+EOF
+
     echo
     echo -n "Installing in $INSTALLDIR ... "
     install -d $INSTALLDIR
