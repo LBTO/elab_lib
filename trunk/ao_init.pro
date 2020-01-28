@@ -18,7 +18,7 @@ end
 
 
 pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, $
-             LEFT=LEFT, RIGHT=RIGHT, WHITE_PLOTS=WHITE_PLOTS
+             LEFT=LEFT, RIGHT=RIGHT, WHITE_PLOTS=WHITE_PLOTS, NOARCETRI=NOARCETRI
 
 ; environment string definitions
 ;
@@ -41,7 +41,7 @@ pro AO_init, rootdir=rootdir, elabdir=elabdir, phasemapdir=phasemapdir, $
     endif
 
     ; Special case for Arcetri local directories
-    if FILE_TEST('/home/elab') then begin
+    if FILE_TEST('/home/elab') and not keyword_set(NOARCETRI) then begin
         print, 'Found /home/elab, setting Arcetri elab paths'
 
         rootdir = '/home/elab/LBT_data_left'
