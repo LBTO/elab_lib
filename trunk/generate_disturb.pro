@@ -106,6 +106,7 @@ pro generate_disturb, disturb_type, $
 		m2c_cor_fname	=			m2c_cor_fname	, $
 		boost_tt		=			boost_tt		, $
 		n_steps			=			n_steps			, $
+                generate_n_steps        =                       generate_n_steps        , $
 		hz				=			hz  			, $
 		vib      		=    		vib     		, $
 		datavib  		=    		datavib			, $
@@ -151,6 +152,7 @@ endif
 ;*************************************************************
 if n_elements(n_steps)		eq 0 then n_steps 	= 4000				; buffer size on the Adsec unit  		[steps]
 if n_elements(hz)			eq 0 then hz		= 1000.				; frequency of the oversampling loop 	[Hz]
+if n_elements(generate_n_steps)	eq 0 then generate_n_steps = n_steps  ; Number of steps to calculate, defaults to the whole disturbance buffer
 
 
 ; Derived parameters
@@ -329,7 +331,7 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	; Generate atmospheric disturbance history
 	command_hist = fltarr(672,n_steps)
 	position = 0.
-	for ii=0L, n_steps-1 do begin
+	for ii=0L, generate_n_steps-1 do begin
 		ph = fshift(phase, position*angle_coef[0], position*angle_coef[1])
 		ph = ph[0:Dpix-1,0:Dpix-1] * maskPup
 		ph = (ph - total(ph)/np) * maskPup					;remove piston
