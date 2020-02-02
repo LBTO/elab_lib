@@ -71,29 +71,35 @@ end
 ; On initialization need to determine where the brightest star is in the frame:
 ; search peak in the fullframe image and select a roi around it
 function aoscientificimage::longexposure, _extra=ex
+;    if self._knowwherethestaris eq 0B then begin
+;        ;message, 'looking for brightest star ' ,/info      
+;        ima = self->AOframe::longexposure(/fullframe)
+;        ; TODO use find of astrolib?
+;        pk=max(ima, idxmax)
+;        xc = idxmax mod n_elements(ima[*,0])
+;        yc = idxmax / n_elements(ima[*,0])
+;
+;        ; TODO FQP convert with pixelscale to 2-3 arcsec of side
+;        roi = fltarr(4)
+;        roi[0] = (xc-60)>0                 ; xmin
+;        roi[1] = (xc+59) < (self->frame_w()-1) ; xmax
+;        roi[2] = (yc-60)>0                 ; ymin
+;        roi[3] = (yc+59) < (self->frame_h()-1) ; ymax
+;    
+;        self->setroi, roi
+;        self._knowwherethestaris = 1B
+;    endif
+;    return, self->AOframe::longexposure(_extra=ex)
     if self._knowwherethestaris eq 0B then begin
-        ;message, 'looking for brightest star ' ,/info
-        ima = self->AOframe::longexposure(/fullframe)
-        ; TODO use find of astrolib?
-        pk=max(ima, idxmax)
-        xc = idxmax mod n_elements(ima[*,0])
-        yc = idxmax / n_elements(ima[*,0])
-
-        ; TODO FQP convert with pixelscale to 2-3 arcsec of side
-        roi = fltarr(4)
-        roi[0] = (xc-60)>0                 ; xmin
-        roi[1] = (xc+59) < (self->frame_w()-1) ; xmax
-        roi[2] = (yc-60)>0                 ; ymin
-        roi[3] = (yc+59) < (self->frame_h()-1) ; ymax
-    
-        self->setroi, roi
-        self._knowwherethestaris = 1B
+      self->findstars, roi = roi, status = status
+      self->setroi, roi
+      if status eq 1 then self._knowwherethestaris = 1B
     endif
-    return, self->AOframe::longexposure(_extra=ex)
+    if self._knowwherethestaris eq 1B then return, self->AOframe::longexposure(_extra=ex) else return, -1
 end
 
 
-pro aoscientificimage::findstars, hmin=hmin
+pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status = status
     ; free self._psfs and other stuff before
     if ptr_valid(self._psfs) then begin
         for i=0, self->nstars()-1 do obj_destroy, self->psfs(i)
@@ -106,29 +112,41 @@ pro aoscientificimage::findstars, hmin=hmin
     ima = self->AOframe::longexposure(/fullframe)
     ima_w = n_elements(ima[*,0])
     ima_h = n_elements(ima[0,*])
+    
+    ;Median filtering on the image to remove bad pixels
+    if not keyword_set(width) then wid = 5 else wid = width
+    ima2 = median(ima,wid)
+    
     if not keyword_set(hmin) then begin 
-        hmin = median(ima) + 6*stddev(ima);  TODO BOH? ultragrezzo
+        hmin = median(ima2) + 6*stddev(ima2);  TODO BOH? ultragrezzo
     endif
     fwhm = self->lambda() / ao_pupil_diameter() / 4.85e-6 / self->pixelscale()  ;  in pixels
     roundlim = [-1.0,1.0]
     sharplim = [0.2,1.0]
-    find, ima, xx, yy, flux, sharpness, roundness, hmin, fwhm, roundlim, sharplim, /SILENT
-    ord=reverse(sort(flux))
-    flux=flux[ord] & xx=xx[ord] & yy=yy[ord] ; flux descending
-    self._nsources = n_elements(ord)  
-    self._xx   = ptr_new(xx)
-    self._yy   = ptr_new(yy)
-    self._flux = ptr_new(flux)
-    ; for every detected object instantiate an aopsf object
-    self._psfs = ptr_new(objarr(self._nsources))
-    for i=0, self->nstars()-1 do begin
+    find, ima2, xx, yy, flux, sharpness, roundness, hmin, fwhm, roundlim, sharplim, /SILENT
+    if n_elements(xx) ge 1 then begin
+      ord=reverse(sort(flux))
+      flux=flux[ord] & xx=xx[ord] & yy=yy[ord] ; flux descending
+      self._nsources = n_elements(ord)
+      self._xx   = ptr_new(xx)
+      self._yy   = ptr_new(yy)
+      self._flux = ptr_new(flux)
+      ; for every detected object instantiate an aopsf object
+      self._psfs = ptr_new(objarr(self._nsources))
+      for i=0, self->nstars()-1 do begin
         roi = [ (xx[i]-60)>0, (xx[i]+59)<(ima_w-1), (yy[i]-60)>0, (yy[i]+59)<(ima_h-1)] ;TODO ROI SIZE parametrizzato
         objpsf = obj_new('aopsf', self->fname(), self->dark_fname(), self->pixelscale(), self->lambda(), $
-             self->framerate(), ROI=roi, badpixelmap_obj=self->badpixelmap_obj(), recompute=self._recompute, $ 
-             store_radix=self._store_radix+'_psf'+string(format='(%"%d")',i) ) 
-
+          self->framerate(), ROI=roi, badpixelmap_obj=self->badpixelmap_obj(), recompute=self._recompute, $
+          store_radix=self._store_radix+'_psf'+string(format='(%"%d")',i) )
+ 
         (*self._psfs)[i]=objpsf
-    endfor 
+
+        if i eq 0 then roi0 = roi
+        
+      endfor
+      status = 1
+
+    endif else status = 0
 end
 
 
