@@ -94,6 +94,9 @@ function AOfiltw::filters_LUT, wunit, fw_number, pos
   W2_FW2[4] = {filtw, 'FB950-10',  0.50,  0.50,  950., 10.}
   W2_FW2[5] = {filtw, 'empty',     0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
 
+  W2SOUL_FW1 = W2_FW1
+  W2SOUL_FW2 = W2_FW2
+
   MAG_FW1 = replicate(INVALID, 6)
   MAG_FW1[0] = {filtw, 'R = 50%, T= 50%',      0.50,  0.50,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
   MAG_FW1[1] = {filtw, 'empty',                0.00,  1.00,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
@@ -182,6 +185,8 @@ function AOfiltw::filters_LUT, wunit, fw_number, pos
   else if (wunit eq 'MAG') and (fw_number eq 2) then data = MAG_FW2 $
   else if (wunit eq 'W1SOUL') and (fw_number eq 1) then data = W1SOUL_FW1 $
   else if (wunit eq 'W1SOUL') and (fw_number eq 2) then data = W1SOUL_FW2 $
+  else if (wunit eq 'W2SOUL') and (fw_number eq 1) then data = W2SOUL_FW1 $
+  else if (wunit eq 'W2SOUL') and (fw_number eq 2) then data = W2SOUL_FW2 $
   else if (wunit eq 'LBTIDX_OLD') and (fw_number eq 1) then data = LBTIDX_OLD_FW1 $
   else if (wunit eq 'LBTIDX_OLD') and (fw_number eq 2) then data = LBTIDX_OLD_FW2 $
   else if (wunit eq 'LBTIDX_SOUL') and (fw_number eq 1) then data = LBTIDX_SOUL_FW1 $
