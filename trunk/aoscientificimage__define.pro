@@ -120,9 +120,10 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     if not keyword_set(width) then wid = 5 else wid = width
     ima2 = median(ima,wid)
 
-    if not keyword_set(hmin) then begin 
+    if n_elements(hmin) eq 0 then begin 
         hmin = median(ima2) + 3*stddev(ima2);  TODO BOH? ultragrezzo
     endif
+ 
     fwhm = self->lambda() / ao_pupil_diameter() / 4.85e-6 / self->pixelscale()  ;  in pixels
     roundlim = [-1.0,1.0]
     sharplim = [0.2,1.0]
@@ -220,7 +221,10 @@ function aoscientificimage::star_fwhm, idx, hmin = hmin
       if n_elements(idx) ne 0 then return, fwhm[idx]*self->pixelscale() else return, fwhm*self->pixelscale()
     endif else begin
       self->findstars, status = status, hmin = hmin
-      if status eq 1 then return, self->star_fwhm(idx) else return,-1
+      if status eq 1 then begin
+        self._knowwherethestaris = 1B
+        return, self->star_fwhm(idx) 
+      endif else return,-1
     endelse
 end
 
