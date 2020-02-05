@@ -92,10 +92,13 @@ function aoscientificimage::longexposure, _extra=ex
 ;    return, self->AOframe::longexposure(_extra=ex)
     if self._knowwherethestaris eq 0B then begin
       self->findstars, roi = roi, status = status
-      self->setroi, roi
-      if status eq 1 then self._knowwherethestaris = 1B
+      if status eq 1 then begin
+        self->setroi, roi
+        self._knowwherethestaris = 1B
+      endif
     endif
-    if self._knowwherethestaris eq 1B then return, self->AOframe::longexposure(_extra=ex) else return, -1
+    if self._knowwherethestaris eq 1B then return, self->AOframe::longexposure(_extra=ex) $
+      else return, self->AOframe::longexposure(/fullframe,_extra=ex)
 end
 
 
@@ -116,9 +119,9 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     ;Median filtering on the image to remove bad pixels
     if not keyword_set(width) then wid = 5 else wid = width
     ima2 = median(ima,wid)
-    
+
     if not keyword_set(hmin) then begin 
-        hmin = median(ima2) + 6*stddev(ima2);  TODO BOH? ultragrezzo
+        hmin = median(ima2) + 3*stddev(ima2);  TODO BOH? ultragrezzo
     endif
     fwhm = self->lambda() / ao_pupil_diameter() / 4.85e-6 / self->pixelscale()  ;  in pixels
     roundlim = [-1.0,1.0]
@@ -208,12 +211,17 @@ function aoscientificimage::star_position_px, idx
 end
 
 ; FWHM of stars in the image [arcsec]
-function aoscientificimage::star_fwhm
-    fwhm=fltarr(self->nstars())
-    for i=0, self->nstars()-1 do begin
+function aoscientificimage::star_fwhm, idx, hmin = hmin
+    if self._knowwherethestaris eq 1B  and n_elements(hmin) eq 0 then begin
+      fwhm=fltarr(self->nstars())
+      for i=0, self->nstars()-1 do begin
         fwhm[i] = ((self->psfs(i))->gaussfit())->fwhm()
-    endfor
-    return, fwhm*self->pixelscale()
+      endfor
+      if n_elements(idx) ne 0 then return, fwhm[idx]*self->pixelscale() else return, fwhm*self->pixelscale()
+    endif else begin
+      self->findstars, status = status, hmin = hmin
+      if status eq 1 then return, self->star_fwhm(idx) else return,-1
+    endelse
 end
 
 ; SR of stars in the image [arcsec]
