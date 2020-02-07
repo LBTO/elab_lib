@@ -59,10 +59,10 @@ function AOm2c::c2m, act_w_cl=act_w_cl
         m2c = m2c[idx_valid_modes,*]
         sz = size(m2c,/dim)
         c2m = make_array(sz[1],sz[0],type=size(m2c,/type))
-        
-        m2c = m2c[*,act_w_cl]
+      
+        ;m2c = m2c[*,act_w_cl]
         c2m_temp = pseudo_invert(m2c)
-        c2m[act_w_cl,*] = c2m_temp
+        c2m[act_w_cl,*] = c2m_temp[act_w_cl,*]
         
         save, c2m, file=self._store_c2m_fname
     endelse
