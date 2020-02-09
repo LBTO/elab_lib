@@ -83,9 +83,9 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
       endif
 
       if ndata eq 1 then begin
-        if keyword_set(wfresiduals) then al_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
+        if keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
           psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], /clear, back = background $
-        else al_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
+        else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
           back = background
       endif
 
@@ -153,9 +153,9 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
       endif
       
       if ndata eq 1 then begin
-        if keyword_set(test_argos) and keyword_set(wfresiduals) then al_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
+        if keyword_set(test_argos) and keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
           psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], /clear, back = background $
-          else al_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
+          else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
           back = background
       endif
     endelse
@@ -167,11 +167,11 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
   endfor
   
   if ndata gt 1 then begin
-    al_legend, tns[index_valid], color = color[index_valid], linestyle = 0, /top,/right, font = 0.5, linsize = 0.5, /clear, $
+    elab_legend, tns[index_valid], color = color[index_valid], linestyle = 0, /top,/right, font = 0.5, linsize = 0.5, /clear, $
       back = background
-    if keyword_set(wfresiduals) then al_legend, ['disturbance','closed-loop', 'wfres'], color = !p.color, $
+    if keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color = !p.color, $
           psym=-[2,1,3], linestyle = [0,0,2], /bottom, /left, thick=thick+[0,0,2], /clear, back = background $
-          else al_legend, ['disturbance','closed-loop'], color= !p.color, psym=-[2,1], /bottom, /left, thick=thick, /clear, $
+          else elab_legend, ['disturbance','closed-loop'], color= !p.color, psym=-[2,1], /bottom, /left, thick=thick, /clear, $
           back = background
   endif
   
