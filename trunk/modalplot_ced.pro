@@ -1,5 +1,6 @@
 pro modalplot_ced, data, color = color, overplot = overplot, wfresiduals = wfresiduals, thick = thick, yr = yr, $
-noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs_fact = wfs_fact_, smooth = smooth_
+noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs_fact = wfs_fact_, smooth = smooth_, $
+clear = clear
   
   if not keyword_set(dm_fact_) then dm_fact = 1 else dm_fact = dm_fact_
   if not keyword_set(wfs_fact_) then wfs_fact = 1 else wfs_fact = wfs_fact_
@@ -84,8 +85,8 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
 
       if ndata eq 1 then begin
         if keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
-          psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], /clear, back = background $
-        else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
+          psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], clear = clear, back = background $
+        else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, clear = clear, $
           back = background
       endif
 
@@ -154,8 +155,8 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
       
       if ndata eq 1 then begin
         if keyword_set(test_argos) and keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color=[olcolor,clcolor,wfrcolor], $
-          psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], /clear, back = background $
-          else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, /clear, $
+          psym=-[2,1,3], linestyle = [0,0,2], /top, /right, thick=thick+[0,0,2], clear = clear, back = background $
+          else elab_legend, ['disturbance','closed-loop'], color=[olcolor,clcolor], psym=-[2,1], /top, /right, thick=thick, clear = clear, $
           back = background
       endif
     endelse
@@ -167,11 +168,11 @@ noargos = noargos, std = std, title = title_, lbt = lbt, dm_fact = dm_fact_, wfs
   endfor
   
   if ndata gt 1 then begin
-    elab_legend, tns[index_valid], color = color[index_valid], linestyle = 0, /top,/right, font = 0.5, linsize = 0.5, /clear, $
+    elab_legend, tns[index_valid], color = color[index_valid], linestyle = 0, /top,/right, font = 0.5, linsize = 0.5, clear = clear, $
       back = background
     if keyword_set(wfresiduals) then elab_legend, ['disturbance','closed-loop', 'wfres'], color = !p.color, $
-          psym=-[2,1,3], linestyle = [0,0,2], /bottom, /left, thick=thick+[0,0,2], /clear, back = background $
-          else elab_legend, ['disturbance','closed-loop'], color= !p.color, psym=-[2,1], /bottom, /left, thick=thick, /clear, $
+          psym=-[2,1,3], linestyle = [0,0,2], /bottom, /left, thick=thick+[0,0,2], clear = clear, back = background $
+          else elab_legend, ['disturbance','closed-loop'], color= !p.color, psym=-[2,1], /bottom, /left, thick=thick, clear = clear, $
           back = background
   endif
   
