@@ -194,8 +194,8 @@ pro AOintmat::im2d
 	im2d_w = xr[1]-xr[0]+1
 	im2d_h = yr[1]-yr[0]+1
 
-        fr_sz_x = (*self._wfs_status->camera())->binnedSensorSideX()
-        fr_sz_y = (*self._wfs_status->camera())->binnedSensorSideY()
+  fr_sz_x = ((self->wfs_status())->camera())->binnedSensorSideX()
+  fr_sz_y = ((self->wfs_status())->camera())->binnedSensorSideY()
 	s2d  = fltarr(fr_sz_x,fr_sz_y)
 	sx2d = fltarr(im2d_w,im2d_h,nm)
 	sy2d = fltarr(im2d_w,im2d_h,nm)
