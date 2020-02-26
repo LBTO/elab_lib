@@ -214,11 +214,12 @@ end
 ; FWHM of stars in the image [arcsec]
 function aoscientificimage::star_fwhm, idx, hmin = hmin
     if self._knowwherethestaris eq 1B  and n_elements(hmin) eq 0 then begin
-      fwhm=fltarr(self->nstars())
+      fwhm=fltarr(self->nstars(),3)
       for i=0, self->nstars()-1 do begin
-        fwhm[i] = ((self->psfs(i))->gaussfit())->fwhm()
+        fwhm[i,*] = [((self->psfs(i))->gaussfit())->fwhm_max(),((self->psfs(i))->gaussfit())->fwhm_min(), $
+          ((self->psfs(i))->gaussfit())->fwhm()]
       endfor
-      if n_elements(idx) ne 0 then return, fwhm[idx]*self->pixelscale() else return, fwhm*self->pixelscale()
+      if n_elements(idx) ne 0 then return, fwhm[idx,*]*self->pixelscale() else return, fwhm*self->pixelscale()
     endif else begin
       self->findstars, status = status, hmin = hmin
       if status eq 1 then begin
