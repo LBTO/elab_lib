@@ -4,9 +4,8 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
     objref =  aodataset->Get()
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL* | *Rec* | *bin* | *#mod* | *freq* "+$
-           "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *Gopt* | *AntiDrift* | *SR* | *SR (from slopes)* | *filter* | *exp* "+ $
-           "| *#frames* | *disturb* | *SN* | *skip* | *notes* "+$
-           "| "
+           "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *Gopt* | *AntiDrift* | *SR* | *SR (from slopes)* "+ $
+           "| *FWHM [max,min] (mas)* | *filter* | *exp* | *#frames* | *disturb* | *SN* | *skip* | *notes* | "
 
     print, hdr
     TEXT = hdr
@@ -68,7 +67,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
         endif else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f | %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -90,8 +89,9 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
             obj_valid(ee->residual_modes()) ? (keyword_set(seeing) ? sr_from_slopes(ee, obj_valid(ee->luci()) ? $
-            (ee->luci())->lambda()*1e9 : 1650.,/fitting,seeing = seeing)*100 : (obj_valid(ee->tel()) ? (finite((ee->tel())->dimm_seeing()) ? $
-            sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.,/fitting)*100 : -1) : -1)) : -1, $
+            (ee->luci())->lambda()*1e9 : 1650.,/fitting,seeing = seeing,/noise)*100 : (obj_valid(ee->tel()) ? (finite((ee->tel())->dimm_seeing()) ? $
+            sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.,/fitting,/noise)*100 : -1) : -1)) : -1, $
+            obj_valid(ee->luci()) ? ((ee->luci())->star_fwhm(0))[0:1]*1e3 : [-1,-1] , $
             obj_valid(instr) ? instr->filter_name() : '?' , $
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
     		obj_valid(instr) ? instr->nframes() : -1 , $
