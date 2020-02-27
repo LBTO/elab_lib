@@ -83,8 +83,8 @@ pro AOgaussfit::fitta, debug=debug
 
 	; Save all Gaussian-fit parameters:
     self._center     = coeff[4:5]
-    self._fwhm_max   = coeff[2] * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
-    self._fwhm_min   = coeff[3] * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+    self._fwhm_max   = max(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+    self._fwhm_min   = min(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
     self._fwhm   	 = sqrt(self._fwhm_max * self._fwhm_min)
     self._ampl       = coeff[1]
     self._ecc        = sqrt(1d - ( min([coeff[3], coeff[2]]) / max([coeff[3], coeff[2]]) )^2 )
