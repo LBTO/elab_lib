@@ -40,7 +40,7 @@ clear = clear
       wfrcolor = color[i]
     endelse
     
-    if cur_data->operation_mode() eq "RR" then begin
+    if cur_data->operation_mode() eq "RR" or cur_data->operation_mode() eq "ARGOScal" then begin
       nmodes = (cur_data->modalpositions())->nmodes()
       clvar  = (cur_data->modalpositions())->time_variance() * ((cur_data->modalpositions())->norm_factor()*dm_fact)^2.
       yrange = sqrt(minmax(clvar))
@@ -52,8 +52,9 @@ clear = clear
         endif
       endif
       if keyword_set(WFRESIDUALS) then begin
-        wfres = (cur_data->residual_modes())->modes() * (cur_data->residual_modes())->norm_factor() $
-          *wfs_fact
+        norm_fact_wfs = (cur_data->residual_modes())->norm_factor()
+        if (cur_data->wfs_status())->optg() lt 1 then norm_fact_wfs /= 2
+        wfres = (cur_data->residual_modes())->modes() * norm_fact_wfs*wfs_fact
         if not keyword_set(std) then wfres = rms(wfres,dim=1) else begin
           tmp = fltarr((size(wfres,/dim))[1])
           for j = 0, (size(wfres,/dim))[1]-1 do tmp[j] = stddev(wfres[*,j])
