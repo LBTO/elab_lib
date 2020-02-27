@@ -38,7 +38,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
         ;endif else begin
         ;    band = '?'
         ;endelse
-        if ee->operation_mode() eq 'RR' then begin
+        if ee->operation_mode() eq 'RR' or ee->operation_mode() eq 'ARGOScal' then begin
             disturb='OFF'
         	if obj_valid(ee->disturb()) then if obj_valid(ee->adsec_status()) then if (ee->adsec_status())->disturb_status() eq 1 then  disturb='ON'
             ;if disturb eq 'OFF' then print, 'WARNING: DISTURB IS OFF!!'
