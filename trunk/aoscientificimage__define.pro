@@ -117,7 +117,7 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     ima_h = n_elements(ima[0,*])
     
     ;Median filtering on the image to remove bad pixels
-    if not keyword_set(width) then wid = 5 else wid = width
+    if not keyword_set(width) then wid = 3 else wid = width
     ima2 = median(ima,wid)
 
     if n_elements(hmin) eq 0 then begin 
