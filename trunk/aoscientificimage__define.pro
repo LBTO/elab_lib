@@ -117,7 +117,7 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     ima_h = n_elements(ima[0,*])
     
     ;Median filtering on the image to remove bad pixels
-    if not keyword_set(width) then wid = 3 else wid = width
+    if not keyword_set(width) then wid = 5 else wid = width
     ima2 = median(ima,wid)
 
     if n_elements(hmin) eq 0 then begin 
@@ -128,6 +128,7 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     roundlim = [-1.0,1.0]
     sharplim = [0.2,1.0]
     find, ima2, xx, yy, flux, sharpness, roundness, hmin, fwhm, roundlim, sharplim, /SILENT
+
     if n_elements(xx) ge 1 then begin
       ord=reverse(sort(flux))
       flux=flux[ord] & xx=xx[ord] & yy=yy[ord] ; flux descending
