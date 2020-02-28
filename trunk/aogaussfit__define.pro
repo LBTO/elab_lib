@@ -74,7 +74,7 @@ pro AOgaussfit::fitta, debug=debug
         ;teeprev = tee
     endfor
     ;i=min(where(teev gt 0.95*max(teev)))
-    i=min(where(teev gt 0.95*toten))
+    i=min(where(teev gt 0.95*toten)) > 1
     xint = [0 > (xmax-i), (xmax+i) < (w-1)]
     yint = [0 > (ymax-i), (ymax+i) < (h-1)]
     tee = teev[i]
