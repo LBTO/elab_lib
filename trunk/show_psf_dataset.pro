@@ -48,7 +48,7 @@ pro show_psf_dataset, data, fullframe = fullframe, rec = rec, z = z_
     tv, psf_rgb, /true, i
     x = .01+(i mod nx)/float(nx)
     y = (ny - i/nx)/float(ny)-.05
-    xyouts, x, y, tns[i], color = 'FFFFFF'x,/normal, charthick = 2, charsize = z
+    xyouts, x, y, tns[i], color = 'FFFFFF'x,/normal, charthick = z, charsize = z
   endfor
 
 end
