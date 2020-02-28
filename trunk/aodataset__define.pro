@@ -503,12 +503,12 @@ pro aodataset::modalplot, average = average, overplot = overplot, cols=cols, arg
             if not obj_valid(ao) then continue
             if ao->meas_type() ne 'LOOP' then continue
 		    if first eq 1 then ao->modalplot, argoscal=argoscal, _extra=ex, title='', /NOLEGEND else $
-		    			       ao->modalplot, /OVERPLOT, argoscal=argoscal, COLOR=cols[ii, /NOLEGEND 
+		    			       ao->modalplot, /OVERPLOT, argoscal=argoscal, COLOR=cols[ii], /NOLEGEND 
             first=0
             progress, ii, ao->tracknum()
             ao->free
 	    endfor
-	    elab_legend, tr, psym=replicate(-1,self->count()), color=cols, /right
+	    elab_legend, tr, psym=replicate(-1,self->count()), color=cols, /right, /clear
     endelse
 end
 
