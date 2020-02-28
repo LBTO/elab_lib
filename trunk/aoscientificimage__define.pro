@@ -117,8 +117,9 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     ima_h = n_elements(ima[0,*])
     
     ;Median filtering on the image to remove bad pixels
+    ima2 = median(ima,3) ;first tight filtering for pixels close to the core
     if not keyword_set(width) then wid = 5 else wid = width
-    ima2 = median(ima,wid)
+    ima2 = median(ima2,wid)
 
     if n_elements(hmin) eq 0 then begin 
         hmin = median(ima2) + 3*stddev(ima2);  TODO BOH? ultragrezzo
