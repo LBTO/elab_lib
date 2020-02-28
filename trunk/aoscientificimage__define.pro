@@ -131,6 +131,15 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     find, ima2, xx, yy, flux, sharpness, roundness, hmin, fwhm, roundlim, sharplim, /SILENT
 
     if n_elements(xx) ge 1 then begin
+      ;find function bugs
+      if total(xx) eq 0 then begin
+        x_cog = findgen(ima_w,ima_h) mod ima_w
+        y_cog = transpose(x_cog)
+        im_thresh = (ima2 > (.1*max(ima2)))-.1*max(ima2)
+        xx = total(x_cog*im_thresh)/total(im_thresh)
+        yy = total(y_cog*im_thresh)/total(im_thresh)
+        flux = total(ima2[(xx-10)>0:(xx+10)<(ima_w-1),(yy-10)>0:(yy+10)<(ima_h-1)])
+      endif
       ord=reverse(sort(flux))
       flux=flux[ord] & xx=xx[ord] & yy=yy[ord] ; flux descending
       self._nsources = n_elements(ord)
