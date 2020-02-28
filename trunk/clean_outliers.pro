@@ -15,7 +15,7 @@ function clean_outliers, data, THRESHOLD=THRESHOLD, do3sigmaDiffFiltering=do3sig
             idx_t = where(abs(delta_series) gt th3sigma, count)
             if count gt 0 then begin
                 delta_series[idx_t] = delta_series[idx_t]/abs(delta_series[idx_t]) * th3sigma
-                series = replicate(series[0],length_a)
+                series = replicate(series[0],n_frames)
                 series[1:*] += total(delta_series,/cum)
             endif
         endif
