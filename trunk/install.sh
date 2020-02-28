@@ -16,7 +16,7 @@ case $# in
       echo
       echo "Running IDL to detect the library dir..."
       echo
-      IDLDIR=`idl -e "print, pref_get('IDL_DIR')" 2>/dev/null`
+      IDLDIR=`/usr/local/bin/idl -e "print, pref_get('IDL_DIR')" 2>/dev/null`
       INSTALLDIR=${IDLDIR}/lib/elab_lib
       ;;
    1) INSTALLDIR=$1 ;;
