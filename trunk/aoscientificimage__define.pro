@@ -120,6 +120,10 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
     ima2 = median(ima,3) ;first tight filtering for pixels close to the core
     if not keyword_set(width) then wid = 5 else wid = width
     ima2 = median(ima2,wid)
+    
+    ; Discard borders 2 rows and 2 columns
+    ima2[[0,1,ima_w-2,ima_w-1],*] = 0
+    ima2[*,[0,1,ima_h-2,ima_h-1]] = 0
 
     if n_elements(hmin) eq 0 then begin 
         hmin = median(ima2) + 3*stddev(ima2);  TODO BOH? ultragrezzo
