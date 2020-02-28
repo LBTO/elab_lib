@@ -50,7 +50,7 @@ pro AOgaussfit::fitta, debug=debug
 	; Find a first estimate of the PSF center: the position of the max...
 	; If you fear hot-spots just smooth:
 	ffr = median(fr,5)	
-	toten = total(ffr)
+	toten = total(ffr > 0)
 	psfmax = max(ffr,idx)
     ;toten = total(fr)
     ;psfmax = max(smooth(fr,5),idx)
@@ -68,7 +68,7 @@ pro AOgaussfit::fitta, debug=debug
     for i=0L,sz-1 do begin
         xint = [0 > (xmax-i), (xmax+i) < (w-1)]
         yint = [0 > (ymax-i), (ymax+i) < (h-1)]
-        teev[i] = total(ffr[xint[0]:xint[1], yint[0]:yint[1]])
+        teev[i] = total(ffr[xint[0]:xint[1], yint[0]:yint[1]] > 0)
         ;teev[i] = total(fr[xint[0]:xint[1], yint[0]:yint[1]])
         ;if (tee/teeprev lt 1.002) then break
         ;teeprev = tee
