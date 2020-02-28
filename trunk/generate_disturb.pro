@@ -169,7 +169,7 @@ scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 ;rname = 'dist_'+disturb_type		;FLAO1
 ;rname = 'dist_flao2a'+disturb_type	;FLAO2
 ;rname = 'dist_flao2_20111210_'+disturb_type	;FLAO2
-rname = 'dist_flao1_ts4_'+disturb_type  ;FLAO1 with TS4
+rname = 'dist_flao2_KL_v20_'+disturb_type  ;FLAO1 with TS4
 
 
 ; Vibration Disturbance Handling

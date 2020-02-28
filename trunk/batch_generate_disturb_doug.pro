@@ -7,7 +7,7 @@ disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
 
 ;FLAO#1
 ;disturb_dir = '/savedata/phase_screens_flao1_ts4/'
-disturb_dir = '/local/aomeas/adsec_calib/M2C/KL_v27/atm_disturb'
+disturb_dir = '/local/aomeas/adsec_calib/CMD/disturb'
 
 ;FLAO#2
 ;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
@@ -25,14 +25,14 @@ ao_init;, root='~'
 ;seeing = [1.0]
 ;seeing = [0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2.0, 2.4, 3.0]
 ;seeing = [ 0.8, 1.0, 1.2, 2.0]
-seeing = [1.5]
+seeing = [2.0]
 ;seeing = [1.0, 1.2, 1.5, 0.8]
 nseeing = n_elements(seeing)
 L0 = 40.
 v_wind = 15.
 seed = 3892L
 n_steps = 4000
-hz = [200.]
+hz = [1500., 750.]
 ;hz = [990.,500.,200.]
 ;hz = [1200., 1500., 1700.]
 nhz = n_elements(hz)
@@ -44,7 +44,8 @@ nhz = n_elements(hz)
 ;Dpix		  = 219			; pupil diameter [pix]			;FLAO2 20111210
 ;Dpix		  = 217			; pupil diameter [pix]			;MAG585
 ;Dpix      = 216     ; pupil diameter [ix]       ;FLAO1 with TS3  20181012  DLM
-Dpix      = 219     ; pupil diameter [ix]       ;FLAO2 from 2015 slave01
+;Dpix      = 219     ; pupil diameter [ix]       ;FLAO2 from 2015 slave01
+Dpix      = 220     ; pupil diameter [ix]       ;FLAO2 from 2015 slave01
 
 ;mirror modes file (required to compute zonal IFmatrix)
 ;mirmodes_file = getenv('HOME')+'/FLAO_data/phase_maps/MMmatrix_20090811_setg1.sav'	;FLAO1
@@ -54,7 +55,7 @@ Dpix      = 219     ; pupil diameter [ix]       ;FLAO2 from 2015 slave01
 ;mirmodes_file = '/savedata/phase_maps/MMmatrix_FLAO2_20111210.sav'
 ;mirmodes_file = '/local/phase_maps/MMmatrix_TS3_20180209.sav'
 ;mirmodes_file = '/local/aomeas/adsec_calib/optical-projection/20181025_200008/MMmatrix.sav'
-mirmodes_file = '/local/phase_maps/MMmatrix_FLAO1_20190907.sav'
+mirmodes_file = '/local/aomeas/phase_maps/MMmatrix_FLAO2_20150529_slave01.sav'
 
 ; Pre-correction parameters:
 ;*************************************************************
@@ -161,3 +162,4 @@ for ii=0, nseeing-1 do $
 	mirmodes_file =		mirmodes_file	;, $
 ;	prefix		  =		prefix
 
+end
