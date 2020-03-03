@@ -74,7 +74,8 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
 	self._stored_enc_ene_fname  = store_radix+'_enc_ene.sav'
 
 
-    ; Use telescope obstruction by default
+    ; Use telescope diameter & obstruction by default
+    self._pupdiam = -1
     self._oc = -1
  
     if keyword_set(recompute) eq 1B then self->deletestoredfiles
@@ -139,7 +140,7 @@ end
 function AOpsfAbstract::background_mask, xc, yc, nsup=nsup, borderpix=borderpix, mask_ok=mask_ok
 	if n_params() ne 2 then message, 'Syntax: ...->background_mask(xc,yc)'
 	if not keyword_set(nsup) then nsup = 40.	;maximum radius to ensure all star light is in.
- 	dsup = ao_pupil_diameter() / nsup
+ 	dsup = self->pupdiam() / nsup
      if not finite(self->pixelscale()) or not finite(self->lambda()) then begin
      	mask_ok=0B
      	return, -1
@@ -218,11 +219,11 @@ function AOpsfAbstract::SR_se, plot=plot, ima=ima, psf_dl_ima=psf_dl_ima
             endif else begin
                         if not keyword_set(psf_dl_ima) then begin
     			    psf_dl_fname = filepath( root=ao_elabdir(), $
-                	    'psf_dl_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(self->oc()*1e3),2)+'.sav')
+                	    'psf_dl_diam'+strtrim(round(self->pupdiam()*1e3),2)+'_'+strtrim(round(self->lambda()*1e9),2)+'_scale'+strtrim(round(self->pixelscale()*1e3),2)+'_oc'+strtrim(round(self->oc()*1e3),2)+'.sav')
     			    if file_test(psf_dl_fname) then begin
         			    restore, psf_dl_fname
     			    endif else begin
-        			    psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=self->oc(), Dpup=ao_pupil_diameter()) ; wl [m] and scala [arcsec/pixel]
+        			    psf_dl_ima = psf_dl_esposito(self->lambda(), self->pixelscale(), oc=self->oc(), Dpup=self->pupdiam()) ; wl [m] and scala [arcsec/pixel]
         			    save, psf_dl_ima, file=psf_dl_fname
     			    endelse
                         endif
@@ -425,7 +426,7 @@ pro AOpsfAbstract::plotJitter, from_freq=from_freq, to_freq=to_freq, overplot=ov
     legend, ['Tilt+Tip', 'Tip', 'Tilt'],linestyle=[0,0,0],colors=[!P.COLOR, '0000ff'x, '00ff00'x],charsize=1.2
 
     sigmatot2 = max( self->power(0, /cum)+self->power(1, /cum) ) * self->norm_factor()^2. / 2
-    ldmas = self->lambda() / ao_pupil_diameter() / 4.848d-6 * 1e3 ; l/D in mas
+    ldmas = self->lambda() / self->pupdiam() / 4.848d-6 * 1e3 ; l/D in mas
     print, 'SR attenuation due to TT jitter ', 1. / (1. + (!pi^2 /2 )*( sqrt(sigmatot2)/ ldmas)^2)
 end
 
@@ -493,11 +494,11 @@ pro AOpsfAbstract::show_profile, show_rms=show_rms, xsize=xsize, ysize=ysize, $
 	sec2rad = 4.85*1.e-6
 	airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
-    airysep_arcsec = airysep_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    airysep_arcsec = airysep_lD * ((self->lambda()/self->pupdiam())/sec2rad)
     save, airysep_lD, airysep_arcsec, airyprof, file='/tmp/airyprof.sav'
 
 	if n_elements(xrange) gt 0 then prof_xrange_lD = xrange else prof_xrange_lD = [0.1,1e2]
-	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+	prof_xrange_arcsec = prof_xrange_lD * ((self->lambda()/self->pupdiam())/sec2rad)
 
 	winsize = get_screen_size()/2
     if not keyword_set(xsize) then xsize= winsize[0]
@@ -534,7 +535,7 @@ pro AOpsfAbstract::show_enc_ene, _extra=ex, xsize=xsize, ysize=ysize, title=titl
     sec2rad = 4.85*1.e-6
     airyprof = psf_dl(airysep_lD, OBS=oc, /PEAK)
 
-    airysep_arcsec = airysep_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    airysep_arcsec = airysep_lD * ((self->lambda()/self->pupdiam())/sec2rad)
     save, airysep_lD, airysep_arcsec, airyprof, file='/tmp/airyprof.sav'
 
     winsize = get_screen_size()/2
@@ -555,7 +556,7 @@ pro AOpsfAbstract::show_enc_ene, _extra=ex, xsize=xsize, ysize=ysize, title=titl
     
     if n_elements(xrange) gt 0 then ee_xrange_lD = xrange else ee_xrange_lD = [1e-1,1e2]
     if n_elements(yrange) gt 0 then ee_yrange = yrange else ee_yrange = [1e-2,1]
-    ee_xrange_arcsec = ee_xrange_lD * ((self->lambda()/ao_pupil_diameter())/sec2rad)
+    ee_xrange_arcsec = ee_xrange_lD * ((self->lambda()/self->pupdiam())/sec2rad)
 
     if not keyword_set(xsize) then xsize= winsize[0]
     if not keyword_set(ysize) then ysize= winsize[1]
@@ -653,6 +654,11 @@ function AOpsfAbstract::oc
     return, self._oc
 end
 
+function AOpsfAbstract::pupdiam
+  if self._pupdiam lt 0 then return, ao_pupil_diameter()
+  return, self._pupdiam
+end
+
 pro AOpsfAbstract::write_movie, FILENAME=FILENAME
 
     if not keyword_set(FILENAME) then FILENAME= self._plots_title+'.gif'
@@ -671,6 +677,7 @@ pro AOpsfAbstract__define
         _pixelscale_lD  :  0d			, $  ;[in lambda/D per pixel]
         _framerate		:  0.			, $	  ;Hz
         _oc             :  0.           , $  ; Camera obstruction. If <0, uses telescope obstruction
+        _pupdiam        :  0.           , $  ; Pupil diameter. If <0, uses telescope diameter
         _gaussfit       :  obj_new()	, $
         _centroid	    :  ptr_new()	, $
         _stored_centroid_fname :  ""	, $
