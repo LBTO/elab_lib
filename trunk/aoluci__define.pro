@@ -132,8 +132,12 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
     if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
     	            badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
 
-    ; Override obstruction
+    ; Override diameter & obstruction + dependent parameters
+    self._pupdiam = 7.8
     self._oc = 0.314
+    self._pixelscale_lD = self._pixelscale / ((self->lambda()/self->pupdiam())/4.848d-6)
+    nsup = 40.  ;maximum radius to ensure all star light is in.
+    self._object_size = nsup * self->lambda() / self->pupdiam() / 4.85e-6 / self._pixelscale
 
     ; initialize help object and add methods and leafs
     if not self->AOhelp::Init('aoluci', 'luci image') then return, 0
