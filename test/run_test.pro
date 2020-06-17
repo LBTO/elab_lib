@@ -9,7 +9,9 @@ pro run_test, testname, UPDATE_REF=UPDATE_REF, FAILED=FAILED, PREFIX=PREFIX
   testlibdir = c+path_sep()+'testlib'
   startup='IDL_STARTUP=""'
   path='IDL_PATH="'+updir+':'+testlibdir+':'+!path+'"'
-  meas='ADOPT_MEAS='+c+path_sep()+'data'
+
+  ;;; Change this path when the data archive is updated
+  meas='ADOPT_MEAS='+c+path_sep()+'data_20200617'
 
   idlfile = testname+'.pro'
   reffile = testname+'.ref'

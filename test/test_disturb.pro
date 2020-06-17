@@ -14,7 +14,7 @@ disturb_type = 'atm' ;'vib', 'atm', 'atm+vib'
 
 ;FLAO#1
 ;disturb_dir = '/savedata/phase_screens_flao1_ts4/'
-disturb_dir = 'test/data/output'
+disturb_dir = getenv('ADOPT_MEAS')+path_sep()+'output'
 
 ;FLAO#2
 ;disturb_dir = getenv('HOME')+'/FLAO_data/phase_screens_flao2/'
@@ -28,7 +28,7 @@ disturb_dir = 'test/data/output'
 ao_test_init;, root='~'
 
 ; Remove cached output
-file_delete, 'test/data/output/inv_MMmatrix_FLAO1_20190907.sav', /quiet
+file_delete, getenv('ADOPT_MEAS')+path_sep()+'output/inv_MMmatrix_FLAO1_20190907.sav', /quiet
 
 
 ;atmospheric parameters
@@ -66,7 +66,7 @@ Dpix      = 219     ; pupil diameter [ix]       ;FLAO2 from 2015 slave01
 ;mirmodes_file = '/local/phase_maps/MMmatrix_TS3_20180209.sav'
 ;mirmodes_file = '/local/aomeas/adsec_calib/optical-projection/20181025_200008/MMmatrix.sav'
 ;mirmodes_file = '/local/phase_maps/MMmatrix_FLAO1_20190907.sav'
-mirmodes_file = 'test/data/phase_maps/MMmatrix_FLAO1_20190907.sav'
+mirmodes_file = getenv('ADOPT_MEAS')+path_sep()+'phase_maps/MMmatrix_FLAO1_20190907.sav'
 
 ; Pre-correction parameters:
 ;*************************************************************
@@ -179,7 +179,7 @@ for ii=0, nseeing-1 do $
 ;
 ; Now check that the generation went OK
 
-data = readfits('test/data/output/dist_flao1_ts4_atm_s0.8_L040.0_v15.0_ovfreq1700.00_sd3892.fits')
+data = readfits(getenv('ADOPT_MEAS')+path_sep()+'output/dist_flao1_ts4_atm_s0.8_L040.0_v15.0_ovfreq1700.00_sd3892.fits')
 help,data
 
 for i=0,4 do print,stddev(data[i,*])

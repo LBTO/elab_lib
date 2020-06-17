@@ -29,6 +29,19 @@ run_test.py: Python procedure to run tests and update reference outputs
 
 run_test.pro: low-level IDL procedure for a single test
 
+
+WHAT TODO IF THE DATA ARCHIVE IS UPDATED
+----------------------------------------
+
+The "data" directory containing the TNs used for test is not archived,
+because it is too big (300+MB). If the data is updated:
+
+1. Make sure that the new "data" directory has a new name, for example
+   using a timestamp like data_YYYYMMDD
+2. Edit "run_test.pro" and modify the data directory name near line 14.
+3. Delete any previous data directories, if any
+
+
 HOW TO IMPLEMENT A TEST
 -----------------------
 
