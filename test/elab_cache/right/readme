@@ -1,0 +1,2 @@
+This directory is necessary for ao_init to work,
+but it is not used by tests

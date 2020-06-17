@@ -1,0 +1,23 @@
+| Tracknum                       | 20190302_190223 |
+| Closed Loop                    | Yes |
+| Is OK?                         | No  - Unknown luci filter <clear HKspec> - luci dark cannot be searched: (filter unknown) |
+| AntiDrift                      | OFF |
+| nphotons/sub/fr                | 47.935032 |
+| Magnitude                      | 13.293907 |
+| # Modes                        | 500 |
+| Modal rec                      | Rec_20181217_031744.fits |
+| Binning                        | 1 |
+| Frequency [Hz]                 | 500 |
+| Modulation                     | 3.000000 |
+| FW1                            | Dichroic 600-1000 nm |
+| FW2                            | empty |
+| Gain minmax                    | 0.250650 0.648900 |
+| Telescope elevation            | 89.999190 |
+| Wind speed                     | 0.000000 |
+| number of skipped frames       | 0 |
+| lambda [um]                    | NaN |
+| exptime [s]                    | 10.000000 |
+| framerate [Hz]                 | 0.100000 |
+| no. frames                     | 1 |
+| SR SE                          | 0.000000 |
+| LUCI dark                      |  |

@@ -1,0 +1,32 @@
+Wind speed requested:       15.0000
+Wind speed obtained:        15.005793
+min/max Singular value: Max=0.000499024 (Max singular value=21.7895)
+--------------------------------------------
+Checking file: 
+/home/puglisi/elab_lib/trunk/test/data/output/atm_np0002_sz00000.08_L0040_seed3892_nosha_nl2.dat.sav
+File description: gen_layers_par_struct_v1
+Not matching parameters:
+Wanted.DIM =         665
+Actual.DIM =           2
+Wanted.LENGTH =       24.966347
+Actual.LENGTH =     0.075086758
+--------------------------------------------
+Checking file: 
+/home/puglisi/elab_lib/trunk/test/data/output/atm_np0665_sz00024.97_L0040_seed3892_nosha_nl2.dat.sav
+File description: gen_layers_par_struct_v1
+Matching parameters found!
+step number 0
+step number 1
+step number 2
+step number 3
+DATA            FLOAT     = Array[4000, 672]
+  2.28160e-07
+  2.28189e-07
+  2.28234e-07
+  2.28296e-07
+      0.00000
+  4.44194e-09
+  4.43775e-09
+  4.43358e-09
+  4.42946e-09
+      0.00000

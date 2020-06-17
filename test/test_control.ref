@@ -1,0 +1,10 @@
+FLAO pure integrator modes:
+<Expression>    LONG      = Array[672]
+SOUL pure integrator modes:
+<Expression>    LONG      = Array[55]
+FLAO IIR:   0
+SOUL IIR:   0
+FLAO IIR modes:
+<Expression>    INT       =       -1
+SOUL IIR modes:
+<Expression>    INT       =       -1

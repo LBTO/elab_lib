@@ -1,0 +1,25 @@
+| Tracknum                       | 20180129_220007 |
+| Closed Loop                    | Yes |
+| Is OK?                         | No  - CRC error - FLTimeout error - PendingCounter error - SkipCounter error - TimeStamp error - WFSGlobalTimeout error - Pyramid modulation mismatch - Unknown luci filter <clear HKspec> - luci dark cannot be searched: (filter unknown) |
+| seeing [arcsec]                | 0.400000 |
+| Vwind [m/s]                    | 14.900119 |
+| AntiDrift                      | ON |
+| nphotons/sub/fr                | -1.000000 |
+| Magnitude                      | -NaN |
+| # Modes                        | 36 |
+| Modal rec                      | Rec_20160229_205357.fits |
+| Binning                        | 4 |
+| Frequency [Hz]                 | 993 |
+| Modulation                     | 2.962017 |
+| FW1                            | Dichroic 600-1000 nm |
+| FW2                            | FB900-10 |
+| Gain minmax                    | 0.050000 0.300000 |
+| Telescope elevation            | 75.000001 |
+| Wind speed                     | 0.000000 |
+| number of skipped frames       | 0 |
+| lambda [um]                    | NaN |
+| exptime [s]                    | 2.502421 |
+| framerate [Hz]                 | 0.399613 |
+| no. frames                     | 1 |
+| SR SE                          | 0.000000 |
+| LUCI dark                      |  |
