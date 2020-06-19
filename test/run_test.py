@@ -5,8 +5,9 @@ from __future__ import print_function
 import os
 import sys
 import glob
+import tempfile
 
-mainfile = '/tmp/test_main.pro'
+tmp_fd, tmp_filename = tempfile.mkstemp(suffix='.pro', prefix='test_main')
 
 update=False
 do_all=False
@@ -68,8 +69,10 @@ for i,test in enumerate(tests):
 
 statements.append('if FAILED ne 0 then EXIT, status=FAILED')
 statements.append('end')
-open(mainfile, 'w').write('\n'.join(statements))
-status += os.system('idl -e ".r %s"' % mainfile)
+open(tmp_filename, 'w').write('\n'.join(statements))
+status += os.system('idl -e ".r %s"' % tmp_filename)
+
+os.unlink(tmp_filename)
 
 if status != 0:
     print('Test failed')
