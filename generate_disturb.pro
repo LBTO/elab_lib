@@ -111,7 +111,8 @@ pro generate_disturb, disturb_type, $
 		vib      		=    		vib     		, $
 		datavib  		=    		datavib			, $
 		Dpix			=			Dpix			, $
-		mirmodes_file	=			mirmodes_file
+		mirmodes_file	=			mirmodes_file, $
+		verbose = verbose, fits_fname = fits_fname
 
 ; General Parameters
 ;*************************************************************
@@ -273,18 +274,18 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	;update parameters due to rounding:
 	scr_size_m	= scr_size_pix * sample_size
 
-	print, 'Wind speed requested: ', v_wind
+	if keyword_set(verbose) then print, 'Wind speed requested: ', v_wind
 	v_wind = scr_size_m / (t_int * n_steps) / angle_coef[ang_idx]
-	print, 'Wind speed obtained: ', v_wind
+	if keyword_set(verbose) then print, 'Wind speed obtained: ', v_wind
 
 	shft = v_wind * t_int / sample_size			; Shift to be applied to phase screen at each step	[pix]
 
 	; Compute matrices for modal pre-correction
 	if keyword_set(nmodes_cor) then begin
 		IFmatrix = modalif_to_zonalif(mirmodes_file, idx_mask=idx_mask)
-		print, 'computing matrices for pre-correction of modes...'
+		if keyword_set(verbose) then print, 'computing matrices for pre-correction of modes...'
 		modes_cor_matrix = IFmatrix ## m2c_cor[first_mode_cor:first_mode_cor+nmodes_cor-1,*]
-		inv_modes_cor_matrix = pseudo_invert(modes_cor_matrix, EPS=1e-4, COUNT_ZEROS=count1, /VERBOSE)
+		inv_modes_cor_matrix = pseudo_invert(modes_cor_matrix, EPS=1e-4, COUNT_ZEROS=count1, verbose = verbose)
 		undefine, m2c_cor
 	endif
 
@@ -298,7 +299,7 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 		tip  = zern(2, (xx-cx)/rr, (yy-cy)/rr)
 		tilt = zern(3, (xx-cx)/rr, (yy-cy)/rr)
 		tt_mat = [transpose(tip),transpose(tilt)]
-		inv_tt_mat = pseudo_invert(tt_mat, EPS=1e-4, COUNT_ZEROS=count_tt, /VERBOSE)
+		inv_tt_mat = pseudo_invert(tt_mat, EPS=1e-4, COUNT_ZEROS=count_tt, verbose = verbose)
 	endif
 
 	; Inverse of zonal IF matrix, for projection of disturb realization onto DM space
@@ -312,13 +313,13 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 	endif else begin
 		if n_elements(IFmatrix) eq 0 then IFmatrix = restore_modalif(mirmodes_file, idx_mask=idx_mask, mm2c=mm2c, dpix=mmdpix)
         if mmdpix ne Dpix then message, 'Dpix should be equal to '+strtrim(mmdpix)+', that is the number of pixel of '+mirmodes_file
-		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, /VERBOSE, N_MODES_TO_DROP=1)
+		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, verbose = verbose, N_MODES_TO_DROP=1)
 		save, inv_IFmatrix, Dpix, idx_mask, mm2c, filename=inv_IFmat, /compress
 		undefine, IFmatrix
 	endelse
 
 	; Screen generation/retrieval
-	phase = get_layers(n_layers, scr_size_pix, scr_size_m, lambda, r_0, L0=L0, par=par, seed=seed, dir=disturb_dir, FILE=ph_file, /no_sha, /VERBOSE)
+	phase = get_layers(n_layers, scr_size_pix, scr_size_m, lambda, r_0, L0=L0, par=par, seed=seed, dir=disturb_dir, FILE=ph_file, /no_sha, verbose = verbose)
 
 	; and convert to surface [m]
 	phase = phase * lambda/(2*!pi*Refl_coeff)
@@ -352,7 +353,7 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 		command_hist[*,ii] = mm2c ## reform(inv_IFmatrix ## ph[idx_mask])	;project phase onto IFs
 		;command_hist[*,ii] = inv_IFmatrix ## ph[idx_mask]	;project phase onto IFs
 		position -= shft									;update position
-		print, 'step number '+strtrim(ii,2)
+		if keyword_set(verbose) then print, 'step number '+strtrim(ii,2)
 	;	tvscl, ph
 	;	wait,0.5
 	endfor
@@ -401,13 +402,18 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 endif
 
 ; Write the file!
-if disturb_type eq 'atm' then $
-	writefits, filepath(rname+command_hist_fname+'.fits', root=disturb_dir), command_hist, hdr
-if disturb_type eq 'atm+vib' then $
-	writefits, filepath(rname+command_hist_fname+command_hist_vib_fname+'.fits', root=disturb_dir), $
+if disturb_type eq 'atm' then begin
+  writefits, filepath(rname+command_hist_fname+'.fits', root=disturb_dir), command_hist, hdr
+  fits_fname = filepath(rname+command_hist_fname+'.fits', root=disturb_dir)
+endif 
+if disturb_type eq 'atm+vib' then begin
+  writefits, filepath(rname+command_hist_fname+command_hist_vib_fname+'.fits', root=disturb_dir), $
            command_hist+command_hist_vib, hdr
-if disturb_type eq 'vib' then $
-	writefits, filepath(rname+command_hist_vib_fname+'.fits', root=disturb_dir), command_hist_vib, hdr
-
+  fits_fname = filepath(rname+command_hist_fname+command_hist_vib_fname+'.fits', root=disturb_dir)
+endif
+if disturb_type eq 'vib' then begin
+  writefits, filepath(rname+command_hist_vib_fname+'.fits', root=disturb_dir), command_hist_vib, hdr
+  fits_fname = filepath(rname+command_hist_vib_fname+'.fits', root=disturb_dir)
+endif
 
 end
