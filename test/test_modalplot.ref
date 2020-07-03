@@ -1,4 +1,4 @@
 WFS residual minmax:      2.43123      128.230
 CLVAR           FLOAT     = Array[594]
 OLVAR           UNDEFINED = <Undefined>
-std(clvar)=      516.233
+std(clvar)=      540.916
