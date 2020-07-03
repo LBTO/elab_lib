@@ -2,6 +2,8 @@
 ELAB_LIB TEST
 -------------
 
+IMPORTANT: It is better to delete the files in elab_cache before running the tests!
+
 This directory contains a series of test scripts, together with representative test data.
 
 A test is an IDL main file that executes some code. The resulting standard output is
@@ -71,8 +73,9 @@ Check that this file contains the correct output.
 
 5. Add and commit the pro and ref files:
 
-svn add test_flao.rpo test_flao.ref
-svn commit test_flao.rpo test_flao.ref
+git add test_flao.pro test_flao.ref
+git commit test_flao.pro test_flao.ref
+(git push)
 
 RUN ALL TESTS
 -------------
