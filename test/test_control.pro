@@ -2,10 +2,10 @@
 ao_test_init
 
 ; Pure integrator
-a = getaoelab('20180129_220007')
+a = getaoelab('20180129_220007',/rec)
 
 ; Fogetting factor
-b = getaoelab('20190302_190223')
+b = getaoelab('20190302_190223',/rec)
 
 ; TODO add a TN with IIR control
 

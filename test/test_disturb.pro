@@ -171,7 +171,8 @@ for ii=0, nseeing-1 do $
 	m2c_cor_fname =		m2c_cor_fname	, $
 	boost_tt	  = 	boost_tt		, $
 	Dpix		  =		Dpix			, $
-	mirmodes_file =		mirmodes_file	;, $
+	mirmodes_file =		mirmodes_file	, $
+	fits_fname = fits_fname
 ;	prefix		  =		prefix
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -179,10 +180,11 @@ for ii=0, nseeing-1 do $
 ;
 ; Now check that the generation went OK
 
-data = readfits(getenv('ADOPT_MEAS')+path_sep()+'output/dist_flao1_ts4_atm_s0.8_L040.0_v15.0_ovfreq1700.00_sd3892.fits')
+;data = readfits(getenv('ADOPT_MEAS')+path_sep()+'output/dist_flao1_ts4_atm_s0.8_L040.0_v15.0_ovfreq1700.00_sd3892.fits')
+data = readfits(fits_fname)
 help,data
 
-for i=0,4 do print,stddev(data[i,*])
-for i=0,4 do print,mean(data[i,*])
+for i=0,4 do print,stddev(data[i,*]), format = '(E0.2)'
+for i=0,4 do print,mean(data[i,*]), format = '(E0.2)'
 
 end

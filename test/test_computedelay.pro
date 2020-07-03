@@ -1,8 +1,8 @@
 
 ao_test_init
 
-a = getaoelab('20180129_220007')
-b = getaoelab('20190302_190223')
+a = getaoelab('20180129_220007',/rec)
+b = getaoelab('20190302_190223',/rec)
 
 print,'FLAO delay (ms) = ', (a->delay())->delay()
 print,'SOUL delay (ms) = ', (b->delay())->delay()

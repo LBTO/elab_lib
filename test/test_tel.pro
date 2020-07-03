@@ -4,8 +4,8 @@
 
 ao_test_init
 
-; Fogetting factor
-a = getaoelab('20190302_190223')
+; Forgetting factor
+a = getaoelab('20190302_190223',/rec)
 
 print,'Tel elevation:', (a->tel())->el()
 print,'Tel azimuth:', (a->tel())->az()
