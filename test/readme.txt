@@ -2,7 +2,7 @@
 ELAB_LIB TEST
 -------------
 
-IMPORTANT: It is better to delete the files in elab_cache before running the tests!
+IMPORTANT: Delete the files in elab_cache before running the tests ("rm -r elab_cache/*" in test directory)!
 
 This directory contains a series of test scripts, together with representative test data.
 
