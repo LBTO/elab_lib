@@ -3,165 +3,169 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
   vs_seeing = vs_seeing, filename = filename, vs_flux = vs_flux, xr = xr_, aux = tab_aux, simpath = simpath, $
   ncpa = ncpa_
   
-  ;format tab_aux: [[sr],[seeing],[mag]]
-
-  if not keyword_set(lambda_) then print, 'WARNING: lambda not set, there is no rescaling of the Strehl Ratio!'
-  if keyword_set(vs_flux) and keyword_set(vs_seeing) then message, 'Choose between Flux and seeing'
-  if keyword_set(tab_aux) then begin
-    loadct,34, rgb_table = rgb_table
-    tab_res2 = tab_aux
-    idx_sort = sort(tab_res2[*,1])
-    tab_res2 = [[tab_res2[idx_sort,0]],[tab_res2[idx_sort,1]],[tab_res2[idx_sort,2]]]
-    idx_tmp = uniq(tab_res2[*,1])
-    idx_uniq = 0
-    for i = 1, n_elements(idx_tmp)-1 do idx_uniq = [idx_uniq,idx_tmp[i-1]+1]
-  endif
-  if keyword_set(simpath) then begin
-    loadct,34, rgb_table = rgb_table
-    restore,simpath+'.sav'
-    
-    if not keyword_set(lambda_) then begin
-      print, 'Putting lambda at 1650 nm by default for simulations.'
-      lambda_tmp = 1650.
-    endif else lambda_tmp = lambda_
-    idx_wave = closest(lambda_tmp,wavelengthinnm,/outmm)
-    
-    if n_elements(ncpa_) eq 0 then ncpa = 0. else ncpa = ncpa_
-    
-    sr2 = fltarr(n_elements(seeings)*n_elements(magnitudes))
-    seeing2 = sr2
-    mag2 = sr2
-    for i = 0, n_elements(seeings)-1 do sr2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = sr[*,i,0,idx_wave,0]
-    for i = 0, n_elements(seeings)-1 do mag2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = magnitudes
-    for i = 0, n_elements(seeings)-1 do seeing2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = seeings[i]
-    
-    sr2 *= exp(-(ncpa*2*!pi/lambda_tmp)^2.)
-    
-    tab_res2 = [[sr2],[seeing2],[mag2]]
-    idx_sort = sort(tab_res2[*,1])
-    tab_res2 = [[tab_res2[idx_sort,0]],[tab_res2[idx_sort,1]],[tab_res2[idx_sort,2]]]
-    idx_tmp = uniq(tab_res2[*,1])
-    idx_uniq = 0
-    for i = 1, n_elements(idx_tmp)-1 do idx_uniq = [idx_uniq,idx_tmp[i-1]+1]
-  endif
-
-  if size(set,/type) eq 8 then begin
-    if total(tag_names(set) eq 'SEEING_OL') eq 0 then testol=0 else testol=1
-    test = set.sr gt 0 and set.seeing gt 0 and set.mag ne -1 and strmid(set.filter,0,1) ne '*'
-    if keyword_set(onsky) then test = test and set.mode eq 'ONSKY'
-    if keyword_set(calib) then test = test and set.mode ne 'ONSKY'
-    if keyword_set(max_dark) then test = test and abs(set.dark_time) le max_dark
-    if keyword_set(min_exp) then test = test and abs(set.exp_time) ge min_exp
-    if keyword_set(dimm) then test = test and set.dimm eq 1
-    index = where(test)
-    if total(index) eq -1 then begin
-      print, 'No valid TN in this set (no SR or no seeing or no mag)
-      return
-    endif
-    nfiles = n_elements(index)
-    tns = set.tn[index]
-    tab_res = [[set.sr[index]],[set.seeing[index]],[set.mag[index]],[set.bin[index]], [index]]
-    if keyword_set(vs_flux) then begin
-      dum = recalc_mag(set.counts[index], trans = set.trans[index], nsubap = set.nsub[index], $
-        freq = set.freq[index], EMgain = set.EMgain[index], binning = set.bin[index], flux = flux)
-      tab_res[*,2] = flux
-    endif
-    for i = 0,nfiles-1 do begin
-      case set.filter[index[i]] of
-        'clear J': lambda0 = 1250.
-        'P_beta clear': lambda0 = 1280.
-        'FeII clear': lambda0 = 1646.
-        'clear H': lambda0 = 1646.
-        'H2 clear': lambda0 = 2124.
-        else: begin
-          print, 'Unknown filter for '+tns[i]+' (#'+strtrim(fix(i),2)+')'
-          if not keyword_set(lambda_) then begin
-            print, 'Set lambda to avoid terminating the procedure here'
-            return
-          endif else lambda0 = lambda_
-        end
-      endcase
-      if not keyword_set(lambda_) then lambda = lambda0 else lambda = lambda_
-      tab_res[i,0] = tab_res[i,0]^((lambda0/lambda)^2.)
-      if set.mode[index[i]] eq 'ARGOScalib' then begin
-        if not keyword_set(testol) then tab_res[i,1] /= 2. else begin
-          if not keyword_set(set.seeing_ol[index[i]]) then tab_res[i,1] /= 2.
-        endelse
-      endif
-    endfor
-
-    index1 = where(tab_res[*,3] eq 1)
-    index2 = where(tab_res[*,3] eq 2)
-    index3 = where(tab_res[*,3] eq 3)
-    index4 = where(tab_res[*,3] eq 4)
-
-    if keyword_set(vs_seeing) then begin
-      xdata = tab_res[*,1]
-      vcolor = bytscl(tab_res[*,2])
-      rcolor = [min(tab_res[*,2]),max(tab_res[*,2])]
-      xtit = 'Seeing (arcsec)'
-      ctit = 'R mag.'
-    endif else begin
-      xdata = tab_res[*,2]
-      vcolor = bytscl(tab_res[*,1])
-      rcolor = [min(tab_res[*,1]),max(tab_res[*,1])]
-      if keyword_set(vs_flux) then begin
-        xtit = 'Flux (ph/s)'
-        xlog = 1
-      endif else begin
-        xtit = 'R mag.'
-        xlog = 0
-      endelse
-      ctit = 'Seeing (arcsec)'
-    endelse
-    if not keyword_set(xr_) then xr = [floor(min(xdata))-1,ceil(max(xdata))+1] else xr = xr_
-    legpos = [.9,.9]
-    if keyword_set(vs_seeing) then xr[0] = xr[0] > 0
-    if keyword_set(vs_flux) then begin
-      if not keyword_set(xr_) then begin
-        xr = [10.^(floor(min(alog10(xdata)))),10.^(ceil(max(alog10(xdata))))]
-        xr = reverse(xr)
-      endif else xr = xr_
-      legpos[0] = 1-legpos[0]
-    endif
-
-    if not keyword_set(noplot) then begin
-      p = plot(xdata,tab_res[*,0],'o',/sym_filled, rgb_table = 34, vert_color = vcolor, $
-        xtit = xtit, ytit = 'SR ('+strtrim(fix(lambda),2)+' nm)',axis_style = 2, sym_size = 1, margin = 0.2, font_size = 15, $
-        yr = [0,1], xr = xr,/nodata, xlog = xlog)
-      if total(index1) ne -1 then begin
-        p1 = plot(xdata[index1],tab_res[index1,0],'+',/sym_filled, rgb_table = 34, $
-          vert_color = vcolor[index1], sym_size = 1, /over, name = 'BIN 1', sym_thick = 2)
-      endif
-      if total(index2) ne -1 then begin
-        p2 = plot(xdata[index2],tab_res[index2,0],'s', rgb_table = 34, $
-          vert_color = vcolor[index2], sym_size = 1, /over, name = 'BIN 2', sym_thick = 2)
-      endif
-      if total(index3) ne -1 then begin
-        p3 = plot(xdata[index3],tab_res[index3,0],'tu',/sym_filled, rgb_table = 34, $
-          vert_color = vcolor[index3], sym_size = 1, /over, name = 'BIN 3', sym_thick = 2)
-      endif
-      if total(index4) ne -1 then begin
-        p4 = plot(xdata[index4],tab_res[index4,0],'X',/sym_filled, rgb_table = 34, $
-          vert_color = vcolor[index4], sym_size = 1, /over, name = 'BIN 4', sym_thick = 2)
-      endif
-      
-      c = colorbar(range = rcolor, orientation = 1, $
-        rgb_table = 34,title = ctit, font_size = 15,textpos = 1, tickdir = 1, position = [.85,.2,.9,.8],/norm)
-      target = []
-      if obj_valid(p1) then target = [target,p1]
-      if obj_valid(p2) then target = [target,p2]
-      if obj_valid(p3) then target = [target,p3]
-      if obj_valid(p4) then target = [target,p4]
-      if n_elements(target) gt 0 then l = legend(target = target,position=legpos,/relative,color=0,sample_width=0)
-    endif
-
-    tab_res_out = tab_res
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;This part is obsolete
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+;  ;format tab_aux: [[sr],[seeing],[mag]]
+;
+;  if not keyword_set(lambda_) then print, 'WARNING: lambda not set, there is no rescaling of the Strehl Ratio!'
+;  if keyword_set(vs_flux) and keyword_set(vs_seeing) then message, 'Choose between Flux and seeing'
+;  if keyword_set(tab_aux) then begin
+;    loadct,34, rgb_table = rgb_table
+;    tab_res2 = tab_aux
+;    idx_sort = sort(tab_res2[*,1])
+;    tab_res2 = [[tab_res2[idx_sort,0]],[tab_res2[idx_sort,1]],[tab_res2[idx_sort,2]]]
+;    idx_tmp = uniq(tab_res2[*,1])
+;    idx_uniq = 0
+;    for i = 1, n_elements(idx_tmp)-1 do idx_uniq = [idx_uniq,idx_tmp[i-1]+1]
+;  endif
+;  if keyword_set(simpath) then begin
+;    loadct,34, rgb_table = rgb_table
+;    restore,simpath+'.sav'
+;    
+;    if not keyword_set(lambda_) then begin
+;      print, 'Putting lambda at 1650 nm by default for simulations.'
+;      lambda_tmp = 1650.
+;    endif else lambda_tmp = lambda_
+;    idx_wave = closest(lambda_tmp,wavelengthinnm,/outmm)
+;    
+;    if n_elements(ncpa_) eq 0 then ncpa = 0. else ncpa = ncpa_
+;    
+;    sr2 = fltarr(n_elements(seeings)*n_elements(magnitudes))
+;    seeing2 = sr2
+;    mag2 = sr2
+;    for i = 0, n_elements(seeings)-1 do sr2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = sr[*,i,0,idx_wave,0]
+;    for i = 0, n_elements(seeings)-1 do mag2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = magnitudes
+;    for i = 0, n_elements(seeings)-1 do seeing2[i*n_elements(magnitudes):(i+1)*n_elements(magnitudes)-1] = seeings[i]
+;    
+;    sr2 *= exp(-(ncpa*2*!pi/lambda_tmp)^2.)
+;    
+;    tab_res2 = [[sr2],[seeing2],[mag2]]
+;    idx_sort = sort(tab_res2[*,1])
+;    tab_res2 = [[tab_res2[idx_sort,0]],[tab_res2[idx_sort,1]],[tab_res2[idx_sort,2]]]
+;    idx_tmp = uniq(tab_res2[*,1])
+;    idx_uniq = 0
+;    for i = 1, n_elements(idx_tmp)-1 do idx_uniq = [idx_uniq,idx_tmp[i-1]+1]
+;  endif
+;
+;  if size(set,/type) eq 8 then begin
+;    if total(tag_names(set) eq 'SEEING_OL') eq 0 then testol=0 else testol=1
+;    test = set.sr gt 0 and set.seeing gt 0 and set.mag ne -1 and strmid(set.filter,0,1) ne '*'
+;    if keyword_set(onsky) then test = test and set.mode eq 'ONSKY'
+;    if keyword_set(calib) then test = test and set.mode ne 'ONSKY'
+;    if keyword_set(max_dark) then test = test and abs(set.dark_time) le max_dark
+;    if keyword_set(min_exp) then test = test and abs(set.exp_time) ge min_exp
+;    if keyword_set(dimm) then test = test and set.dimm eq 1
+;    index = where(test)
+;    if total(index) eq -1 then begin
+;      print, 'No valid TN in this set (no SR or no seeing or no mag)
+;      return
+;    endif
+;    nfiles = n_elements(index)
+;    tns = set.tn[index]
+;    tab_res = [[set.sr[index]],[set.seeing[index]],[set.mag[index]],[set.bin[index]], [index]]
+;    if keyword_set(vs_flux) then begin
+;      dum = recalc_mag(set.counts[index], trans = set.trans[index], nsubap = set.nsub[index], $
+;        freq = set.freq[index], EMgain = set.EMgain[index], binning = set.bin[index], flux = flux)
+;      tab_res[*,2] = flux
+;    endif
+;    for i = 0,nfiles-1 do begin
+;      case set.filter[index[i]] of
+;        'clear J': lambda0 = 1250.
+;        'P_beta clear': lambda0 = 1280.
+;        'FeII clear': lambda0 = 1646.
+;        'clear H': lambda0 = 1646.
+;        'H2 clear': lambda0 = 2124.
+;        else: begin
+;          print, 'Unknown filter for '+tns[i]+' (#'+strtrim(fix(i),2)+')'
+;          if not keyword_set(lambda_) then begin
+;            print, 'Set lambda to avoid terminating the procedure here'
+;            return
+;          endif else lambda0 = lambda_
+;        end
+;      endcase
+;      if not keyword_set(lambda_) then lambda = lambda0 else lambda = lambda_
+;      tab_res[i,0] = tab_res[i,0]^((lambda0/lambda)^2.)
+;      if set.mode[index[i]] eq 'ARGOScalib' then begin
+;        if not keyword_set(testol) then tab_res[i,1] /= 2. else begin
+;          if not keyword_set(set.seeing_ol[index[i]]) then tab_res[i,1] /= 2.
+;        endelse
+;      endif
+;    endfor
+;
+;    index1 = where(tab_res[*,3] eq 1)
+;    index2 = where(tab_res[*,3] eq 2)
+;    index3 = where(tab_res[*,3] eq 3)
+;    index4 = where(tab_res[*,3] eq 4)
+;
+;    if keyword_set(vs_seeing) then begin
+;      xdata = tab_res[*,1]
+;      vcolor = bytscl(tab_res[*,2])
+;      rcolor = [min(tab_res[*,2]),max(tab_res[*,2])]
+;      xtit = 'Seeing (arcsec)'
+;      ctit = 'R mag.'
+;    endif else begin
+;      xdata = tab_res[*,2]
+;      vcolor = bytscl(tab_res[*,1])
+;      rcolor = [min(tab_res[*,1]),max(tab_res[*,1])]
+;      if keyword_set(vs_flux) then begin
+;        xtit = 'Flux (ph/s)'
+;        xlog = 1
+;      endif else begin
+;        xtit = 'R mag.'
+;        xlog = 0
+;      endelse
+;      ctit = 'Seeing (arcsec)'
+;    endelse
+;    if not keyword_set(xr_) then xr = [floor(min(xdata))-1,ceil(max(xdata))+1] else xr = xr_
+;    legpos = [.9,.9]
+;    if keyword_set(vs_seeing) then xr[0] = xr[0] > 0
+;    if keyword_set(vs_flux) then begin
+;      if not keyword_set(xr_) then begin
+;        xr = [10.^(floor(min(alog10(xdata)))),10.^(ceil(max(alog10(xdata))))]
+;        xr = reverse(xr)
+;      endif else xr = xr_
+;      legpos[0] = 1-legpos[0]
+;    endif
+;
+;    if not keyword_set(noplot) then begin
+;      p = plot(xdata,tab_res[*,0],'o',/sym_filled, rgb_table = 34, vert_color = vcolor, $
+;        xtit = xtit, ytit = 'SR ('+strtrim(fix(lambda),2)+' nm)',axis_style = 2, sym_size = 1, margin = 0.2, font_size = 15, $
+;        yr = [0,1], xr = xr,/nodata, xlog = xlog)
+;      if total(index1) ne -1 then begin
+;        p1 = plot(xdata[index1],tab_res[index1,0],'+',/sym_filled, rgb_table = 34, $
+;          vert_color = vcolor[index1], sym_size = 1, /over, name = 'BIN 1', sym_thick = 2)
+;      endif
+;      if total(index2) ne -1 then begin
+;        p2 = plot(xdata[index2],tab_res[index2,0],'s', rgb_table = 34, $
+;          vert_color = vcolor[index2], sym_size = 1, /over, name = 'BIN 2', sym_thick = 2)
+;      endif
+;      if total(index3) ne -1 then begin
+;        p3 = plot(xdata[index3],tab_res[index3,0],'tu',/sym_filled, rgb_table = 34, $
+;          vert_color = vcolor[index3], sym_size = 1, /over, name = 'BIN 3', sym_thick = 2)
+;      endif
+;      if total(index4) ne -1 then begin
+;        p4 = plot(xdata[index4],tab_res[index4,0],'X',/sym_filled, rgb_table = 34, $
+;          vert_color = vcolor[index4], sym_size = 1, /over, name = 'BIN 4', sym_thick = 2)
+;      endif
+;      
+;      c = colorbar(range = rcolor, orientation = 1, $
+;        rgb_table = 34,title = ctit, font_size = 15,textpos = 1, tickdir = 1, position = [.85,.2,.9,.8],/norm)
+;      target = []
+;      if obj_valid(p1) then target = [target,p1]
+;      if obj_valid(p2) then target = [target,p2]
+;      if obj_valid(p3) then target = [target,p3]
+;      if obj_valid(p4) then target = [target,p4]
+;      if n_elements(target) gt 0 then l = legend(target = target,position=legpos,/relative,color=0,sample_width=0)
+;    endif
+;
+;    tab_res_out = tab_res
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Normal dataset
-  endif else begin
+ ; endif else begin
     if keyword_set(from) and keyword_set(to) then begin
       set = obj_new('aodataset',from=from,to=to,rec=rec)
       if keyword_set(filter) then set = set->where('luci.filter_name()','eq',filter)
@@ -190,21 +194,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
         endif
         if keyword_set((cur_ee->luci())->filter_name()) then begin
           filter = (cur_ee->luci())->filter_name()
+          lambda0 = (cur_ee->luci())->lambda()*1e9
         endif else continue
-        case filter of
-          'clear J': lambda0 = 1250.
-          'P_beta clear': lambda0 = 1280.
-          'FeII clear': lambda0 = 1646.
-          'clear H': lambda0 = 1646.
-          'H2 clear': lambda0 = 2124.
-          else: begin
-            print, 'Unknown filter for '+tns[i]+' (#'+strtrim(fix(i),2)+')'
-            if not keyword_set(lambda_) then begin
-              print, 'Set lambda to avoid terminating the procedure here'
-              return
-            endif else lambda0 = lambda_
-          end
-        endcase
         if not keyword_set(lambda_) then lambda = lambda0 else lambda = lambda_
 
         sr_tmp = (cur_ee->luci())->sr_se()
@@ -347,7 +338,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
       print,'No TN in this time period'
       return
     endelse
-  endelse
+  ;endelse
 
   if keyword_set(filename) and obj_valid(p) then p.save, filename+'.png'
 
