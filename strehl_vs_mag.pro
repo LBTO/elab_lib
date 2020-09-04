@@ -1,4 +1,4 @@
-pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns = tns, noplot = noplot, $
+pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns = tns, noplot = noplot, $
   lambda = lambda_, onsky = onsky, calib = calib, max_dark = max_dark, min_exp = min_exp, dimm = dimm, $
   vs_seeing = vs_seeing, filename = filename, vs_flux = vs_flux, xr = xr_, aux = tab_aux, simpath = simpath, $
   ncpa = ncpa_
@@ -177,7 +177,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
 
     if tns[0] ne '' then begin
 
-      tab_res = fltarr(nfiles,3)-1 ;Strehl, seeing, R magnitude
+      tab_res = fltarr(nfiles,4)-1 ;Strehl, seeing, R magnitude/flux, binning
 
       count = 0
 
@@ -229,6 +229,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
         endif else continue
 
         cur_bin = ((cur_ee->wfs_status())->camera())->binning()
+        tab_res[i,3] = cur_bin 
 
         if n_elements(index) eq 0 then index = i else index = [index,i]
 
@@ -333,6 +334,10 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out, tns 
         if obj_valid(p4) then target = [target,p4]
         if n_elements(target) gt 1 then l = legend(target = target,position=legpos,/relative, font_size = 15)
       endif
+      
+      tab_res_out2 = {tns:tns, sr:tab_res_out[*,0],seeing:tab_res_out[*,1],bin:tab_res_out[*,3]}
+      if keyword_set(vs_flux) then tab_res_out2 = create_struct(tab_res_out2,'flux',tab_res_out[*,2]) $
+        else tab_res_out2 = create_struct(tab_res_out2,'Rmag',tab_res_out[*,2])
 
     endif else begin
       print,'No TN in this time period'
