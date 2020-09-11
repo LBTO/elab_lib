@@ -81,15 +81,18 @@ pro AOgaussfit::fitta, debug=debug
       
     if (ddd) then  print, 'fitting subframe ', xint[0], xint[1], yint[0], yint[1], tee/toten
 
-	; Fit a 2D Gaussian
+	; Fit a 2D Gaussian --> changed to Moffat
     rfr = fr[xint[0]:xint[1], yint[0]:yint[1]]
-    rfrfit = gauss2dfit(rfr,coeff,/tilt)
+    ;rfrfit = gauss2dfit(rfr,coeff,/tilt)
+    rfrfit = mpfit2dpeak(rfr,coeff,/tilt,/moffat)
     coeff[4:5] += [xint[0], yint[0]]
 
 	; Save all Gaussian-fit parameters:
     self._center     = coeff[4:5]
-    self._fwhm_max   = max(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
-    self._fwhm_min   = min(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+;    self._fwhm_max   = max(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+;    self._fwhm_min   = min(coeff[2:3]) * 2*SQRT(2*ALOG(2)) ;* self->pixelscale()
+    self._fwhm_max   = max(coeff[2:3]) * 2*SQRT(2^(1./coeff[7])-1) ;* self->pixelscale()
+    self._fwhm_min   = min(coeff[2:3]) * 2*SQRT(2^(1./coeff[7])-1) ;* self->pixelscale()
     self._fwhm   	 = sqrt(self._fwhm_max * self._fwhm_min)
     self._ampl       = coeff[1]
     self._ecc        = sqrt(1d - ( min([coeff[3], coeff[2]]) / max([coeff[3], coeff[2]]) )^2 )
@@ -183,7 +186,7 @@ pro AOgaussfit__define
         _ecc           : 0d, $
         _angle         : 0d, $
         _background    : 0d, $
-        _coeff         : fltarr(7), $
+        _coeff         : fltarr(8), $
         _roi           : lonarr(4), $
         INHERITS AOhelp $
     }
