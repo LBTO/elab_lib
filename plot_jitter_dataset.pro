@@ -52,17 +52,17 @@ pro plot_jitter_dataset, data, rec = rec, from=from_freq, to=to_freq, xlog = xlo
     norm = 4 ; surf from wfs to real wf rms
     if (cur_data->wfs_status())->optg() lt 1 then norm /= 2 
     
-    coeff2mas = norm * 4 / ao_pupil_diameter() / 4.848d-6 * 1e3
-
-    freq_ol = (cur_data->olmodes())->freq(from=from_freq, to=to_freq)
-    tip_ol  = (cur_data->olmodes())->power(0, from=from_freq, to=to_freq, /cum) * coeff2mas^2
-    tilt_ol = (cur_data->olmodes())->power(1, from=from_freq, to=to_freq, /cum) * coeff2mas^2
+    coeff2mas = norm * 4 / ao_pupil_diameter() * 206265. * 1e3
 
     freq_res = (cur_data->residual_modes())->freq(from=from_freq, to=to_freq)
     tip_res  = (cur_data->residual_modes())->power(0, from=from_freq, to=to_freq, /cum) * coeff2mas^2
     tilt_res = (cur_data->residual_modes())->power(1, from=from_freq, to=to_freq, /cum) * coeff2mas^2
 
     if keyword_set(openloop) then begin
+        freq_ol = (cur_data->olmodes())->freq(from=from_freq, to=to_freq)
+        tip_ol  = (cur_data->olmodes())->power(0, from=from_freq, to=to_freq, /cum) * coeff2mas^2
+        tilt_ol = (cur_data->olmodes())->power(1, from=from_freq, to=to_freq, /cum) * coeff2mas^2
+        
         freq = freq_ol
         tip  = tip_ol
         tilt = tilt_ol
