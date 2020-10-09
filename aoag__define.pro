@@ -49,6 +49,10 @@ function AOag::gains
     return, (*self._gains)[0:2]
 end
 
+function AOag::wfs_status
+    IF (OBJ_VALID(self._wfs_status)) THEN return, self._wfs_status else return, obj_new()
+end
+
 pro AOag::old_plot, i
 
     images = *(self.old_plot_fnames())
@@ -98,9 +102,12 @@ pro AOag::plot_single, img, idx, dimx=dimx, dimy=dimy
 end
 
 pro AOag::free
-    if ptr_valid(self._old_plot_fnames) then ptr_free, self._old_plot_fnames
-    if ptr_valid(self._new_plot_fnames) then ptr_free, self._new_plot_fnames
-    if ptr_valid(self._gains) then ptr_free, self._gains
+;    Removed because aodataset::values calls his method.
+;    To be investigated...
+;
+;    if ptr_valid(self._old_plot_fnames) then ptr_free, self._old_plot_fnames
+;    if ptr_valid(self._new_plot_fnames) then ptr_free, self._new_plot_fnames
+;    if ptr_valid(self._gains) then ptr_free, self._gains
 end
 
 pro AOag::Cleanup
