@@ -84,7 +84,17 @@ function AOelab::Init, tracknum, $
   ; tracknum object
   self._obj_tracknum = obj_new('AOtracknum', tracknum)
 
-  if self._meas_type eq 'AG' then return,1
+  ;;;;; AUTOGAIN wrapper object
+  if self._meas_type eq 'AG' then begin
+
+      self._ag = obj_new('AOag__define', self)
+      if not obj_valid(self._ag) then message, 'Warning: autogain data not available!', /info ;return, 0
+
+      if not self->AOhelp::Init('AOag__define', 'Represents a gain optimization measure') then return, 0
+      if obj_valid(self._ag) then self->addleaf, self._ag, 'obj_ag'
+      return, 1
+
+  endif
 
   ; create adsec_status leaf
   adsec_status_file = filepath(root=self._datadir, 'adsec.sav')
