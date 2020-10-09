@@ -87,10 +87,10 @@ function AOelab::Init, tracknum, $
   ;;;;; AUTOGAIN wrapper object
   if self._meas_type eq 'AG' then begin
 
-      self._ag = obj_new('AOag__define', self)
+      self._ag = obj_new('AOag', self)
       if not obj_valid(self._ag) then message, 'Warning: autogain data not available!', /info ;return, 0
 
-      if not self->AOhelp::Init('AOag__define', 'Represents a gain optimization measure') then return, 0
+      if not self->AOhelp::Init('AOag', 'Represents a gain optimization measure') then return, 0
       if obj_valid(self._ag) then self->addleaf, self._ag, 'obj_ag'
       return, 1
 
@@ -1065,6 +1065,10 @@ function AOelab::telemetry
   IF (OBJ_VALID(self._telemetry)) THEN return, self._telemetry else return, obj_new()
 end
 
+function AOelab::ag
+  IF (OBJ_VALID(self._ag)) THEN return, self._ag else return, obj_new()
+end
+
 function AOelab::ex, cmd,  isvalid=isvalid
   apex = string(39B)
 
@@ -1165,6 +1169,7 @@ pro AOelab::free
   IF (OBJ_VALID(self._override)) THEN  self._override->free
   IF (OBJ_VALID(self._sinusacq)) THEN  self._sinusacq->free
   IF (OBJ_VALID(self._telemetry)) THEN  self._telemetry->free
+  IF (OBJ_VALID(self._ag)) THEN  self._ag->free
 end
 
 pro AOelab::Cleanup
@@ -1205,6 +1210,7 @@ pro AOelab::Cleanup
   obj_destroy, self._override
   obj_destroy, self._sinusacq
   obj_destroy, self._telemetry
+  obj_destroy, self._ag
   self->AOhelp::Cleanup
 end
 
@@ -1254,6 +1260,7 @@ pro AOelab__define
     _override          : obj_new(), $
     _sinusacq          : obj_new(), $
     _telemetry         : obj_new(), $
+    _ag                : obj_new(), $
     INHERITS AOhelp $
   }
 end

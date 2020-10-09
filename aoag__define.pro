@@ -11,19 +11,29 @@ function AOag::Init, root_obj
 
     ; create wfs_status leaf
     wfs_status_file = filepath(root=root_obj.datadir(), 'wfs.fits')
-    self._wfs_status = obj_new('AOwfs_status', self, wfs_status_file)
+    self._wfs_status = obj_new('AOwfs_status', root_obj, wfs_status_file)
     if not obj_valid(self._wfs_status) then message, 'Warning: wfs object not available!', /info ;return, 0
 
-    self._old_plot_fnames = file_search(filepath(root=self._datadir, 'plot*step*.bmp'))
-    self._new_plot_fnames = file_search(filepath(root=self._datadir, 'plot*_.bmp'))
+    self._old_plot_fnames = ptr_new(file_search(filepath(root=root_obj.datadir(), 'plot*step*.bmp')))
+    self._new_plot_fnames = ptr_new(file_search(filepath(root=root_obj.datadir(), 'plot*_.bmp')))
 
+    optimal_gains_filename = filepath(root=root_obj.datadir(), 'optimal_gains.txt')
+    if file_test(optimal_gains_filename) then begin
+        gains = read_ascii(optimal_gains_filename, delimiter=':')
+        gains = gains.field1[1,*]
+    endif else begin
+        message,'Warning: optimal gains file no found', /info
+        gains = [0,0,0]
+    endelse
 
+    self._gains = ptr_new(gains)
 
     if not self->AOhelp::Init('AOag', 'Autogain data container') then return, 0
     if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
 
     self->addMethodHelp, "old_plot_fnames()", "old-style plot filenames"
     self->addMethodHelp, "new_plot_fnames()", "new-style plot filenamew"
+    self->addMethodHelp, "gains()", "optimal gains found by autogain measurement"
     return, 1
 end
 
@@ -35,7 +45,27 @@ function AOag::new_plot_fnames
     return, self._new_plot_fnames
 end
 
+function AOag::gains
+    return, self._gains
+end
+
+pro AOag::old_plot, i
+
+    images = *(self.old_plot_fnames())
+    if n_elements(images) lt 2 then begin
+        print,'There are no plots to show'
+        return
+    endif
+
+    img = read_image(images[i])  
+    tvscl, img[0, *, *]
+
+end
+
 pro AOag::free
+    if ptr_valid(self._old_plot_fnames) then ptr_free, self._old_plot_fnames
+    if ptr_valid(self._new_plot_fnames) then ptr_free, self._new_plot_fnames
+    if ptr_valid(self._gains) then ptr_free, self._gains
 end
 
 pro AOag::Cleanup
@@ -45,8 +75,10 @@ end
 pro AOag__define
 struct = { AOag, $
     _root_obj          : obj_new(), $
-    _old_plot_fnames   : obj_new(), $
-    _new_plot_fnames   : obj_new(), $
+    _wfs_status        : obj_new(), $
+    _old_plot_fnames   : ptr_new(), $
+    _new_plot_fnames   : ptr_new(), $
+    _gains             : ptr_new(), $
     INHERITS    AOhelp 		        $
 }
 end
