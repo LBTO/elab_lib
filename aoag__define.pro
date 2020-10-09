@@ -46,7 +46,7 @@ function AOag::new_plot_fnames
 end
 
 function AOag::gains
-    return, self._gains
+    return, (*self._gains)[0:2]
 end
 
 pro AOag::old_plot, i
@@ -62,15 +62,18 @@ pro AOag::old_plot, i
 
 end
 
-pro plot_new, dim=dim
+pro AOag::plot_new, dim=dim, wnum=wnum
 
-    if not keyword_set(dim) then dim = 300
+    if n_elements(dim) eq 0 then dim = 400
+    if n_elements(wnum) eq 0 then wnum=0
 
     images = *(self.new_plot_fnames())
     if n_elements(images) lt 2 then begin
         print,'There are no plots to show'
         return
     endif
+
+    window, wnum, xsize=dim*3, ysize=dim*2
 
     for i=0, n_elements(images)-1 do begin
 
@@ -81,22 +84,17 @@ pro plot_new, dim=dim
         idx = row*3+col
 
         img = read_image(images[i])
-        plot_single, img, idx, dimx=dim, dimy=dim
+        self.plot_single, img, idx, dimx=dim, dimy=dim
 
     endfor
 
 end
 
-pro plot_single, img, idx, dimx=dimx, dimy=dimy
+pro AOag::plot_single, img, idx, dimx=dimx, dimy=dimy
 
-    r = reform(img[0,*,*])
-    g = reform(img[0,*,*])
-    b = reform(img[0,*,*])
     if not keyword_set(dimx) then dimx = n_elements(r[*,0])
     if not keyword_set(dimy) then dimy = n_elements(r[0,*])
-    tv, rebin(r, dimx, dimy, /sample), idx, channel=1, /device
-    tv, rebin(g, dimx, dimy, /sample), idx, channel=2, /device
-    tv, rebin(b, dimx, dimy, /sample), idx, channel=3, /device
+    tv, rebin(img, 3, dimx, dimy), true=1, idx
 end
 
 pro AOag::free
