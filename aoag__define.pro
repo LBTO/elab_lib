@@ -62,6 +62,43 @@ pro AOag::old_plot, i
 
 end
 
+pro plot_new, dim=dim
+
+    if not keyword_set(dim) then dim = 300
+
+    images = *(self.new_plot_fnames())
+    if n_elements(images) lt 2 then begin
+        print,'There are no plots to show'
+        return
+    endif
+
+    for i=0, n_elements(images)-1 do begin
+
+        pieces = strsplit(images[i], '_', /extract)
+        row = fix(pieces[n_elements(pieces)-4])
+        col = fix(pieces[n_elements(pieces)-3])
+        
+        idx = row*3+col
+
+        img = read_image(images[i])
+        plot_single, img, idx, dimx=dim, dimy=dim
+
+    endfor
+
+end
+
+pro plot_single, img, idx, dimx=dimx, dimy=dimy
+
+    r = reform(img[0,*,*])
+    g = reform(img[0,*,*])
+    b = reform(img[0,*,*])
+    if not keyword_set(dimx) then dimx = n_elements(r[*,0])
+    if not keyword_set(dimy) then dimy = n_elements(r[0,*])
+    tv, rebin(r, dimx, dimy, /sample), idx, channel=1, /device
+    tv, rebin(g, dimx, dimy, /sample), idx, channel=2, /device
+    tv, rebin(b, dimx, dimy, /sample), idx, channel=3, /device
+end
+
 pro AOag::free
     if ptr_valid(self._old_plot_fnames) then ptr_free, self._old_plot_fnames
     if ptr_valid(self._new_plot_fnames) then ptr_free, self._new_plot_fnames
