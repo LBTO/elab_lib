@@ -34,6 +34,8 @@ function AOag::Init, root_obj
     self->addMethodHelp, "old_plot_fnames()", "old-style plot filenames"
     self->addMethodHelp, "new_plot_fnames()", "new-style plot filenames"
     self->addMethodHelp, "gains()", "optimal gains found by autogain measurement"
+    self->addMethodHelp, "plot_new", "attempt to replicate the autogain plots"
+    self->addMethodHelp, "wfs_status()", "reference to wfs status object (AOwfs_status)"
     return, 1
 end
 
