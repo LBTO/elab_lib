@@ -32,7 +32,7 @@ function AOag::Init, root_obj
     if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
 
     self->addMethodHelp, "old_plot_fnames()", "old-style plot filenames"
-    self->addMethodHelp, "new_plot_fnames()", "new-style plot filenamew"
+    self->addMethodHelp, "new_plot_fnames()", "new-style plot filenames"
     self->addMethodHelp, "gains()", "optimal gains found by autogain measurement"
     return, 1
 end
