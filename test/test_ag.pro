@@ -1,5 +1,5 @@
 
-pro testag
+pro test_ag
 
 ao_init, /left
 ee = getaoelab('20201001_021730')
