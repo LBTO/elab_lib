@@ -28,15 +28,112 @@ function AOag::Init, root_obj
 
     self._gains = ptr_new(gains)
 
+    self.readconf
+    self.readsteps
+
     if not self->AOhelp::Init('AOag', 'Autogain data container') then return, 0
     if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
 
+    self->addMethodHelp, "nsteps()", "returns the number of measurements steps"
+    self->addMethodHelp, "step(n)", "returns a single step object"
+    self->addMethodHelp, "recpath()", "returns the reconstructor file path"
+    self->addMethodHelp, "conf(key)", "returns a configuration value"
     self->addMethodHelp, "old_plot_fnames()", "old-style plot filenames"
     self->addMethodHelp, "new_plot_fnames()", "new-style plot filenames"
     self->addMethodHelp, "gains()", "optimal gains found by autogain measurement"
     self->addMethodHelp, "plot_new", "attempt to replicate the autogain plots"
     self->addMethodHelp, "wfs_status()", "reference to wfs status object (AOwfs_status)"
     return, 1
+end
+
+function AOag::recpath
+    gainfile = filepath(root=self._root_obj.datadir(), 'gains_step1.fits')
+    dummy = readfits(gainfile, hdr)
+    m2c = aoget_fits_keyword(hdr, 'M2C')
+    rec = aoget_fits_keyword(hdr, 'REC')
+    ;; TODO generalize path
+    recpath = '/aodata/lbtdata/adsecsx/adsec_calib/M2C/'+strtrim(m2c)+'/RECs/'+strtrim(rec)
+    return, recpath
+end
+
+
+pro AOag::readconf
+   conffile = filepath(root=self._root_obj.datadir(), 'conf.txt')
+   line=''
+   tags = strarr(1)
+   values = strarr(1)
+   tags[0] = 'dummy'
+   values[0] = 'dummy'
+
+   openr, lun, conffile, /get_lun
+   while not eof(lun) do begin
+     readf, lun, line
+     if line ne '' then begin
+         tokens = strsplit(line, /extract)
+         tag = tokens[0]
+         tag = strmid(tag,0,strlen(tag)-1)
+         value = strjoin(tokens[1:*], ' ')
+         tags = [tags, tag]
+         values = [values, value]
+     endif
+   endwhile
+
+   if ptr_valid(self._conftags) then ptr_free, self._conftags
+   if ptr_valid(self._confvalues) then ptr_free, self._confvalues
+
+   self._conftags = ptr_new(tags)
+   self._confvalues = ptr_new(values)
+end
+
+function AOag::_actuated_group, gains
+    return, where(max(gains,dim=2) - min(gains,dim=2))
+end
+
+pro AOag::readsteps
+
+    gain_fnames = file_search(filepath(root=self._root_obj.datadir(), 'gains_step*.fits'))
+    prev_actuated_group = -1
+    sequence = strsplit(self.conf('sequence'), /extract)
+
+    self._steps = ptr_new(objarr(n_elements(gain_fnames)))
+
+    for step=1,n_elements(gain_fnames) do begin
+        ; Regenerate gain_fname to get rid of problems with lexical sorting
+        gain_fname =filepath(root=self._root_obj.datadir(), 'gains_step'+strtrim(step,2)+'.fits')
+        gains = readfits(gain_fname)
+        print,self._actuated_group(gains)
+        if self._actuated_group(gains) ne prev_actuated_group then begin
+            first_step = step
+            prev_actuated_group = self._actuated_group(gains)
+            target = sequence[0]
+            if n_elements(sequence) gt 1 then sequence = sequence[1:*]
+            iterations = 0
+        endif
+
+        iterations = iterations +1
+        print,'STEP '+strtrim(step,2)+'  iteration: '+target+' - ' +strtrim(iterations,2)
+        stepobj = obj_new('AOagstep', self, self._root_obj, first_step, step, target, fix(self.conf('ho_middle')))
+        (*self._steps)[step-1] = stepobj
+     endfor
+
+
+end
+
+function AOag::step, n
+   return, (*self._steps)[n-1]
+end
+
+function AOag::conf, key
+
+   for i=0, n_elements(*self._conftags) do begin
+      if (*self._conftags)[i] eq key then return, (*self._confvalues)[i]
+   endfor
+   return, ''
+
+end
+
+function AOag::nsteps
+    return, n_elements(*self._steps)
 end
 
 function AOag::old_plot_fnames
@@ -52,7 +149,7 @@ function AOag::gains
 end
 
 function AOag::wfs_status
-    IF (OBJ_VALID(self._wfs_status)) THEN return, self._wfs_status else return, obj_new()
+    IF OBJ_VALID(self._wfs_status) THEN return, self._wfs_status else return, obj_new()
 end
 
 pro AOag::old_plot, i
@@ -123,6 +220,9 @@ struct = { AOag, $
     _old_plot_fnames   : ptr_new(), $
     _new_plot_fnames   : ptr_new(), $
     _gains             : ptr_new(), $
+    _conftags          : ptr_new(), $
+    _confvalues        : ptr_new(), $
+    _steps             : ptr_new(), $
     INHERITS    AOhelp 		        $
 }
 end
