@@ -15,7 +15,6 @@ function AOagstep::Init, parent, root_obj, first_step, last_step, target, middle
     self._first_step = first_step
     self._last_step = last_step
 
-    print,'Creating aoagstep',self._first_step, self._last_step
     if not self->AOhelp::Init('AOagstep', 'Autogain step') then return, 0
 
     self->addMethodHelp, "recalc()", "Recalculate step"
@@ -25,7 +24,6 @@ end
 pro AOagstep::recalc, PRONAME=PRONAME, GAINTT=GAINTT, GAINHO1=GAINHO1, GAINHO2=GAINHO2, ERRMSG=ERRMSG, $
                       OUTFILE_PLOT=OUTFILE_PLOT, MODESI_PATTERN=MODESI_PATTERN
 
-    print,'Recalc aoagstep',self._first_step, self._last_step
     if n_elements(PRONAME) eq 0 then PRONAME='autogain_analyze_offline'
     if n_elements(OUTFILE_PLOT) eq 0 then OUTFILE_PLOT='/tmp/plot_step'+strtrim(self._last_step,2)+'.bmp'
     if n_elements(MODESI_PATTERN) eq 0 then MODESI_PATTERN='/tmp/modesi_step%d.fits'
@@ -33,7 +31,6 @@ pro AOagstep::recalc, PRONAME=PRONAME, GAINTT=GAINTT, GAINHO1=GAINHO1, GAINHO2=G
     title = self._root_obj->tracknum() + ' ' + self._target
     steps = indgen(self._last_step - self._first_step + 1) + self._first_step
     join_steps = strjoin(strtrim(steps,2), ' ')
-    print,'JOIN STEPS',join_steps
     gainsfile_pattern = filepath(root=self._root_obj->datadir(), 'gains_step%d.fits')
     slopesfile_pattern = filepath(root=self._root_obj->datadir(), 'slopes_step%d.fits')
     recpath = self._parent->recpath()

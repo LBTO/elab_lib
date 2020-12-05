@@ -101,7 +101,6 @@ pro AOag::readsteps
         ; Regenerate gain_fname to get rid of problems with lexical sorting
         gain_fname =filepath(root=self._root_obj.datadir(), 'gains_step'+strtrim(step,2)+'.fits')
         gains = readfits(gain_fname)
-        print,self._actuated_group(gains)
         if self._actuated_group(gains) ne prev_actuated_group then begin
             first_step = step
             prev_actuated_group = self._actuated_group(gains)
@@ -111,7 +110,6 @@ pro AOag::readsteps
         endif
 
         iterations = iterations +1
-        print,'STEP '+strtrim(step,2)+'  iteration: '+target+' - ' +strtrim(iterations,2)
         stepobj = obj_new('AOagstep', self, self._root_obj, first_step, step, target, fix(self.conf('ho_middle')))
         (*self._steps)[step-1] = stepobj
      endfor
