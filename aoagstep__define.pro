@@ -48,7 +48,7 @@ pro AOagstep::recalc, PRONAME=PRONAME, GAINTT=GAINTT, GAINHO1=GAINHO1, GAINHO2=G
     for i=0, n_elements(steps)-1 do begin
         step = strtrim(steps[i],2)
         modesi_filename = oaa_str_replace(MODESI_PATTERN, '%d', step)
-        FILE_DELETE, modesi_filename
+        FILE_DELETE, modesi_filename, /ALLOW_NONEXISTENT
     endfor
 
     CALL_PROCEDURE, PRONAME, GAINTT=GAINTT, GAINHO1=GAINHO1, GAINHO2=GAINHO2, ERRMSG=ERRMSG, $
