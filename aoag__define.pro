@@ -10,14 +10,14 @@ function AOag::Init, root_obj
     self._root_obj = root_obj
 
     ; create wfs_status leaf
-    wfs_status_file = filepath(root=root_obj.datadir(), 'wfs.fits')
+    wfs_status_file = filepath(root=root_obj->datadir(), 'wfs.fits')
     self._wfs_status = obj_new('AOwfs_status', root_obj, wfs_status_file)
     if not obj_valid(self._wfs_status) then message, 'Warning: wfs object not available!', /info ;return, 0
 
-    self._old_plot_fnames = ptr_new(file_search(filepath(root=root_obj.datadir(), 'plot*step*.bmp')))
-    self._new_plot_fnames = ptr_new(file_search(filepath(root=root_obj.datadir(), 'plot*_.bmp')))
+    self._old_plot_fnames = ptr_new(file_search(filepath(root=root_obj->datadir(), 'plot*step*.bmp')))
+    self._new_plot_fnames = ptr_new(file_search(filepath(root=root_obj->datadir(), 'plot*_.bmp')))
 
-    optimal_gains_filename = filepath(root=root_obj.datadir(), 'optimal_gains.txt')
+    optimal_gains_filename = filepath(root=root_obj->datadir(), 'optimal_gains.txt')
     if file_test(optimal_gains_filename) then begin
         gains = read_ascii(optimal_gains_filename, delimiter=':')
         gains = gains.field1[1,*]
@@ -28,8 +28,8 @@ function AOag::Init, root_obj
 
     self._gains = ptr_new(gains)
 
-    self.readconf
-    self.readsteps
+    self->readconf
+    self->readsteps
 
     if not self->AOhelp::Init('AOag', 'Autogain data container') then return, 0
     if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
@@ -47,18 +47,17 @@ function AOag::Init, root_obj
 end
 
 function AOag::recpath
-    gainfile = filepath(root=self._root_obj.datadir(), 'gains_step1.fits')
+    gainfile = filepath(root=self._root_obj->datadir(), 'gains_step1.fits')
     dummy = readfits(gainfile, hdr)
     m2c = aoget_fits_keyword(hdr, 'M2C')
     rec = aoget_fits_keyword(hdr, 'REC')
-    ;; TODO generalize path
-    recpath = '/aodata/lbtdata/adsecsx/adsec_calib/M2C/'+strtrim(m2c)+'/RECs/'+strtrim(rec)
+    recpath = ao_datadir()+path_sep()+'adsec_calib/M2C/'+strtrim(m2c)+'/RECs/'+strtrim(rec)
     return, recpath
 end
 
 
 pro AOag::readconf
-   conffile = filepath(root=self._root_obj.datadir(), 'conf.txt')
+   conffile = filepath(root=self._root_obj->datadir(), 'conf.txt')
    line=''
    tags = strarr(1)
    values = strarr(1)
@@ -91,27 +90,28 @@ end
 
 pro AOag::readsteps
 
-    gain_fnames = file_search(filepath(root=self._root_obj.datadir(), 'gains_step*.fits'))
+    gain_fnames = file_search(filepath(root=self._root_obj->datadir(), 'gains_step*.fits'))
     prev_actuated_group = -1
-    sequence = strsplit(self.conf('sequence'), /extract)
+    sequence = strsplit(self->conf('sequence'), /extract)
 
     self._steps = ptr_new(objarr(n_elements(gain_fnames)))
 
     for step=1,n_elements(gain_fnames) do begin
         ; Regenerate gain_fname to get rid of problems with lexical sorting
-        gain_fname =filepath(root=self._root_obj.datadir(), 'gains_step'+strtrim(step,2)+'.fits')
+        gain_fname =filepath(root=self._root_obj->datadir(), 'gains_step'+strtrim(step,2)+'.fits')
         gains = readfits(gain_fname)
-        if self._actuated_group(gains) ne prev_actuated_group then begin
+        if self->_actuated_group(gains) ne prev_actuated_group then begin
             first_step = step
-            prev_actuated_group = self._actuated_group(gains)
+            prev_actuated_group = self->_actuated_group(gains)
             target = sequence[0]
             if n_elements(sequence) gt 1 then sequence = sequence[1:*]
             iterations = 0
         endif
 
         iterations = iterations +1
-        stepobj = obj_new('AOagstep', self, self._root_obj, first_step, step, target, fix(self.conf('ho_middle')))
+        stepobj = obj_new('AOagstep', self, self._root_obj, first_step, step, target, fix(self->conf('ho_middle')))
         (*self._steps)[step-1] = stepobj
+        help,(step-1), (*self._steps)[step-1]
      endfor
 
 
@@ -152,7 +152,7 @@ end
 
 pro AOag::old_plot, i
 
-    images = *(self.old_plot_fnames())
+    images = *(self->old_plot_fnames())
     if n_elements(images) lt 2 then begin
         print,'There are no plots to show'
         return
@@ -168,7 +168,7 @@ pro AOag::plot_new, dim=dim, wnum=wnum
     if n_elements(dim) eq 0 then dim = 400
     if n_elements(wnum) eq 0 then wnum=0
 
-    images = *(self.new_plot_fnames())
+    images = *(self->new_plot_fnames())
     if n_elements(images) lt 2 then begin
         print,'There are no plots to show'
         return
@@ -185,7 +185,7 @@ pro AOag::plot_new, dim=dim, wnum=wnum
         idx = row*3+col
 
         img = read_image(images[i])
-        self.plot_single, img, idx, dimx=dim, dimy=dim
+        self->plot_single, img, idx, dimx=dim, dimy=dim
 
     endfor
 
