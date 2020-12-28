@@ -91,7 +91,7 @@ function AOelab::Init, tracknum, $
       if not obj_valid(self._ag) then message, 'Warning: autogain data not available!', /info ;return, 0
 
       if not self->AOhelp::Init('AOag', 'Represents a gain optimization measure') then return, 0
-      if obj_valid(self._ag) then self->addleaf, self._ag, 'obj_ag'
+      if obj_valid(self._ag) then self->addleaf, self._ag, 'ag'
       return, 1
 
   endif
