@@ -111,7 +111,6 @@ pro AOag::readsteps
         iterations = iterations +1
         stepobj = obj_new('AOagstep', self, self._root_obj, first_step, step, target, fix(self->conf('ho_middle')))
         (*self._steps)[step-1] = stepobj
-        help,(step-1), (*self._steps)[step-1]
      endfor
 
 
