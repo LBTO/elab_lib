@@ -83,6 +83,7 @@ lbt = lbt
     tab_emgain = fltarr(nfiles)
     tab_hasPSF = fltarr(nfiles)
     tab_dimm = fltarr(nfiles)
+    tab_dimm_elevation = fltarr(nfiles)
     tab_darktime = fltarr(nfiles)
     tab_exptime = fltarr(nfiles)
     tab_rot = fltarr(nfiles)
@@ -111,6 +112,7 @@ lbt = lbt
       cur_emgain = -1
       cur_hasPSF = 0
       cur_dimm = 0
+      cur_dimm_elevation = 0
       cur_darktime = !values.f_infinity
       cur_exptime = -1
       cur_rot = 0
@@ -200,6 +202,11 @@ lbt = lbt
             cur_seeingol = 0
             cur_dimm = 1
             endif
+            if finite((cur_ee->tel())->dimm_seeing_elevation()) then begin
+            cur_seeing = (cur_ee->tel())->dimm_seeing_elevation()
+            cur_seeingol = 0
+            cur_dimm_elevation = 1
+            endif
           endif
           if obj_valid(cur_ee->modal_rec()) then begin
             cur_recmat = strmid((cur_ee->modal_rec())->fname(),10,6,/reverse)
@@ -226,6 +233,7 @@ lbt = lbt
       tab_emgain[i] = cur_emgain
       tab_haspsf[i] = cur_haspsf
       tab_dimm[i] = cur_dimm
+      tab_dimm_elevation[i] = cur_dimm_elevation
       tab_darktime[i] = cur_darktime
       tab_exptime[i] = cur_exptime
       tab_rot[i] = cur_rot
@@ -238,7 +246,7 @@ lbt = lbt
     tab = create_struct('TN', tns, 'SR', tab_sr, 'filter', tab_filter, $
       'seeing', tab_seeing, 'seeing_ol', tab_seeingol, 'mag', tab_mag, 'gains', tab_gains, 'recmat', tab_recmat, $
       'freq', tab_freq, 'nmodes', tab_nmodes, 'bin', tab_bin, 'nsub', tab_nsubap, 'trans', tab_trans, 'counts', tab_counts, $
-      'mode', tab_mode, 'emGain', tab_emgain, 'hasPSF', tab_haspsf, 'DIMM', tab_dimm, 'dark_time', tab_darktime, $
+      'mode', tab_mode, 'emGain', tab_emgain, 'hasPSF', tab_haspsf, 'DIMM', tab_dimm, 'DIMMELEVATION', tab_dimm_elevation, 'dark_time', tab_darktime, $
       'exp_time', tab_exptime, 'rot', tab_rot, 'ra', tab_ra, 'dec', tab_dec, 'side', strarr(nfiles)+side, $
       'valid', tab_valid)
 

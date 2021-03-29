@@ -214,6 +214,9 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
         if finite((cur_ee->tel())->dimm_seeing()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing() else begin
           if keyword_set(dimm) then continue
         endelse
+        if finite((cur_ee->tel())->dimm_seeing_elevation()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing_elevation() else begin
+          if keyword_set(dimm) then continue
+        endelse
         if tab_res[i,1] le 0 then begin
           tab_res[i,1]=-1
           continue

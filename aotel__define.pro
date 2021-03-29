@@ -74,8 +74,13 @@ function AOtel::Init, root, fitsfile
     endif else begin
         dimm = readfits(filepath(root=root->datadir(),  'Dimm_'+root->tracknum()+'.fits'), /SILENT)
         self._dimm_seeing = median(dimm[0,*])
-        if self._dimm_seeing lt 0. then self._dimm_seeing = float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))	;file Dimm...fits contiene merda....
-        if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN		;Tutto e' pieno di merda....
+        if self._dimm_seeing lt 0. then self._dimm_seeing = float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEING'))	;file Dimm...fits garbage....
+        if self._dimm_seeing lt 0. then self._dimm_seeing = !VALUES.F_NAN		;garbage....
+
+        dimm_elev = readfits(filepath(root=root->datadir(),  'DimmElevation'+root->tracknum()+'.fits'), /SILENT)
+        self._dimm_seeing_elevation = median(dimm_elev[0,*])
+        if self._dimm_seeing_elevation lt 0. then self._dimm_seeing_elevation = float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEINGELEVATION'))	;file Dimm...fits garbage
+        if self._dimm_seeing_elevation lt 0. then self._dimm_seeing_elevation = !VALUES.F_NAN		;garbage....
     endelse
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
     self._guidecam_centroid_y   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.Y'))
@@ -131,6 +136,7 @@ function AOtel::Init, root, fitsfile
     self->addMethodHelp, "extern_wind_speed()", "Wind speed external (m/s)"
     self->addMethodHelp, "extern_wind_direction()", "Wind direction (deg)"
     self->addMethodHelp, "dimm_seeing()", "DIMM seeing (arcsec)"
+    self->addMethodHelp, "dimm_seeing_elevation()", "DIMM seeing elevation (arcsec)"
     self->addMethodHelp, "guidecam_fwhm_x()", "FWHM of guidecam x (arcsec)"
     self->addMethodHelp, "guidecam_fwhm_y()", "FWHM of guidecam y (arcsec)"
 
@@ -139,6 +145,10 @@ end
 
 function AOtel::dimm_seeing
 	return, self._dimm_seeing
+end
+
+function AOtel::dimm_seeing_elevation
+	return, self._dimm_seeing_elevation
 end
 
 function AOtel::guidecam_fwhm_x
@@ -255,6 +265,7 @@ pro AOtel::test
     d=self->extern_wind_speed()
     d=self->extern_wind_direction()
     d=self->dimm_seeing()
+    d=self->dimm_seeing_elevation()
     d=self->guidecam_fwhm_x()
     d=self->guidecam_fwhm_y()
 end
@@ -280,6 +291,7 @@ pro AOtel::summary
     print, string(format='(%"%-30s %f")','External Wind speed [m/s]', self->extern_wind_speed() )
     print, string(format='(%"%-30s %f")','External Wind direction [deg]', self->extern_wind_direction() )
     print, string(format='(%"%-30s %f")','Dimm seeing [arcsec]', self->dimm_seeing() )
+    print, string(format='(%"%-30s %f")','Dimm seeing elevation [arcsec]', self->dimm_seeing_elevation() )
     print, string(format='(%"%-30s %f")','FWHM of guidecam x [arcsec]', self->guidecam_fwhm_x() )
     print, string(format='(%"%-30s %f")','FWHM of guidecam y [arcsec]', self->guidecam_fwhm_y() )
 end
@@ -296,6 +308,7 @@ pro AOtel__define
         _ter       					: fltarr(4)		, $ ; tertiary
         _swa    					: 0.     		, $ ; swing arm deployed
         _dimm_seeing    			: 0.     		, $ ; dimm seeing
+        _dimm_seeing_elevation    			: 0.     		, $ ; dimm seeing elevation
         _extern_wind_direction 		: 0.     		, $ ;
         _extern_wind_speed     		: 0.     		, $ ;
         _guidecam_centroid_x  		: 0.     		, $ ;

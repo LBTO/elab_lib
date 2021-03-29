@@ -63,6 +63,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
       else begin
         if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) then begin
           if finite((cur_data->tel())->dimm_seeing()) then seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
+          if finite((cur_data->tel())->dimm_seeing_elevation()) then seeing_rad = (cur_data->tel())->dimm_seeing_elevation()*asec2rad
         endif
       endelse
       if n_elements(seeing_rad) eq 0 then message, 'fitting error can not be computed', /info else begin
