@@ -59,15 +59,21 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
     if keyword_set(fitting) then begin
       rad2asec = 3600.d*180.d/!dpi
       asec2rad = 1.d/rad2asec
-      if keyword_set(seeing) then seeing_rad = seeing*asec2rad $
-      else begin
+      if keyword_set(seeing) then begin
+        if n_elements(seeing) eq 1 then seeing_rad = seeing*asec2rad $
+          else seeing_rad = seeing[i]*asec2rad
+      endif else begin
+        if obj_valid(cur_data->disturb()) then begin
+          if (cur_data->disturb())->type() eq 'atm' or (cur_data->disturb())->type() eq 'atm+sinus' then $
+            seeing_rad = (cur_data->disturb())->seeing()/(1.+(cur_data->operation_mode() ne 'RR'))*asec2rad
+        endif 
         if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) then begin
           if finite((cur_data->tel())->dimm_seeing()) then seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
           if finite((cur_data->tel())->dimm_seeing_elevation()) then seeing_rad = (cur_data->tel())->dimm_seeing_elevation()*asec2rad
         endif
       endelse
       if n_elements(seeing_rad) eq 0 then message, 'fitting error can not be computed', /info else begin
-        r0500 = 0.98d*0.5d-6/seeing_rad ; Fried's r0 @ 500 nm
+        r0500 = 0.976d*0.5d-6/seeing_rad ; Fried's r0 @ 500 nm
         r0LAM = r0500*(lambda/500.d)^(6.d/5.d)
         fitting_error = 0.2778d*(cur_data->modal_rec())->nmodes()^(-0.9d) * (8.222d / r0LAM)^(5.d/3.d)
       endelse
