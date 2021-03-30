@@ -44,6 +44,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
       if sr_tmp gt 1 or sr_tmp lt 0 then continue
       tab_res[i,0] = sr_tmp^((lambda0/lambda)^2.)
       if obj_valid(cur_ee->olmodes()) then tab_res[i,1] = (cur_ee->olmodes())->seeing()
+
+      ; 1. Get seeing from disturbance, if available
       if (cur_ee->adsec_status())->disturb_status() ne 0 then begin
         if keyword_set(cur_ee->disturb()) then begin
           if (cur_ee->disturb())->type() eq 'atm' or (cur_ee->disturb())->type() eq 'atm+sinus' then begin
@@ -53,9 +55,13 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
           endif
         endif
       endif
+
+      ; 2. Override seeing with the DIMM measurement, if available
       if finite((cur_ee->tel())->dimm_seeing()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing() else begin
         if keyword_set(dimm) then continue
       endelse
+
+      ; 3. Override seeting with the DIMM measuremetn corrected by elevation, if available
       if finite((cur_ee->tel())->dimm_seeing_elevation()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing_elevation() else begin
         if keyword_set(dimm) then continue
       endelse
