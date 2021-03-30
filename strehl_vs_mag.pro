@@ -3,17 +3,17 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
   vs_seeing = vs_seeing, filename = filename, vs_flux = vs_flux, xr = xr_, aux = tab_aux, simpath = simpath, $
   ncpa = ncpa_
 
-  if size(data,/type) eq 11 then begin
-    if obj_class(data) eq 'AOELAB' then tns = set->tracknum()
-    if obj_class(data) eq 'AODATASET' then tns = set->tracknums()
-  endif else tns = set
-
   if keyword_set(from) and keyword_set(to) then begin
     set = obj_new('aodataset',from=from,to=to,rec=rec)
     if keyword_set(filter) then set = set->where('luci.filter_name()','eq',filter)
     set = set->where('luci.sr_se()','between',[0,1])
     tns = set->tracknums()
-  endif else tns = set
+  endif else begin
+    if size(set,/type) eq 11 then begin
+      if obj_class(set) eq 'AOELAB' then tns = set->tracknum()
+      if obj_class(set) eq 'AODATASET' then tns = set->tracknums()
+    endif else tns = set
+  endelse
 
   nfiles = n_elements(tns)
 
@@ -53,7 +53,10 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
           endif
         endif
       endif
-      if finite((cur_ee->tel())->dimm_seeing()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing() else begin
+      if finite((cur_ee->tel())->dimm_seeing()) then begin
+        tab_res[i,1] = (cur_ee->tel())->dimm_seeing()
+        if finite((cur_ee->tel())->dimm_seeing_elevation()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing_elevation()
+      endif else begin
         if keyword_set(dimm) then continue
       endelse
       if tab_res[i,1] le 0 then begin
