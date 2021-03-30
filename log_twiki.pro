@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
 
     objref =  aodataset->Get()
 
-    hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL/Disturb* | *Rec* | *bin* | *#mod* | *freq* "+$
+    hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/Corrected/OL/Disturb* | *Rec* | *bin* | *#mod* | *freq* "+$
            "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *Gopt* | *AntiDrift* | *SR* | *SR (from slopes)* "+ $
            "| *FWHM [max,min] (mas)* | *filter* | *exp* | *#frames* | *disturb* | *SN* | *skip* | *notes* | "
 
@@ -67,7 +67,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
         endif else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
