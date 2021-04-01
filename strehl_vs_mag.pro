@@ -20,6 +20,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
   if tns[0] ne '' then begin
 
     tab_res = fltarr(nfiles,4)-1 ;Strehl, seeing, R magnitude/flux, binning
+    
+    if not keyword_set(lambda_) then lambda = 1650. else lambda = lambda_
 
     count = 0
 
@@ -27,20 +29,24 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
       cur_ee = getaoelab(tns[i],rec=rec)
       if not obj_valid(cur_ee) then continue
-      if not obj_valid(cur_ee->luci()) then continue
       if not obj_valid(cur_ee->wfs_status()) then continue
       if not obj_valid((cur_ee->wfs_status())->pupils()) then continue
       if keyword_set(onsky) and cur_ee->operation_mode() ne 'ONSKY' then continue
       if keyword_set(calib) then begin
         if cur_ee->operation_mode() eq 'ONSKY' and keyword_set((ee->tel())->isTracking()) then continue
       endif
-      if keyword_set((cur_ee->luci())->filter_name()) then begin
-        filter = (cur_ee->luci())->filter_name()
-        lambda0 = (cur_ee->luci())->lambda()*1e9
-      endif else continue
-      if not keyword_set(lambda_) then lambda = lambda0 else lambda = lambda_
-
-      sr_tmp = (cur_ee->luci())->sr_se()
+      
+      if not obj_valid(cur_ee->luci()) then begin
+        sr_tmp = sr_from_slopes(cur_ee,lambda,/fitting,/noise)
+        lambda0 = lambda
+      endif else begin
+        if keyword_set((cur_ee->luci())->filter_name()) then begin
+          filter = (cur_ee->luci())->filter_name()
+          lambda0 = (cur_ee->luci())->lambda()*1e9
+          sr_tmp = (cur_ee->luci())->sr_se()
+        endif else continue
+      endelse
+      
       if sr_tmp gt 1 or sr_tmp lt 0 then continue
       tab_res[i,0] = sr_tmp^((lambda0/lambda)^2.)
       if obj_valid(cur_ee->olmodes()) then tab_res[i,1] = (cur_ee->olmodes())->seeing()
@@ -97,7 +103,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
     tns = tns[index]
 
     tab_res_out = tab_res[index,*]
-
+stop
     if keyword_set(vs_seeing) then begin
       xdata = tab_res_out[*,1]
       rcolor = [min(tab_res_out[*,2]),max(tab_res_out[*,2])]
