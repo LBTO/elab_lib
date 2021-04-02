@@ -117,7 +117,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
       endif
       vcolor = (bytscl([rcolor,tab_res_out[*,2]]))[2:*]
       xtit = 'Seeing (arcsec)'
-      ctit = 'R mag.'
+      ctit = 'WFS mag.'
     endif else begin
       xdata = tab_res_out[*,2]
       rcolor = [min(tab_res_out[*,1]),max(tab_res_out[*,1])]
@@ -132,7 +132,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
         xtit = 'Flux (ph/s)'
         xlog = 1
       endif else begin
-        xtit = 'R mag.'
+        xtit = 'WFS mag.'
         xlog = 0
       endelse
       ctit = 'Seeing (arcsec)'
@@ -190,7 +190,7 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
     tab_res_out2 = {tns:tns, sr:tab_res_out[*,0],seeing:tab_res_out[*,1],bin:tab_res_out[*,3]}
     if keyword_set(vs_flux) then tab_res_out2 = create_struct(tab_res_out2,'flux',tab_res_out[*,2]) $
-    else tab_res_out2 = create_struct(tab_res_out2,'Rmag',tab_res_out[*,2])
+    else tab_res_out2 = create_struct(tab_res_out2,'WFSmag',tab_res_out[*,2])
 
   endif else begin
     print,'No TN in this time period'
