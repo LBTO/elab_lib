@@ -3,7 +3,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
 
     objref =  aodataset->Get()
 
-    hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/OL/Disturb* | *Rec* | *bin* | *#mod* | *freq* "+$
+    hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/Corrected/OL/Disturb* | *Rec* | *bin* | *#mod* | *freq* "+$
            "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *Gopt* | *AntiDrift* | *SR* | *SR (from slopes)* "+ $
            "| *FWHM [max,min] (mas)* | *filter* | *exp* | *#frames* | *disturb* | *SN* | *skip* | *notes* | "
 
@@ -67,13 +67,14 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
         endif else ADU2nph=0.5
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f  %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
             obj_valid(ee->tel()) ? round( (ee->tel())->el() ) : -1 , $
             obj_valid(ee->tel()) ? round( (ee->tel())->extern_wind_speed() ) : -1 , $
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing() : -1 , $
+            obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing_elevation() : -1 , $
             obj_valid(ee->olmodes()) ?  (ee->olmodes())->seeing() : -1 , $
             obj_valid(ee->disturb()) ?  ((ee->disturb())->seeing())/(1.+(ee->operation_mode() ne 'RR')) : -1 , $
             obj_valid(ee->modal_rec()) ? strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) : ' ', $
@@ -128,5 +129,11 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
     if cnt gt 0 then begin
         dimmsee = dimmsee[idx]
         print, string(format='(%"| %s | %g (%g) |")', 'SEEING (DIMM)', mean(dimmsee),  stddev(dimmsee))
+    endif
+    dimmsee_elevation=aodataset->value('tel.dimm_seeing_elevation')
+    idx = where(finite(dimmsee_elevation) eq 1, cnt)
+    if cnt gt 0 then begin
+        dimmsee_elevation = dimmsee_elevation[idx]
+        print, string(format='(%"| %s | %g (%g) |")', 'SEEING ELEVATION (DIMM)', mean(dimmsee_elevation),  stddev(dimmsee_elevation))
     endif
 end

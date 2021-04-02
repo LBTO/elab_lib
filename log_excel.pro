@@ -135,6 +135,9 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
           if finite((cur_ee->tel())->dimm_seeing()) then begin
             cur_seeing = (cur_ee->tel())->dimm_seeing()
           endif
+          if finite((cur_ee->tel())->dimm_seeing_elevation()) then begin
+            cur_seeing = (cur_ee->tel())->dimm_seeing_elevation()
+          endif
         endif
         if obj_valid(cur_ee->modal_rec()) then begin
           cur_recmat = strmid((cur_ee->modal_rec())->fname(),10,6,/reverse)

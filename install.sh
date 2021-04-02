@@ -16,7 +16,7 @@ case $# in
       echo
       echo "Running IDL to detect the library dir..."
       echo
-      IDLDIR=`/usr/local/bin/idl -e "print, pref_get('IDL_DIR')" 2>/dev/null`
+      IDLDIR=`/usr/local/bin/idl -e "print, pref_get('IDL_DIR')" | tail -1  2>/dev/null`
       INSTALLDIR=${IDLDIR}/lib/elab_lib
       ;;
    1) INSTALLDIR=$1 ;;
@@ -28,7 +28,7 @@ esac
 echo
 echo "Elab_lib will be installed in this directory:"
 echo
-echo ${INSTALLDIR}
+echo "--> ${INSTALLDIR} <--"
 echo
 
 read -p "Continue? (y/n) " yesno
