@@ -1,4 +1,4 @@
-pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing = seeing
+pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     if not keyword_set(ref_star) then ref_star='???'
 
     objref =  aodataset->Get()
@@ -65,9 +65,11 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
             else: ADU2nph = 30.0/((ee->wfs_status())->camera())->emGain()
           endcase
         endif else ADU2nph=0.5
+        
+        lambda_srfromslopes = obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f (%d nm) | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -76,7 +78,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing() : -1 , $
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing_elevation() : -1 , $
             obj_valid(ee->olmodes()) ?  (ee->olmodes())->seeing() : -1 , $
-            obj_valid(ee->disturb()) ?  ((ee->disturb())->seeing())/(1.+(ee->operation_mode() ne 'RR')) : -1 , $
+            obj_valid(ee->disturb()) ?  ((ee->disturb())->seeing())/(1.+(ee->operation_mode() ne 'RR' or (ee->tel())->isTracking() eq 0)) : -1 , $
             obj_valid(ee->modal_rec()) ? strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) : ' ', $
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->camera())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
@@ -90,9 +92,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID, seeing 
             obj_valid(ee->wfs_status()) ? (ee->wfs_status())->optg() : 1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
-            obj_valid(ee->residual_modes()) ? (keyword_set(seeing) ? sr_from_slopes(ee, obj_valid(ee->luci()) ? $
-            (ee->luci())->lambda()*1e9 : 1650.,/fitting,seeing = seeing,/noise)*100 : (obj_valid(ee->tel()) ? (finite((ee->tel())->dimm_seeing()) ? $
-            sr_from_slopes(ee, obj_valid(ee->luci()) ? (ee->luci())->lambda()*1e9 : 1650.,/fitting,/noise)*100 : -1) : -1)) : -1, $
+            obj_valid(ee->residual_modes()) ? sr_from_slopes(ee, lambda_srfromslopes,/fitting,/noise)*100 : -1, lambda_srfromslopes, $
             obj_valid(ee->luci()) ? ((ee->luci())->star_fwhm(0))[0:1]*1e3 : [-1,-1] , $
             obj_valid(instr) ? instr->filter_name() : '?' , $
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
