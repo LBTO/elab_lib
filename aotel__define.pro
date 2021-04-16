@@ -82,6 +82,16 @@ function AOtel::Init, root, fitsfile
         if self._dimm_seeing_elevation lt 0. then self._dimm_seeing_elevation = float(aoget_fits_keyword(hdr, 'tel.DIMM.SEEINGELEVATION'))	;file Dimm...fits garbage
         if self._dimm_seeing_elevation lt 0. then self._dimm_seeing_elevation = !VALUES.F_NAN		;garbage....
     endelse
+
+    ; seeing can be overridden
+    catch, err
+    if err eq 0 then self._dimm_seeing = (root->override())->overriden_value('tel.dimm_seeing')
+    catch, /cancel
+
+    catch, err
+    if err eq 0 then self._dimm_seeing_elevation = (root->override())->overriden_value('tel.dimm_seeing_elevation')
+    catch, /cancel
+
     self._guidecam_centroid_x   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.X'))
     self._guidecam_centroid_y   =  float(aoget_fits_keyword(hdr, 'tel.GUIDECAM.CENTROID.Y'))
     extern_wind_direction =  float(aoget_fits_keyword(hdr, 'tel.EXTERN.WINDDIRECTION'))
