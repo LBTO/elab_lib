@@ -578,7 +578,7 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
   endif
   if obj_valid(self->frames()) then begin
     TEXT = [TEXT, string(format='(%"| %-30s | %s |")','AntiDrift', (self->frames())->antidrift_status() ? 'ON':'OFF' )]
-    TEXT = [TEXT, string(format='(%"| %-30s | %f |")','nphotons/sub/fr', (self->frames())->nphsub_per_int_av())]
+    TEXT = [TEXT, string(format='(%"| %-30s | %f |")','counts/sub/fr', (self->frames())->nphsub_per_int_av())]
   endif
   TEXT = [TEXT, string(format='(%"| %-30s | %f |")','Magnitude', self->mag())]
   if obj_valid(self->modal_rec()) then begin
