@@ -53,11 +53,14 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
       file_test(dir+'adsec_data/'+strmid(tns[i],0,8)+'/Data_'+tns[i]+'/wfs.fits') then begin
       cur_ee = getaoelab(tns[i],rec=rec)
       if obj_valid(cur_ee) then begin
-        if obj_valid(cur_ee->luci()) then begin
-          cur_haspsf = 1
-          cur_exptime = (cur_ee->luci())->nframes()*(cur_ee->luci())->exptime()
+        sci_camera = cur_ee->luci())
+        if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()) 
 
-          darkname = (cur_ee->luci())->dark_fname()
+        if obj_valid(sci_camera) then begin
+          cur_haspsf = 1
+          cur_exptime = sci_camera->nframes()*sci_camera->exptime()
+
+          darkname = sci_camera->dark_fname()
           if darkname ne '' then begin
             tn_dark = strmid(darkname,29,15,/reverse)
             ;time TN
@@ -80,19 +83,19 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
             cur_darktime = time_im-time_dark
           endif
 
-          cur_fwhm = ((cur_ee->luci())->star_fwhm())[0]*1e3
+          cur_fwhm = sci_camera->star_fwhm())[0]*1e3
 
-          if keyword_set((cur_ee->luci())->filter_name()) then cur_filter = (cur_ee->luci())->filter_name()
-          psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(round((cur_ee->luci())->lambda()*1e9),2)+'_scale'+ $
-            strtrim(round((cur_ee->luci())->pixelscale()*1e3),2)+'_oc'+strtrim(round((cur_ee->luci())->oc()*1e3),2)+'.sav')
-          if file_test(psf_dl_fname) then sr_tmp = (cur_ee->luci())->sr_se() else sr_tmp = 0
+          if keyword_set(sci_camera->filter_name()) then cur_filter = sci_camera->filter_name()
+          psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(round(sci_camera->lambda()*1e9),2)+'_scale'+ $
+            strtrim(round(sci_camera->pixelscale()*1e3),2)+'_oc'+strtrim(round(sci_camera->oc()*1e3),2)+'.sav')
+          if file_test(psf_dl_fname) then sr_tmp = sci_camera->sr_se() else sr_tmp = 0
           if not (sr_tmp gt 1 or sr_tmp lt 0) then cur_sr = sr_tmp
         endif
-        if keyword_set(seeing) then cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(cur_ee->luci()) ? $
-          (cur_ee->luci())->lambda()*1e9 : 1650.,/fitting, seeing = seeing) else begin
+        if keyword_set(seeing) then cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(sci_camera) ? $
+          sci_camera->lambda()*1e9 : 1650.,/fitting, seeing = seeing) else begin
           if obj_valid(cur_ee->tel()) then if finite((cur_ee->tel())->dimm_seeing()) then $
-            cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(cur_ee->luci()) ? $
-            (cur_ee->luci())->lambda()*1e9 : 1650.,/fitting)
+            cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(sci_camera)) ? $
+            (sci_camera->lambda()*1e9 : 1650.,/fitting)
         endelse
         if obj_valid(cur_ee->wfs_status()) then begin
           if obj_valid((cur_ee->wfs_status())->camera()) then begin

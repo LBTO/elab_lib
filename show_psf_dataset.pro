@@ -12,12 +12,16 @@ pro show_psf_dataset, data, fullframe = fullframe, rec = rec, z = z_
     return
   endif
   ndata = n_elements(tns)
-  
+
   ;check valid tns
   for i = 0, ndata-1 do begin
     cur_data = getaoelab(tns[i], rec = rec)
+  
     if not obj_valid(cur_data) then continue
-    if not obj_valid(cur_data->luci()) then continue
+    sci_camera = cur_data->luci())
+    if NOT obj_valid(sci_camera) then sci_camera = cur_data->lmircam() 
+  
+    if not obj_valid(sci_camera) then continue
     if n_elements(idx_valid) eq 0 then idx_valid = i else idx_valid = [idx_valid,i]
   endfor
   if n_elements(idx_valid) ne 0 then tns = tns[idx_valid] else begin
@@ -41,7 +45,11 @@ pro show_psf_dataset, data, fullframe = fullframe, rec = rec, z = z_
   
   for i = 0, ndata-1 do begin
     cur_data = getaoelab(tns[i])
-    cur_psf = (cur_data->luci())->longexposure(fullframe=fullframe)
+
+    sci_camera = cur_data->luci())
+    if NOT obj_valid(sci_camera) then sci_camera = cur_data->lmircam() 
+
+    cur_psf = sci_camera->longexposure(fullframe=fullframe)
     cur_psf = bytscl(congrid(alog(cur_psf > 1),npix,npix))
     psf_rgb = bytarr(3,npix,npix)
     for j = 0,2 do psf_rgb[j,*,*] = rgb_table[cur_psf[*],j]

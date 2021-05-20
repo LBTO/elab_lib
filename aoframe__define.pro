@@ -137,7 +137,7 @@ pro AOframe::process_cube
             return
         endif
     endif else begin
-        psf = float(readfits(self->fname(), header, /SILENT))
+        psf = float(readfits(self->fname(), header, /SILENT))     
         for i=0L, self->nframes()-1 do begin
             if (i+1) mod 10 eq 0 then print, string(format='(%"%d of %d ")', i+1, self->nframes() )
                 psf[*,*,i] = self->linearize(psf[*,*,i])
@@ -152,6 +152,10 @@ pro AOframe::process_cube
         save, psf, used_dark_fname, used_badpixelmap_fname, used_object_size, filename=self._stored_cube_fname ;, /compress
         print, 'done'
     endelse
+    if self._lmircam then begin
+      psf2 = psf[*,*,1:self->nframes()-1:2]-psf[*,*,0:self->nframes()-2:2]
+      psf = psf2
+    endif
     roi=self->roi()
     self._imagecube = ptr_new(psf[roi[0]:roi[1], roi[2]:roi[3], *], /no_copy)
 end
@@ -335,7 +339,10 @@ function AOframe::longExposure, fullframe=fullframe
                 endif else begin
                     psf = self->linearize(psf)
                 endelse
-    		psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
+    		        if self._lmircam then begin
+                  psf2 = psf[*,*,1:self->nframes()-1:2]-psf[*,*,0:self->nframes()-2:2]
+                  psf_le = (self->nframes() gt 2) ? 2*total(psf2, 3) / self->nframes() : psf2   
+                endif else psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
         	if self._dark_fname ne "" then           psf_le -= self->dark_image()         ; subtract dark
         	if obj_valid(self._badpixelmap_obj) then psf_le = self->maneggiaFrame(psf_le) ; trigrid bad pixels
 			if self._object_size ne 0 then           psf_le = self->pulisceFrame(psf_le)  ; remove line noise
@@ -360,7 +367,10 @@ function AOframe::rawImage, dark_correct=dark_correct, badpixel_correct=badpixel
     endif else begin
         psf = self->linearize(psf)
     endelse
-    psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
+    if self._lmircam then begin
+        psf2 = psf[*,*,1:self->nframes()-1:2]-psf[*,*,0:self->nframes()-2:2]
+        psf_le = (self->nframes() gt 2) ? 2*total(psf2, 3) / self->nframes() : psf2   
+    endif else psf_le = (self->nframes() gt 1) ? total(psf, 3) / self->nframes() : psf
     if keyword_set(dark_correct) then $
         if self._dark_fname ne "" then           psf_le -= self->dark_image()         ; subtract dark
     if keyword_set(badpixel_correct) then $
@@ -371,7 +381,7 @@ function AOframe::rawImage, dark_correct=dark_correct, badpixel_correct=badpixel
 end
 
 function AOframe::imagecube
-    if not (PTR_VALID(self._imagecube)) THEN self->process_cube
+    if ~(PTR_VALID(self._imagecube)) THEN self->process_cube
     return, *(self._imagecube)
 end
 
@@ -490,7 +500,8 @@ pro AOframe__define
 		_roi            :  [0,0,0,0]    , $
         _stored_le_fname   :  ""	    , $
         _stored_cube_fname :  ""		, $
-        _frame_err_msg     :  ""		  $
+        _frame_err_msg     :  ""		,  $
+        _lmircam           : 0B      $
     }
 end
 
