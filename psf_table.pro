@@ -100,7 +100,11 @@ for i = 0,nsee-1 do begin
   for j = 0,nmags-1 do begin
     if tab_tns[j,i] ne '' then begin
       ee = getaoelab(tab_tns[j,i])
-      cur_psf = (ee->luci())->longexposure(fullframe = fullframe)
+      
+      sci_camera = cur_ee->luci())
+      if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()
+
+      cur_psf = sci_camera->longexposure(fullframe = fullframe)
       
       psf_disp = bytscl(congrid(alog(cur_psf > 1),npix,npix))
       psf_rgb = bytarr(3,npix,npix)
