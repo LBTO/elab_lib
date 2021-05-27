@@ -27,7 +27,7 @@
 ;   store_radix          (string) example =filepath(root=root_obj->elabdir(), 'irtc')
 ;-
 
-function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framerate, $
+function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framerate, lmircam, $
         roi=roi, badpixelmap_obj=badpixelmap_obj, label=label, store_radix=store_radix, recompute=recompute
 
 	if not file_test(psf_fname) then begin
@@ -38,6 +38,7 @@ function AOpsfAbstract::Init, psf_fname, dark_fname, pixelscale, lambda, framera
     self._pixelscale = pixelscale
     self._lambda = lambda
     self._framerate = framerate
+    self._lmircam = lmircam
 
 	self._pixelscale_lD = self._pixelscale / ((self->lambda()/ao_pupil_diameter())/4.848d-6)	;l/D per pixel
 
