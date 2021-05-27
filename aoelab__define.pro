@@ -312,6 +312,10 @@ function AOelab::Init, tracknum, $
   luci_fname = file_search(filepath(root=self._datadir, 'luci.fits'))
   self._luci = obj_new('AOLUCI', self, luci_fname, dark_fname)
 
+  ; LMIRCAM
+  lmircam_fname = file_search(filepath(root=self._datadir, 'lmircam.fits'))
+  self._lmircam = obj_new('AOLMIRCAM', self, lmircam_fname, dark_fname)
+  
   ; SHARK
   shark_fname = file_search(filepath(root=self._datadir, 'shark.fits'))
   self._shark = obj_new('AOSHARK', self, shark_fname, dark_fname)
@@ -424,6 +428,8 @@ function AOelab::Init, tracknum, $
   if obj_valid(self._override) then self->addleaf, self._override, 'override'
   if obj_valid(self._sinusacq) then self->addleaf, self._sinusacq, 'sinusacq'
   if obj_valid(self._telemetry) then self->addleaf, self._telemetry, 'telemetry'
+  if obj_valid(self._lmircam) then self->addleaf, self._lmircam, 'lmircam'
+  if obj_valid(self._luci) then self->addleaf, self._luci, 'luci'
 
   self->addMethodHelp, "tracknum()", "Tracknum (string)"
   self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
@@ -446,6 +452,7 @@ function AOelab::Init, tracknum, $
   self->addMethodHelp, "piscesold()", "reference to old PISCES object (AOpsfabstract)"
   self->addMethodHelp, "irtc()", "reference to IRTC object (AOpsf)"
   self->addMethodHelp, "luci()", "reference to LUCI object (AOpsf)"
+  self->addMethodHelp, "lmircam()", "reference to LUMIRCAM object (AOpsf)"
   self->addMethodHelp, "shark()", "reference to SHARK object (AOpsf)"
   self->addMethodHelp, "tv()", "reference to TV ccd47 object (AOpsf)"
   self->addMethodHelp, "modal_rec()", "reference to modal reconstructor object (AOrecmatrix)"
@@ -645,6 +652,14 @@ pro AOelab::summary, PARAMS_ONLY=PARAMS_ONLY, TEXT=TEXT
       TEXT = [TEXT, string(format='(%"| %-30s | %f |")','SR SE' ,(self->luci())->sr_se())]
       TEXT = [TEXT, string(format='(%"| %-30s | %s |")','LUCI dark', file_basename( (self->luci())->dark_fname()))]
     endif
+    if obj_valid(self->lmircam()) then begin
+      TEXT = [TEXT, string(format='(%"| %-30s | %f |")','lambda [um]',(self->lmircam())->lambda()*1e6)]
+      TEXT = [TEXT, string(format='(%"| %-30s | %f |")','exptime [s]',(self->lmircam())->exptime())]
+      TEXT = [TEXT, string(format='(%"| %-30s | %f |")','framerate [Hz]',(self->lmircam())->framerate())]
+      TEXT = [TEXT, string(format='(%"| %-30s | %d |")','no. frames',(self->lmircam())->nframes())]
+      TEXT = [TEXT, string(format='(%"| %-30s | %f |")','SR SE' ,(self->lmircam())->sr_se())]
+      TEXT = [TEXT, string(format='(%"| %-30s | %s |")','LMIRCAM dark', file_basename( (self->lmircam())->dark_fname()))]
+    endif
     if obj_valid(self->shark()) then begin
       TEXT = [TEXT, string(format='(%"| %-30s | %f |")','lambda [um]',(self->shark())->lambda()*1e6)]
       TEXT = [TEXT, string(format='(%"| %-30s | %f |")','exptime [s]',(self->shark())->exptime())]
@@ -688,6 +703,7 @@ pro AOelab::fullsummary
   if obj_valid(self._irtc) then if obj_hasmethod(self._irtc, 'summary') then self._irtc->summary
   if obj_valid(self._pisces) then if obj_hasmethod(self._pisces, 'summary') then self._pisces->summary
   if obj_valid(self._luci) then if obj_hasmethod(self._luci, 'summary') then self._luci->summary
+  if obj_valid(self._lmircam) then if obj_hasmethod(self._lmircam, 'summary') then self._lmircam->summary
   if obj_valid(self._shark) then if obj_hasmethod(self._shark, 'summary') then self._shark->summary
   ;if obj_valid(self._piscesold) then if obj_hasmethod(self._piscesold, 'summary') then self._piscesold->summary
   if obj_valid(self._offloadmodes) then if obj_hasmethod(self._offloadmodes, 'summary') then self._offloadmodes->summary
@@ -720,17 +736,19 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
   if self->operation_mode() eq "RR" or self->operation_mode() eq "ARGOScal" or keyword_set(ARGOSCAL) then begin
     nmodes = (self->modalpositions())->nmodes()
     clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
+    if self->operation_mode() eq "RR" and not keyword_set((self->tel())->isTracking()) then clvar /= 4.
     yrange = sqrt(minmax(clvar))
     if obj_valid(self._disturb) then begin
       if (self->adsec_status())->disturb_status() ne 0 then begin
         olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
+        if self->operation_mode() eq "RR" and not keyword_set((self->tel())->isTracking()) then olvar /= 4.
         yrange = sqrt(minmax([clvar,olvar]))
       endif
     endif
     if keyword_set(WFRESIDUALS) then begin
       wfres = (self->residual_modes())->modes(); * (self->residual_modes())->norm_factor()
-      if (self->wfs_status())->optg() lt 1 and keyword_set(argosCalUnit) then wfres *= (self->olmodes())->norm_factor() $
-      else wfres *= (self->residual_modes())->norm_factor()
+      wfres *= (self->residual_modes())->norm_factor()
+      if (self->wfs_status())->optg() lt 1 then wfres /= 2.
       wfres = rms(wfres,dim=1)
       yrange = minmax([yrange, minmax(wfres)])
     endif
@@ -847,12 +865,15 @@ function AOelab::duration
   d_irtc=0
   d_pisces=0
   d_luci=0
+  d_lmircam=0
   d_shark=0
   d_loop=0
   if obj_valid(self->irtc()) then $
     d_irtc = (self->irtc())->nframes() * (self->irtc())->exptime()
   if obj_valid(self->luci()) then $
     d_luci = (self->luci())->nframes() * (self->luci())->exptime()
+  if obj_valid(self->lmircam()) then $
+    d_lmircam = (self->lmircam())->nframes() * (self->lmircam())->exptime()
   if obj_valid(self->shark()) then $
     d_shark = (self->shark())->nframes() * (self->shark())->exptime()
   if obj_valid(self->pisces()) then $
@@ -860,15 +881,16 @@ function AOelab::duration
   if obj_valid(self->frames_counter()) then $
     d_loop = (self->frames_counter())->nframes() * (self->frames_counter())->deltat()
 
-  return, max([d_irtc, d_luci, d_shark, d_pisces, d_loop])
+  return, max([d_irtc, d_luci, d_lmircam, d_shark, d_pisces, d_loop])
 end
 
 pro AOelab::psf, PARENT = PARENT, fullframe=fullframe, sr=sr
   loadct,3
-  if ((not obj_valid(self->irtc())) and (not obj_valid(self->pisces())) and (not obj_valid(self->luci())) and (not obj_valid(self->shark())) ) then return
+  if ((not obj_valid(self->irtc())) and (not obj_valid(self->pisces())) and (not obj_valid(self->luci())) and (not obj_valid(self->lmircam())) and (not obj_valid(self->shark())) ) then return
   if keyword_set(sr) then begin
     if obj_valid(self->irtc()) then obj = self->irtc()
     if obj_valid(self->luci()) then obj = self->luci()
+    if obj_valid(self->lmircam()) then obj = self->lmircam()
     if obj_valid(self->shark()) then obj = self->shark()
     if obj_valid(self->pisces()) then obj = self->pisces()
     image_show, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos, obj->longexposure(/fullframe)>0.1
@@ -882,6 +904,7 @@ pro AOelab::psf, PARENT = PARENT, fullframe=fullframe, sr=sr
   endif else begin
     if obj_valid(self->irtc()) then psf = (self->irtc())->longexposure()
     if obj_valid(self->luci()) then psf = (self->luci())->longexposure(fullframe=fullframe)
+    if obj_valid(self->lmircam()) then psf = (self->lmircam())->longexposure(fullframe=fullframe)
     if obj_valid(self->shark()) then psf = (self->shark())->longexposure()
     if obj_valid(self->pisces()) then psf = (self->pisces())->longexposure(fullframe=fullframe)
     xshow, /lab, /as, /sh, /log, title=self->tracknum(), pos=pos,   psf>0.1, PARENT = PARENT
@@ -1003,6 +1026,10 @@ end
 
 function AOelab::luci
   IF (OBJ_VALID(self._luci)) THEN return, self._luci else return, obj_new()
+end
+
+function AOelab::lmircam
+  IF (OBJ_VALID(self._lmircam)) THEN return, self._lmircam else return, obj_new()
 end
 
 function AOelab::shark
@@ -1151,6 +1178,7 @@ pro AOelab::free
   IF (OBJ_VALID(self._tv)) THEN  self._tv->free
   IF (OBJ_VALID(self._irtc)) THEN  self._irtc->free
   IF (OBJ_VALID(self._luci)) THEN  self._luci->free
+  IF (OBJ_VALID(self._lmircam)) THEN  self._lmircam->free
   IF (OBJ_VALID(self._shark)) THEN  self._shark->free
   IF (OBJ_VALID(self._pisces)) THEN  self._pisces->free
   IF (OBJ_VALID(self._piscesold)) THEN  self._piscesold->free
@@ -1193,6 +1221,7 @@ pro AOelab::Cleanup
   obj_destroy, self._tv
   obj_destroy, self._irtc
   obj_destroy, self._luci
+  obj_destroy, self._lmircam
   obj_destroy, self._shark
   obj_destroy, self._pisces
   obj_destroy, self._piscesold
@@ -1243,6 +1272,7 @@ pro AOelab__define
     _tv                : obj_new(), $
     _irtc              : obj_new(), $
     _luci              : obj_new(), $
+    _lmircam           : obj_new(), $
     _shark             : obj_new(), $
     _pisces            : obj_new(), $
     _piscesold         : obj_new(), $

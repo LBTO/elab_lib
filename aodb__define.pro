@@ -114,6 +114,7 @@ function aodb::Init, SYSTEM_ID, recompute=recompute
         {name:'tel.extern_wind_speed',              type:'real'}, $
         {name:'tel.extern_wind_direction',          type:'real'}, $
         {name:'tel.dimm_seeing',                    type:'real'}, $
+        {name:'tel.dimm_seeing_elevation',          type:'real'}, $
         {name:'tel.guidecam_fwhm_x',                type:'real'}, $
         {name:'tel.guidecam_fwhm_y',                type:'real'}, $
         {name:'tv.nframes',                         type:'real'}, $

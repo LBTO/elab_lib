@@ -83,6 +83,7 @@ lbt = lbt
     tab_emgain = fltarr(nfiles)
     tab_hasPSF = fltarr(nfiles)
     tab_dimm = fltarr(nfiles)
+    tab_dimm_elevation = fltarr(nfiles)
     tab_darktime = fltarr(nfiles)
     tab_exptime = fltarr(nfiles)
     tab_rot = fltarr(nfiles)
@@ -111,6 +112,7 @@ lbt = lbt
       cur_emgain = -1
       cur_hasPSF = 0
       cur_dimm = 0
+      cur_dimm_elevation = 0
       cur_darktime = !values.f_infinity
       cur_exptime = -1
       cur_rot = 0
@@ -122,11 +124,16 @@ lbt = lbt
         file_test(dir+'adsec_data/'+strmid(tns[i],0,8)+'/Data_'+tns[i]+'/wfs.fits') then begin
         cur_ee = getaoelab(tns[i],rec=rec2)
         if obj_valid(cur_ee) then begin
-          if obj_valid(cur_ee->luci()) then begin
-            cur_haspsf = 1
-            cur_exptime = (cur_ee->luci())->nframes()*(cur_ee->luci())->exptime()
 
-            darkname = (cur_ee->luci())->dark_fname()
+          sci_camera = cur_ee->luci()
+
+          if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam() 
+          
+          if obj_valid(sci_camera) then begin
+            cur_haspsf = 1
+            cur_exptime = sci_camera->nframes() * sci_camera->exptime() 
+
+            darkname = sci_camera->dark_fname()
             if darkname ne '' then begin
               tn_dark = strmid(darkname,29,15,/reverse)
               ;time TN
@@ -149,10 +156,10 @@ lbt = lbt
               cur_darktime = time_im-time_dark
             endif
 
-            if keyword_set((cur_ee->luci())->filter_name()) then cur_filter = (cur_ee->luci())->filter_name()
-            psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(round((cur_ee->luci())->lambda()*1e9),2)+'_scale'+ $
-              strtrim(round((cur_ee->luci())->pixelscale()*1e3),2)+'_oc'+strtrim(round((cur_ee->luci())->oc()*1e3),2)+'.sav')
-            if file_test(psf_dl_fname) then sr_tmp = (cur_ee->luci())->sr_se() else sr_tmp = 0
+            if keyword_set(sci_camera->filter_name()) then cur_filter = sci_camera->filter_name()
+            psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(round(sci_camera->lambda()*1e9),2)+'_scale'+ $
+              strtrim(round(sci_camera->pixelscale()*1e3),2)+'_oc'+strtrim(round(sci_camera->oc()*1e3),2)+'.sav')
+            if file_test(psf_dl_fname) then sr_tmp = sci_camera->sr_se() else sr_tmp = 0
             if not (sr_tmp gt 1 or sr_tmp lt 0) then cur_sr = sr_tmp
           endif
           if obj_valid(cur_ee->wfs_status()) then begin
@@ -200,6 +207,11 @@ lbt = lbt
             cur_seeingol = 0
             cur_dimm = 1
             endif
+            if finite((cur_ee->tel())->dimm_seeing_elevation()) then begin
+            cur_seeing = (cur_ee->tel())->dimm_seeing_elevation()
+            cur_seeingol = 0
+            cur_dimm_elevation = 1
+            endif
           endif
           if obj_valid(cur_ee->modal_rec()) then begin
             cur_recmat = strmid((cur_ee->modal_rec())->fname(),10,6,/reverse)
@@ -226,6 +238,7 @@ lbt = lbt
       tab_emgain[i] = cur_emgain
       tab_haspsf[i] = cur_haspsf
       tab_dimm[i] = cur_dimm
+      tab_dimm_elevation[i] = cur_dimm_elevation
       tab_darktime[i] = cur_darktime
       tab_exptime[i] = cur_exptime
       tab_rot[i] = cur_rot
@@ -238,7 +251,7 @@ lbt = lbt
     tab = create_struct('TN', tns, 'SR', tab_sr, 'filter', tab_filter, $
       'seeing', tab_seeing, 'seeing_ol', tab_seeingol, 'mag', tab_mag, 'gains', tab_gains, 'recmat', tab_recmat, $
       'freq', tab_freq, 'nmodes', tab_nmodes, 'bin', tab_bin, 'nsub', tab_nsubap, 'trans', tab_trans, 'counts', tab_counts, $
-      'mode', tab_mode, 'emGain', tab_emgain, 'hasPSF', tab_haspsf, 'DIMM', tab_dimm, 'dark_time', tab_darktime, $
+      'mode', tab_mode, 'emGain', tab_emgain, 'hasPSF', tab_haspsf, 'DIMM', tab_dimm, 'DIMMELEVATION', tab_dimm_elevation, 'dark_time', tab_darktime, $
       'exp_time', tab_exptime, 'rot', tab_rot, 'ra', tab_ra, 'dec', tab_dec, 'side', strarr(nfiles)+side, $
       'valid', tab_valid)
 

@@ -30,12 +30,14 @@ amp_spe = sqrt(pow_spe)*sqrt(2.)
 
 olseeing = set->value('olmodes.seeing')
 ;dimmseeing = set->value('tel.dimm_seeing')
+;dimmseeing_elevation = set->value('tel.dimm_seeing_elevation')
 
 !X.MARGIN=[7,3]
 window,0
 plot, olseeing, amp_out*1e9, psym=1, xtitle='seeing from AO data', ytitle='amp out [nm surf]',charsize=1.5
 ;window,1
 ;plot, dimmseeing, amp_out*1e9, psym=1, xtitle='seeing from DIMM', ytitle='amp out [nm surf]',charsize=1.5
+;plot, dimmseeing_elevation, amp_out*1e9, psym=1, xtitle='seeing elevation corrected from DIMM', ytitle='amp out [nm surf]',charsize=1.5
 window,2
 plot, olseeing, amp_spe*1e9, psym=1, xtitle='seeing from AO data', ytitle='amp mir [nm surf]',charsize=1.5
 window,3
