@@ -15,7 +15,7 @@
 ;-
 
 function aoscientificimage::Init, root_obj, psf_fname, dark_fname, pixelscale, lambda, exptime, framerate, $
-  badpixelmap_fname=badpixelmap_fname, recompute=recompute, store_radix=store_radix
+  lmircam, badpixelmap_fname=badpixelmap_fname, recompute=recompute, store_radix=store_radix
 
 
   if not file_test(psf_fname) then begin
@@ -27,6 +27,7 @@ function aoscientificimage::Init, root_obj, psf_fname, dark_fname, pixelscale, l
 
   self._exptime    = exptime      ; s
   self._recompute  = keyword_set(recompute)
+  self._lmircam  = lmircam
 
   ; File names
   self._store_radix = keyword_set(store_radix) ? store_radix : filepath(root=getenv('IDL_TMPDIR'), 'aoscientificimageabstract')
@@ -35,7 +36,7 @@ function aoscientificimage::Init, root_obj, psf_fname, dark_fname, pixelscale, l
 
   ; initialize PSF object
   if not self->AOpsfAbstract::Init(psf_fname, dark_fname, pixelscale, lambda, framerate, $
-    badpixelmap_obj=badpixelmap_obj, label=root_obj->tracknum(), $
+    self._lmircam, badpixelmap_obj=badpixelmap_obj, label=root_obj->tracknum(), $
     store_radix= self._store_radix,  recompute=recompute) then return,0
 
   ; this is useful since we don't know NOW where the brightest star is
@@ -159,7 +160,7 @@ pro aoscientificimage::findstars, hmin=hmin, width = width, roi = roi0, status =
   for i=0, self->nstars()-1 do begin
     roi = [ (xx[i]-60)>0, (xx[i]+59)<(ima_w-1), (yy[i]-60)>0, (yy[i]+59)<(ima_h-1)] ;TODO ROI SIZE parametrizzato
     objpsf = obj_new('aopsf', self->fname(), self->dark_fname(), self->pixelscale(), self->lambda(), $
-      self->framerate(), ROI=roi, badpixelmap_obj=self->badpixelmap_obj(), recompute=self._recompute, $
+      self->framerate(), self._lmircam, ROI=roi, badpixelmap_obj=self->badpixelmap_obj(), recompute=self._recompute, $
       store_radix=self._store_radix+'_psf'+string(format='(%"%d")',i) )
 
     (*self._psfs)[i]=objpsf
