@@ -22,7 +22,7 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   self._camera_name= strtrim(aoget_fits_keyword(fitsheader, 'INSTRUMENT'), 2)
 
   ; Pixelscale (arcsec):
-  pixelscale = 0.04
+  pixelscale = 0.0107
 
   ; Detect filter:
   ;self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
@@ -35,9 +35,7 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   self._filter_name = self._filter_nameA
 
   valid_filt_number = 1B
-print,self._filter_nameA
-print,self._filter_nameB
-print,self._filter_nameC
+
   CASE strtrim(self._filter_nameA,2) OF
     'MK-J':           lambda = 1.25e-6
     'H':              lambda = 1.65e-6
@@ -119,15 +117,15 @@ print,self._filter_nameC
   endif
 
   store_radix = filepath(root=root_obj->elabdir(), 'lmircam')
+  
+  self._lmircam = 1B
 
   ; initialize PSF object
   if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
-    
-  self._lmircam = 1B
+    self._lmircam, badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
 
   ; Override diameter & obstruction + dependent parameters
-  self._pupdiam = 8.2
+  self._pupdiam = 8.222
   self._oc = 0.12
   self._pixelscale_lD = self._pixelscale / ((self->lambda()/self->pupdiam())/4.848d-6)
   nsup = 40.  ;maximum radius to ensure all star light is in.
