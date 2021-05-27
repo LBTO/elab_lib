@@ -428,6 +428,8 @@ function AOelab::Init, tracknum, $
   if obj_valid(self._override) then self->addleaf, self._override, 'override'
   if obj_valid(self._sinusacq) then self->addleaf, self._sinusacq, 'sinusacq'
   if obj_valid(self._telemetry) then self->addleaf, self._telemetry, 'telemetry'
+  if obj_valid(self._lmircam) then self->addleaf, self._lmircam, 'lmircam'
+  if obj_valid(self._luci) then self->addleaf, self._luci, 'luci'
 
   self->addMethodHelp, "tracknum()", "Tracknum (string)"
   self->addMethodHelp, "obj_tracknum()", "reference to tracknum object (AOtracknum)"
