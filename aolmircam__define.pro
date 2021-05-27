@@ -35,7 +35,6 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   self._filter_name = self._filter_nameA
 
   valid_filt_number = 1B
-
   CASE strtrim(self._filter_nameA,2) OF
     'MK-J':           lambda = 1.25e-6
     'H':              lambda = 1.65e-6
