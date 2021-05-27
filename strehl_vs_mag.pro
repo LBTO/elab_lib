@@ -5,6 +5,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
   if keyword_set(from) and keyword_set(to) then begin
     set = obj_new('aodataset',from=from,to=to,rec=rec)
+
+    ; TODO: what should happen here for LMIRCAM?
     if keyword_set(filter) then set = set->where('luci.filter_name()','eq',filter)
     set = set->where('luci.sr_se()','between',[0,1])
     tns = set->tracknums()
@@ -35,15 +37,18 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
       if keyword_set(calib) then begin
         if cur_ee->operation_mode() eq 'ONSKY' and keyword_set((ee->tel())->isTracking()) then continue
       endif
+
+      sci_camera = cur_ee->luci())
+      if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()
       
-      if not obj_valid(cur_ee->luci()) then begin
+      if not obj_valid(sci_camera) then begin
         sr_tmp = sr_from_slopes(cur_ee,lambda,/fitting,/noise)
         lambda0 = lambda
       endif else begin
-        if keyword_set((cur_ee->luci())->filter_name()) then begin
-          filter = (cur_ee->luci())->filter_name()
-          lambda0 = (cur_ee->luci())->lambda()*1e9
-          sr_tmp = (cur_ee->luci())->sr_se()
+        if keyword_set(sci_camera->filter_name()) then begin
+          filter = sci_camera->filter_name()
+          lambda0 = sci_camera>lambda()*1e9
+          sr_tmp = sci_camera->sr_se()
         endif else continue
       endelse
       
