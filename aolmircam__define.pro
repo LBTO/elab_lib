@@ -22,7 +22,7 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   self._camera_name= strtrim(aoget_fits_keyword(fitsheader, 'INSTRUMENT'), 2)
 
   ; Pixelscale (arcsec):
-  pixelscale = 0.04
+  pixelscale = 0.0107
 
   ; Detect filter:
   ;self._filter_name = strtrim(aoget_fits_keyword(fitsheader, 'FILTERS'),2)
@@ -35,9 +35,6 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   self._filter_name = self._filter_nameA
 
   valid_filt_number = 1B
-print,self._filter_nameA
-print,self._filter_nameB
-print,self._filter_nameC
   CASE strtrim(self._filter_nameA,2) OF
     'MK-J':           lambda = 1.25e-6
     'H':              lambda = 1.65e-6
