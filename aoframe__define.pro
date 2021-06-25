@@ -285,7 +285,11 @@ function AOframe::dark_image
    			endif else begin
 
    			    dark_nframes = (naxis eq 2) ? 1 : long(aoget_fits_keyword(dark_header, 'NAXIS3'))
-       		    self._dark_image = dark_nframes gt 1 ? ptr_new( median(dark, dim=3) ) :  ptr_new(dark)
+       		    if self._lmircam then begin
+                    dark = dark[*,*,1:dark_nframes-1:2]-dark[*,*,0:dark_nframes-2:2]
+                    self._dark_image = dark_nframes gt 2 ? ptr_new( median(dark, dim=3) ) :  ptr_new(dark)
+                endif else self._dark_image = dark_nframes gt 1 ? ptr_new( median(dark, dim=3) ) :  ptr_new(dark)
+                self._dark_image = dark_nframes gt 1 ? ptr_new( median(dark, dim=3) ) :  ptr_new(dark)
        		endelse
        	endif else begin
        		message, 'Dark file not existing. Assuming it zero', /info
