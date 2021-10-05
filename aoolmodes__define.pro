@@ -68,6 +68,7 @@ function AOolmodes::Init, root_obj
   self->addMethodHelp, "nmodes()", "number of modes"
   self->addMethodHelp, "plotJitter(from_freq=from_freq, to_freq=to_freq, _extra=ex)", ""
   self->addMethodHelp, "r0([lambda=lambda] [,/PLOT])", "Estimates r0 @ lambda (default 500nm)"
+  self->addMethodHelp, "setup_r0_est_options, [remove_noise=r], [outer_scale=o], [change_slope=c], [add_power=a])", "Set options for r0 estimation"
   self->addMethodHelp, "seeing()", "Seeing value (@ 500nm)"
   self->addMethodHelp, "ide(mode_idx, visu=visu)", "Identifies turbulence, vibrations and noise model for mode_idx mode"
   self->addMethodHelp, "findDirections(from_freq=from, to_freq=to, plot=plot, nfr=nfr, fstep=fstep)", $
@@ -141,6 +142,18 @@ function AOolmodes::GetDati
   return, self._modes
 end
 
+pro AOolmodes::setup_r0_est_options, remove_noise=remove_noise, outer_scale=outer_scale, $
+                                     change_slope=change_slope, add_power=add_power
+
+    if n_elements(remove_noise) gt 0 then self._removeNoise4R0Est = remove_noise
+    if n_elements(outer_scale) gt 0 then self._outerScale4R0Est = outer_scale 
+    if n_elements(change_slope) gt 0 then self._changeTheoVarSlope4R0Est = change_slope
+    if n_elements(add_power) gt 0 then self._addMissPower4R0Est = add_power
+    
+    if file_test(self._r0_store_fname) then file_delete, self._r0_store_fname
+    self->estimate_r0
+end
+
 ; Estimate r0 from reconstructed open loop data
 ;-----------------------------------------------------
 function AOolmodes::r0, lambda=lambda, PLOT=PLOT
@@ -186,10 +199,27 @@ end
 pro AOolmodes::estimate_r0
 
   COMMON olmodes_data, olvarMean, theovar1
-
-  olvar = self->time_variance() * (self._root_obj->reflcoef()*2.*!PI/500e-9)^2.	;in rad^2 @ 500nm
+  
   nmodes    = self->nmodes()	;including maybe some non-reconstructed modes
   modes_idx = (self._root_obj->modal_rec())->modes_idx()
+
+  if self._removeNoise4R0Est then begin
+    olvar = fltarr(nmodes)
+    psd = self->psd() * (self._root_obj->reflcoef()*2.*!PI/500e-9)^2.	;in rad^2 @ 500nm
+    freq = self->freq()
+    nPSD = (size(psd,/dim))[0]
+    fsample = freq[1] - freq[0]
+    for i=0,nmodes-1 do begin
+      ; -----
+      ; TURBULENCE
+      ;Noise variance is a constant offset in the temporal PSD (temporally uncorrelated), mostly visible at high frequencies
+      noise_level = mean(psd[round(nPSD/2.):*,i]) 
+      olvar[i] = total(psd[*,i]-replicate(noise_level,nPSD)>0)*fsample
+      if self._addMissPower4R0Est and freq[0] gt 1/30. then olvar[i] += mean(psd[0:9,i])*(freq[0]-1/30.)
+    endfor
+  endif else begin
+    olvar = self->time_variance() * (self._root_obj->reflcoef()*2.*!PI/500e-9)^2.	;in rad^2 @ 500nm
+  endelse
 
   nnMax   = long(sqrt(8L*nmodes-7L)-1L)/2L
   nnRange = [self._nnMin,nnMax-1]
@@ -221,7 +251,29 @@ pro AOolmodes::estimate_r0
 
   ;Theoretical data: a single variance per radial order:
   FirstZerns = (nnValues*(nnValues+1)/2)+1   ;Fist zernike of each radial order.
-  theovar1 = (diag_matrix(kolm_mcovar(nmodes+1)))[FirstZerns-2]	;D/r0=1
+  ; kolmogorov or von karman spectrum
+  if self._outerScale4R0Est le 0 then begin
+    theovar1 = (diag_matrix(kolm_mcovar(nmodes+1)))[FirstZerns-2]   ;D/r0=1
+  endif else begin
+    theovar1 = dblarr(n_elements(FirstZerns))
+    DpupM = ao_pupil_diameter()
+    L0norm = (self._outerScale4R0Est/DpupM)
+    for i=0,n_elements(FirstZerns)-1 do theovar1[i] = VON_COVAR(FirstZerns[i],FirstZerns[i],L0norm,/double) ;D/r0=1
+  endelse
+
+  ; change thoerethic slope
+  if self._changeTheoVarSlope4R0Est then begin
+    x = findgen(n_elements(theovar1))+1
+    tot_theoVar1 = total(theovar1)
+    if n_elements(theovar1) gt 6 and n_elements(theovar1) le 16 then begin
+        theovar1 *= x^(-1/16.)
+        theovar1[0] += (tot_theovar1-total(theovar1))
+    endif
+    if n_elements(theoVar) gt 16 then begin
+        theovar1 *= x^(-1/14.)
+        theovar1[0] += (tot_theovar1-total(theovar1))
+    endif
+  endif
 
   ;Find best fit
   r0a=0.01 & r0b=1.   ;range of r0s in m
@@ -600,6 +652,10 @@ pro AOolmodes__define
     _r0_store_fname   : ""			, $
     _r0				  : 0.			, $
     _wf			   	  : obj_new()   , $
+    _removeNoise4R0Est : 0B         , $
+    _outerScale4R0Est : 0.          , $
+    _changeTheoVarSlope4R0Est : 0B  , $
+    _addMissPower4R0Est : 0B        , $
     INHERITS    AOwf                , $
     INHERITS    AOtime_series       , $
     INHERITS    AOhelp 		          $
