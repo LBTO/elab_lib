@@ -51,10 +51,21 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         ;Compute temporal PSD of the residuals
         psd = (cur_data->residual_modes())->psd(j) * norm_fact_wfs^2.
         ;Noise variance is a constant offset in the temporal PSD (temporally uncorrelated), mostly visible at high frequencies
-        noise_level = median(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        ;noise_level = median(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        noise_level = mean(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        
+        ;Correlation of the residuals
+;        ft_res = fft(((cur_data->residual_modes())->modes())[*,j])* norm_fact_wfs
+;        corr = real(fft(ft_res*conj(ft_res),1))
+;        p = poly_fit(indgen(10)+1,corr[1:10],6)
+;        noise_level = p[0]
+        
         clvar[j] = (clvar0[j]-noise_level) > 0
       endfor
     endif else clvar = clvar0
+    
+    scaleFactor = readfits('/raid1/guido/SOUL/goptMatV3.fits',/silent)
+    clvar *= 1/scaleFactor[0:n_elements(clvar)-1]^2.
     
     ;Modification for later if we want to compute the fitting from modalpositions in daytime
 ;    if cur_data->operation_mode() ne 'ONSKY' and obj_valid(cur_data->modalpositions()) then begin
@@ -79,13 +90,22 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
           endif
           if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) and cur_data->operation_mode() eq 'ONSKY' then begin
             if finite((cur_data->tel())->dimm_seeing()) then seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
-            if finite((cur_data->tel())->dimm_seeing_elevation()) then seeing_rad = (cur_data->tel())->dimm_seeing_elevation()*asec2rad
+            if finite((cur_data->tel())->dimm_seeing_elevation()) then $
+              if (cur_data->tel())->dimm_seeing_elevation() ne 0 then $
+              seeing_rad = (cur_data->tel())->dimm_seeing_elevation()*asec2rad
           endif
         endelse
+        
+        if n_elements(seeing_rad) gt 0 then begin
+          r02seeing, r0dummy, seeing_rad/asec2rad, L0=25.0, seeToko=seeToko
+          seeing_rad = seeToko*asec2rad
+        endif
+        
         if n_elements(seeing_rad) eq 0 then message, 'fitting error can not be computed', /info else begin
           r0500 = 0.976d*0.5d-6/seeing_rad ; Fried's r0 @ 500 nm
           r0LAM = r0500*(lambda/500.d)^(6.d/5.d)
-          fitting_error = 0.2778d*(cur_data->modal_rec())->nmodes()^(-0.9d) * (8.222d / r0LAM)^(5.d/3.d)
+          ;fitting_error = 0.2778d*(cur_data->modal_rec())->nmodes()^(-0.9d) * (8.222d / r0LAM)^(5.d/3.d)
+          fitting_error = 0.2313d*(8.222d/sqrt((cur_data->modal_rec())->nmodes()*4./!pi)/r0LAM)^(5.d/3.d)
         endelse
       endif
 
