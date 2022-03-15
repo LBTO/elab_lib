@@ -395,7 +395,7 @@ function AOelab::Init, tracknum, $
   if obj_valid(self._adsec_status) then self->addleaf, self._adsec_status, 'adsec_status'
   if obj_valid(self._wfs_status) then self->addleaf, self._wfs_status, 'wfs_status'
   if obj_valid(self._tel) then self->addleaf, self._tel, 'tel'
-  if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck, 'sanity_check'
+  if obj_valid(self._sanitycheck) then self->addleaf, self._sanitycheck, 'sanitycheck'
   if obj_valid(self._control) then self->addleaf, self._control, 'control'
   if obj_valid(self._frames_counter) then self->addleaf, self._frames_counter, 'frames_counter'
   if obj_valid(self._valid_pixels) then self->addleaf, self._valid_pixels, 'valid_pixels'
