@@ -82,7 +82,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing() : -1 , $
             obj_valid(ee->tel()) ?  (ee->tel())->dimm_seeing_elevation() : -1 , $
             obj_valid(ee->olmodes()) ?  (ee->olmodes())->seeing() : -1 , $
-            obj_valid(ee->disturb()) ?  ((ee->disturb())->seeing())/(1.+(ee->operation_mode() ne 'RR' or (ee->tel())->isTracking() eq 0)) : -1 , $
+            obj_valid(ee->disturb()) ?  ((ee->disturb())->seeing())/(1.+(ee->operation_mode() ne 'RR')) : -1 , $
             obj_valid(ee->modal_rec()) ? strmid(file_basename((ee->modal_rec())->fname()), 13, 6 ) : ' ', $
             obj_valid(ee->wfs_status()) ? ((ee->wfs_status())->camera())->binning() : -1, $
             obj_valid(ee->modal_rec()) ? round((ee->modal_rec())->nmodes()) : -1, $
