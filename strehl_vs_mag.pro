@@ -1,7 +1,7 @@
 pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns = tns, noplot = noplot, $
   lambda = lambda_, onsky = onsky, calib = calib, max_dark = max_dark, min_exp = min_exp, dimm = dimm, $
   vs_seeing = vs_seeing, filename = filename, vs_flux = vs_flux, xr = xr_, aux = tab_aux, simpath = simpath, $
-  ncpa = ncpa_
+  ncpa = ncpa_, slopes = slopes
 
   if keyword_set(from) and keyword_set(to) then begin
     set = obj_new('aodataset',from=from,to=to,rec=rec)
@@ -21,8 +21,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
   if tns[0] ne '' then begin
 
-    tab_res = fltarr(nfiles,4)-1 ;Strehl, seeing, R magnitude/flux, binning
-    
+    tab_res = fltarr(nfiles,7)-1 ;Strehl, seeing, R magnitude/flux, binning, SR from slopes, FWHMx, FWHMy
+
     if not keyword_set(lambda_) then lambda = 1650. else lambda = lambda_
 
     count = 0
@@ -38,20 +38,26 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
         if cur_ee->operation_mode() eq 'ONSKY' and keyword_set((ee->tel())->isTracking()) then continue
       endif
 
-      sci_camera = cur_ee->luci())
+      sci_camera = cur_ee->luci()
       if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()
+
+
+      sr_slopes = sr_from_slopes(cur_ee,lambda,/fitting,/noise)
+      fwhm = (sci_camera->star_fwhm(0))[0:1]*1e3
       
-      if not obj_valid(sci_camera) then begin
-        sr_tmp = sr_from_slopes(cur_ee,lambda,/fitting,/noise)
-        lambda0 = lambda
+      tab_res[i,4] = sr_slopes
+      tab_res[i,5:6] = fwhm
+
+      if keyword_set(sci_camera->filter_name()) then begin
+        filter = sci_camera->filter_name()
+        lambda0 = sci_camera->lambda()*1e9
+        sr_tmp = sci_camera->sr_se()
       endif else begin
-        if keyword_set(sci_camera->filter_name()) then begin
-          filter = sci_camera->filter_name()
-          lambda0 = sci_camera>lambda()*1e9
-          sr_tmp = sci_camera->sr_se()
-        endif else continue
+        lambda0 = lambda
+        sr_tmp = -1
       endelse
-      
+      if keyword_set(slopes) then sr_tmp = sr_slopes
+
       if sr_tmp gt 1 or sr_tmp lt 0 then continue
       tab_res[i,0] = sr_tmp^((lambda0/lambda)^2.)
       if obj_valid(cur_ee->olmodes()) then tab_res[i,1] = (cur_ee->olmodes())->seeing()
@@ -69,9 +75,11 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
       ; 2. Override seeing with the DIMM measurement, if available
       if finite((cur_ee->tel())->dimm_seeing()) then begin
-        tab_res[i,1] = (cur_ee->tel())->dimm_seeing()
+        if (cur_ee->tel())->dimm_seeing() gt 0 then tab_res[i,1] = (cur_ee->tel())->dimm_seeing()
         ; 3. Override seeting with the DIMM measuremetn corrected by elevation, if available
-        if finite((cur_ee->tel())->dimm_seeing_elevation()) then tab_res[i,1] = (cur_ee->tel())->dimm_seeing_elevation()
+        if finite((cur_ee->tel())->dimm_seeing_elevation()) then begin
+          if (cur_ee->tel())->dimm_seeing_elevation() gt 0 then tab_res[i,1] = (cur_ee->tel())->dimm_seeing_elevation()
+        endif
       endif else begin
         if keyword_set(dimm) then continue
       endelse
@@ -155,8 +163,9 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
 
     if not keyword_set(noplot) then begin
       p = plot(xdata,tab_res_out[*,0],'o',/sym_filled, rgb_table = 34, vert_color = vcolor, $
-        xtit = xtit, ytit = 'SR ('+strtrim(fix(lambda),2)+' nm)',axis_style = 2, sym_size = 1, margin = 0.2, font_size = 15, $
-        yr = [0,1], xr = xr,/nodata, xlog = xlog)
+        xtit = xtit, ytit = 'SR ('+strtrim(fix(lambda),2)+' nm)',axis_style = 2, sym_size = 1, $
+        margin = [0.1,0.1,0.2,0.05], font_size = 15, yr = [0,1], xr = xr,/nodata, xlog = xlog, $
+        dimensions = [1000,600])
       if n_elements(index1) ne 0 then begin
         p1 = plot(xdata[index1],tab_res_out[index1,0],'+',/sym_filled, rgb_table = 34, $
           vert_color = vcolor[index1], sym_size = 1, /over, name = 'BIN 1', sym_thick = 2)
@@ -193,7 +202,8 @@ pro strehl_vs_mag, set, from=from, to=to, rec = rec, tab_res = tab_res_out2, tns
       if n_elements(target) gt 1 then l = legend(target = target,position=legpos,/relative, font_size = 15)
     endif
 
-    tab_res_out2 = {tns:tns, sr:tab_res_out[*,0],seeing:tab_res_out[*,1],bin:tab_res_out[*,3]}
+    tab_res_out2 = {tns:tns, sr:tab_res_out[*,0],seeing:tab_res_out[*,1],bin:tab_res_out[*,3],sr_slopes:tab_res_out[*,4], $
+      fwhm:tab_res_out[*,5:6]}
     if keyword_set(vs_flux) then tab_res_out2 = create_struct(tab_res_out2,'flux',tab_res_out[*,2]) $
     else tab_res_out2 = create_struct(tab_res_out2,'WFSmag',tab_res_out[*,2])
 
