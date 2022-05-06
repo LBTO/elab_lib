@@ -736,12 +736,10 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
   if self->operation_mode() eq "RR" or self->operation_mode() eq "ARGOScal" or keyword_set(ARGOSCAL) then begin
     nmodes = (self->modalpositions())->nmodes()
     clvar  = (self->modalpositions())->time_variance() * ((self->modalpositions())->norm_factor())^2.
-    if self->operation_mode() eq "RR" and not keyword_set((self->tel())->isTracking()) then clvar /= 4.
     yrange = sqrt(minmax(clvar))
     if obj_valid(self._disturb) then begin
       if (self->adsec_status())->disturb_status() ne 0 then begin
         olvar  = (self->modaldisturb())->time_variance() * ((self->modaldisturb())->norm_factor())^2.
-        if self->operation_mode() eq "RR" and not keyword_set((self->tel())->isTracking()) then olvar /= 4.
         yrange = sqrt(minmax([clvar,olvar]))
       endif
     endif
