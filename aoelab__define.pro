@@ -746,7 +746,7 @@ pro AOelab::modalplot, OVERPLOT = OVERPLOT, COLOR=COLOR, OLCOLOR=OLCOLOR, $
     if keyword_set(WFRESIDUALS) then begin
       wfres = (self->residual_modes())->modes(); * (self->residual_modes())->norm_factor()
       wfres *= (self->residual_modes())->norm_factor()
-      if (self->wfs_status())->optg() lt 1 then wfres /= 2.
+      if (self->wfs_status())->optg() lt 1 and self->operation_mode() ne 'RR' then wfres /= 2.
       wfres = rms(wfres,dim=1)
       yrange = minmax([yrange, minmax(wfres)])
     endif
