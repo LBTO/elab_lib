@@ -18,7 +18,7 @@ pro show_psf_dataset, data, fullframe = fullframe, rec = rec, z = z_
     cur_data = getaoelab(tns[i], rec = rec)
   
     if not obj_valid(cur_data) then continue
-    sci_camera = cur_data->luci())
+    sci_camera = (cur_data->luci())
     if NOT obj_valid(sci_camera) then sci_camera = cur_data->lmircam() 
   
     if not obj_valid(sci_camera) then continue
@@ -46,7 +46,7 @@ pro show_psf_dataset, data, fullframe = fullframe, rec = rec, z = z_
   for i = 0, ndata-1 do begin
     cur_data = getaoelab(tns[i])
 
-    sci_camera = cur_data->luci())
+    sci_camera = (cur_data->luci())
     if NOT obj_valid(sci_camera) then sci_camera = cur_data->lmircam() 
 
     cur_psf = sci_camera->longexposure(fullframe=fullframe)

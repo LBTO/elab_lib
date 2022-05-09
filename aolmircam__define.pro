@@ -116,15 +116,15 @@ function aolmircam::Init, root_obj, psf_fname, dark_fname
   endif
 
   store_radix = filepath(root=root_obj->elabdir(), 'lmircam')
+  
+  self._lmircam = 1B
 
   ; initialize PSF object
   if not self->AOscientificimage::Init(root_obj, psf_fname, full_dark_fname, pixelscale, lambda, exptime, framerate, $
-    badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
-    
-  self._lmircam = 1B
+    self._lmircam, badpixelmap_fname=badpixelmap_fname, store_radix=store_radix, recompute=root_obj->recompute()) then return,0
 
   ; Override diameter & obstruction + dependent parameters
-  self._pupdiam = 8.2
+  self._pupdiam = 8.222
   self._oc = 0.12
   self._pixelscale_lD = self._pixelscale / ((self->lambda()/self->pupdiam())/4.848d-6)
   nsup = 40.  ;maximum radius to ensure all star light is in.

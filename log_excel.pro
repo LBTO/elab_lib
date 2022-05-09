@@ -53,8 +53,8 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
       file_test(dir+'adsec_data/'+strmid(tns[i],0,8)+'/Data_'+tns[i]+'/wfs.fits') then begin
       cur_ee = getaoelab(tns[i],rec=rec)
       if obj_valid(cur_ee) then begin
-        sci_camera = cur_ee->luci())
-        if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()) 
+        sci_camera = cur_ee->luci()
+        if NOT obj_valid(sci_camera) then sci_camera = cur_ee->lmircam()
 
         if obj_valid(sci_camera) then begin
           cur_haspsf = 1
@@ -83,19 +83,19 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
             cur_darktime = time_im-time_dark
           endif
 
-          cur_fwhm = sci_camera->star_fwhm())[0]*1e3
+          cur_fwhm = (sci_camera->star_fwhm())[0]*1e3
 
           if keyword_set(sci_camera->filter_name()) then cur_filter = sci_camera->filter_name()
           psf_dl_fname = filepath( root=ao_elabdir(), 'psf_dl_'+strtrim(round(sci_camera->lambda()*1e9),2)+'_scale'+ $
             strtrim(round(sci_camera->pixelscale()*1e3),2)+'_oc'+strtrim(round(sci_camera->oc()*1e3),2)+'.sav')
-          if file_test(psf_dl_fname) then sr_tmp = sci_camera->sr_se() else sr_tmp = 0
+          sr_tmp = sci_camera->sr_se()
           if not (sr_tmp gt 1 or sr_tmp lt 0) then cur_sr = sr_tmp
         endif
         if keyword_set(seeing) then cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(sci_camera) ? $
           sci_camera->lambda()*1e9 : 1650.,/fitting, seeing = seeing) else begin
           if obj_valid(cur_ee->tel()) then if finite((cur_ee->tel())->dimm_seeing()) then $
-            cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(sci_camera)) ? $
-            (sci_camera->lambda()*1e9 : 1650.,/fitting)
+            cur_sr_fromslopes = sr_from_slopes(cur_ee, obj_valid(sci_camera) ? $
+            sci_camera->lambda()*1e9 : 1650.,/fitting)
         endelse
         if obj_valid(cur_ee->wfs_status()) then begin
           if obj_valid((cur_ee->wfs_status())->camera()) then begin
@@ -149,7 +149,7 @@ pro log_excel, data, rec = rec, filename = filename, lbt = lbt, left = left, rig
       endif
     endif
 
-    printf, unit, tns[i]+', '+tab+string(cur_mag,format='(F0.1)')+tab+string(cur_freq,format='(I0)')+tab+ $
+    printf, unit, tns[i]+tab+string(cur_mag,format='(F0.1)')+tab+string(cur_freq,format='(I0)')+tab+ $
       string(cur_bin,format='(I0)')+tab+string(cur_nmodes,format='(I0)')+tab+string(cur_seeing,format='(F0.2)')+tab+ $
       string(cur_seeingol,format='(F0.2)')+tab+string(cur_nsubap,format='(I0)')+tab+string(cur_gains[0],format='(F0.2)')+ $
       tab+string(cur_gains[1],format='(F0.2)')+tab+string(cur_gains[2],format='(F0.2)')+tab+cur_recmat+tab+ $
