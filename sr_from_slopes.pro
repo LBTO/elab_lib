@@ -41,7 +41,9 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
       tab_sr[i] = -1
       continue
     endif
-    norm_fact_wfs = (cur_data->residual_modes())->norm_factor()/2 ;division by 2 to take into account the active Gopt
+    norm_fact_wfs = (cur_data->residual_modes())->norm_factor()
+    if (cur_data->wfs_status())->optg() lt 1 and cur_data->operation_mode() ne 'RR' $
+      then norm_fact_wfs /= 2 ;division by 2 to take into account the active Gopt
     clvar0  = (cur_data->residual_modes())->time_variance() * norm_fact_wfs^2.
     nmodes = (cur_data->residual_modes())->nmodes()
     
