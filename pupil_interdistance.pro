@@ -59,10 +59,10 @@ if keyword_set(SPLIT) then begin
     k[2,*,*] = immagine[cx-dimx:cx-1, cy-dimy:cy-1]
     k[3,*,*] = immagine[cx:cx+dimx-1,   cy-dimy:cy-1]
 
-    if file_test('/tmp/',/dir) then writefits,'/tmp/pup1.fits',k[0,*,*]
-    if file_test('/tmp/',/dir) then writefits,'/tmp/pup2.fits',k[1,*,*]
-    if file_test('/tmp/',/dir) then writefits,'/tmp/pup3.fits',k[2,*,*]
-    if file_test('/tmp/',/dir) then writefits,'/tmp/pup4.fits',k[3,*,*]
+;    if file_test('/tmp/',/dir) then writefits,'/tmp/pup1.fits',k[0,*,*]
+;    if file_test('/tmp/',/dir) then writefits,'/tmp/pup2.fits',k[1,*,*]
+;    if file_test('/tmp/',/dir) then writefits,'/tmp/pup3.fits',k[2,*,*]
+;    if file_test('/tmp/',/dir) then writefits,'/tmp/pup4.fits',k[3,*,*]
 
     ;creo array a due dimensioni [la prima mi indica l'imm fra le quattro, la seconda le variabili (r,centro[0],centro[1])]
     results = fltarr(4,3)
