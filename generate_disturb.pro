@@ -112,6 +112,7 @@ pro generate_disturb, disturb_type, $
 		datavib  		=    		datavib			, $
 		Dpix			=			Dpix			, $
 		mirmodes_file	=			mirmodes_file, $
+		filename_prefix =  filename_prefix, $
 		verbose = verbose, fits_fname = fits_fname
 
 ; General Parameters
@@ -167,10 +168,9 @@ scr_size_m_y = (v_wind*t_int*n_steps)*angle_coef[1]	; screen dimension 		[m]
 scr_size_m   = max([scr_size_m_x,scr_size_m_y], ang_idx)		;
 scr_size_pix = round(scr_size_m / sample_size)		; side of the screen	[pix]
 
-;rname = 'dist_'+disturb_type		;FLAO1
-;rname = 'dist_flao2a'+disturb_type	;FLAO2
-;rname = 'dist_flao2_20111210_'+disturb_type	;FLAO2
-rname = 'dist_flao2_KL_v20_'+disturb_type  ;FLAO1 with TS4
+if n_elements(filename_prefix) eq 0 then filename_prefix = 'dist_flao2_KL_v20_'
+
+rname = filename_prefix+disturb_type  ;FLAO1 with TS4
 
 
 ; Vibration Disturbance Handling
@@ -311,6 +311,8 @@ if disturb_type eq 'atm' or disturb_type eq 'atm+vib' then begin
 		undefine, IFmatrix
 		restore, inv_IFmat
 	endif else begin
+		help,IFmatrix
+		help,mirmodes_file,idx_mask,mm2c,mmdpix
 		if n_elements(IFmatrix) eq 0 then IFmatrix = restore_modalif(mirmodes_file, idx_mask=idx_mask, mm2c=mm2c, dpix=mmdpix)
         if mmdpix ne Dpix then message, 'Dpix should be equal to '+strtrim(mmdpix)+', that is the number of pixel of '+mirmodes_file
 		inv_IFmatrix = pseudo_invert(IFmatrix, EPS=1e-4, W_VEC=ww, U_MAT=uu, V_MAT=vv, INV_W=inv_ww,  IDX_ZEROS=idx, COUNT_ZEROS=count, verbose = verbose, N_MODES_TO_DROP=1)
