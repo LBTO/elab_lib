@@ -123,11 +123,18 @@ function AOelab::Init, tracknum, $
 
     if keyword_set((self->tel())->isTracking()) then self._operation_mode = 'ONSKY' else begin
       if obj_valid(self->wfs_status()) then if strmid((self->wfs_status())->wunit(),0,4) eq 'LBTI' then begin
-        if ((self->wfs_status())->cube_stage() gt -10.) then self._operation_mode = 'ARGOScal' $
-        else self._operation_mode = 'RR'
+        if strmid((self->wfs_status())->wunit(),4,2) eq 'DX' then begin
+          if ((self->wfs_status())->cube_stage() gt -100. and (self->wfs_status())->cube_stage() le -60.) $
+            then self._operation_mode = 'RR' $
+          else self._operation_mode = 'ARGOScal'
+        endif
+        if strmid((self->wfs_status())->wunit(),4,2) eq 'SX' then begin
+          if ((self->wfs_status())->cube_stage() gt -100. and (self->wfs_status())->cube_stage() le -60.) $
+            then self._operation_mode = 'RR' $
+          else self._operation_mode = 'ARGOScal'
+        endif
       endif else begin
         if obj_valid(self->wfs_status()) then if strmid((self->wfs_status())->wunit(),0,3) eq 'MAG' then begin
-
           ; MAG does not know where the cube stage is, so we just use the lamp intensity
           if (self->wfs_status())->lamp_intensity() gt .001 then self._operation_mode = "RR" else self._operation_mode = "ARGOScal"
         endif else begin
