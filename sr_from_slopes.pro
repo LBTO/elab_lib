@@ -87,7 +87,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
           if obj_valid(cur_data->disturb()) then begin
             if (cur_data->disturb())->type() eq 'atm' or (cur_data->disturb())->type() eq 'atm+sinus' then $
               seeing_rad = (cur_data->disturb())->seeing()*asec2rad
-              if cur_data->operation_mode() ne 'RR' then seeing_rad /= 2
+              if cur_data->operation_mode() eq 'ARGOScal' then seeing_rad /= 2
           endif
           if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) and cur_data->operation_mode() eq 'ONSKY' then begin
             if finite((cur_data->tel())->dimm_seeing()) then seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
