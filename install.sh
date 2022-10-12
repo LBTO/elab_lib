@@ -53,6 +53,7 @@ EOF
     echo -n "Installing in $INSTALLDIR ... "
     install -d $INSTALLDIR
     cp -a *.pro $INSTALLDIR
+    cp -a *.fits $INSTALLDIR
 
     echo "done!"
     echo

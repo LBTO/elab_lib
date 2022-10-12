@@ -1,3 +1,36 @@
+;+
+; NAME:
+;   r02seeing
+; PURPOSE:
+;   Compute seeing value from r0 value and vice versa
+; CATEGORY:
+;   AO simulation.
+; CALLING SEQUENCE:
+; function r02seeing, r0
+; INPUTS/OUTPUTS:
+;   r0              fried parameter [m]
+;   seeing          seeing [arcsec]
+; KEYWORD
+;   None.
+; COMMON BLOCKS:
+;   None.
+; SIDE EFFECTS:
+;   None.
+; RESTRICTIONS:
+;   None
+; MODIFICATION HISTORY:
+;   Created 26-Oct-2017 by Guido Agapito agapito@arcetri.astro.it
+;-
+pro r02seeing_elab, r0, seeing, L0=L0, seeToko=seeToko
+
+if n_elements(seeing) eq 0 then seeing =  0.9759 * 0.5/(r0*4.848)
+if n_elements(r0) eq 0 then r0 = 0.9759 * 0.5/(seeing*4.848)
+if n_elements(L0) gt 0 then begin
+  seeToko = sqrt(1- 2.183 * (r0/L0)^0.356)*seeing
+endif
+
+end
+
 function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise = noise, tilt_free=tilt_free
 
   ;SR computation from the residual slopes (using Marechal's approximation).
@@ -66,8 +99,11 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         clvar[j] = (clvar0[j]-noise_level) > 0
       endfor
     endif else clvar = clvar0
-    
-    scaleFactor = readfits('/raid1/guido/SOUL/goptMatV3.fits',/silent)
+   
+    adir = '/home/dxwunit/elab_lib/'
+ 
+    goptMatFilename = file_dirname( filepath('sr_from_slopes.pro'))+path_sep()+'goptMatV3.fits'
+    scaleFactor = readfits(goptMatFilename, /silent)
     clvar *= 1/scaleFactor[0:n_elements(clvar)-1]^2.
 
     ; remove tip and tilt if the tilt_free keyword is set.
@@ -102,7 +138,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         endelse
         
         if n_elements(seeing_rad) gt 0 then begin
-          r02seeing, r0dummy, seeing_rad/asec2rad, L0=25.0, seeToko=seeToko
+          r02seeing_elab, r0dummy, seeing_rad/asec2rad, L0=25.0, seeToko=seeToko
           seeing_rad = seeToko*asec2rad
         endif
         

@@ -11,7 +11,7 @@ function elab_version
 ; Return statement will be overwritten by install.sh
 
 ;;; BEGIN GENERATED
-return,'5517M'
+return,'exported'
 ;;; END GENERATED
 
 end
