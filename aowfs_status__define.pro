@@ -215,8 +215,8 @@ function AOwfs_status::zeromag_flux
       'W1SOUL' : f = 2.647e8 * 1256 ;; 1.67E6 for mag 5.5
       'W2'     : f = 4.707e8 * 692  ;; 2.97E6 for mag 5.5
       'W2SOUL' : f = 2.647e8 * 1256 ;; 1.67E6 for mag 5.5
-      'LBTIDX' : f = 4.707e8 * 1188 ;; 2.97E6 for mag 5.5
-      'LBTISX' : f = 2.647e8 * 1188 ;; 1.67E6 for mag 5.5
+      'LBTIDX' : f = 2.647e8 * 1256 ;; 1.67E6 for mag 5.5
+      'LBTISX' : f = 2.647e8 * 1256 ;; 1.67E6 for mag 5.5
    else: message, 'AOwfs_status: magnitude conversion for unit '+self._wunit+' is not possible!'
    endcase
 

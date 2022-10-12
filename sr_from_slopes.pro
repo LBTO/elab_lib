@@ -1,4 +1,4 @@
-function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise = noise
+function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise = noise, tilt_free=tilt_free
 
   ;SR computation from the residual slopes (using Marechal's approximation).
   ;
@@ -8,6 +8,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
   ;seeing: User-defined value for the seeing (in arcsec).
   ;        Overrides the DIMM seeing for the computation of the fitting error.
   ;noise: (flag) Estimation and removal of the mode-per-mode noise in the CL variance.
+  ;tilt_free: (flag) remove first two modes, tip and tilt, from the CL variance to have a tilt free SR estimation.
 
   if size(data,/type) eq 11 then begin
     if obj_class(data) eq 'AOELAB' then tns = data->tracknum()
@@ -68,7 +69,10 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
     
     scaleFactor = readfits('/raid1/guido/SOUL/goptMatV3.fits',/silent)
     clvar *= 1/scaleFactor[0:n_elements(clvar)-1]^2.
-    
+
+    ; remove tip and tilt if the tilt_free keyword is set.
+    if keyword_set(tilt_free) then clvar = clvar[2:*]
+
     ;Modification for later if we want to compute the fitting from modalpositions in daytime
 ;    if cur_data->operation_mode() ne 'ONSKY' and obj_valid(cur_data->modalpositions()) then begin
 ;      norm_fact_dm = (cur_data->modalpositions())->norm_factor()
@@ -87,8 +91,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
           if obj_valid(cur_data->disturb()) then begin
             if (cur_data->disturb())->type() eq 'atm' or (cur_data->disturb())->type() eq 'atm+sinus' then $
               seeing_rad = (cur_data->disturb())->seeing()*asec2rad
-              if not keyword_set((cur_data->tel())->isTracking()) or $
-              cur_data->operation_mode() eq 'ARGOScal' then seeing_rad /= 2
+              if cur_data->operation_mode() eq 'ARGOScal' then seeing_rad /= 2
           endif
           if obj_valid(cur_data->tel()) and obj_valid(cur_data->modal_rec()) and cur_data->operation_mode() eq 'ONSKY' then begin
             if finite((cur_data->tel())->dimm_seeing()) then seeing_rad = (cur_data->tel())->dimm_seeing()*asec2rad
