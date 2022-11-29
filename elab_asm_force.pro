@@ -56,7 +56,7 @@ if keyword_set(doCumulateOnModes) then begin
 endif else for i=0,(size(force,/dim))[0]-1 do maxForcePerMode[i,*] = max(abs(reform(bigForceMat[i,*,*])),dim=1)
 
 window, 0, xs=wsize[0], ys=wsize[1]
-plothist, maxForcePerIter, xhist, yhist, bin=0.025, thick=2, $
+plothist, force, xhist, yhist, bin=0.025, thick=2, $
     charsize=charsize, tit='!17', xtit='!17force !4[!17N!4]!17', $
     ytit='!17occurence', xra=[0,1.0]
 
