@@ -178,10 +178,41 @@ function aolmircam::find_dark, thisJulday, dark_subdir, exptime, filter_tag, fra
       closest_av_dark_fname = filepath(root=ao_datadir(), sub=dark_subdir, file_basename(all_darks_fname[idx_closest[dd]], '_cube.fits'))
       dark_header = headfits(closest_av_dark_fname)
       dark_exptime = float(aoget_fits_keyword(dark_header, 'EXPTIME'))	;in seconds
-      dark_filter_tag = aoget_fits_keyword(dark_header, 'HIERARCH LBTO LMIRCAM INS FILTERS NAMES')
+
+      dark_filter_nameA = strtrim(aoget_fits_keyword(dark_header, 'LM_FW25'), 2)
+      dark_filter_nameB = strtrim(aoget_fits_keyword(dark_header, 'LMIR_FW2'), 2)
+      dark_filter_nameC = strtrim(aoget_fits_keyword(dark_header, 'LMIR_FW4'), 2)
+
+      dark_filter_name = dark_filter_nameA
+
+      CASE strtrim(dark_filter_nameA,2) OF
+        'MK-J':           lambdad = 1.25e-6
+        'H':              lambdad = 1.65e-6
+        'Kshort':         lambdad = 2.16e-6
+        else: begin
+          dark_filter_name = dark_filter_nameB
+          CASE strtrim(dark_filter_nameB,2) OF
+            'Fe-II':          lambdad = 1.645e-6
+            else: begin
+              dark_filter_name = dark_filter_nameC
+              CASE strtrim(dark_filter_nameC,2) OF
+                'Std-L':          lambdad = 3.70e-6
+                'Std-M':          lambdad = 4.78e-6
+                else: begin
+                  lambdad = !VALUES.F_NAN
+                  msg_temp = 'Unknown lmircam DARK filter <'+self._filter_name+'>'
+                  message, msg_temp, /info
+                  self._lmircam_err_msg += ' - ' + msg_temp
+                end
+              ENDCASE
+            end
+          ENDCASE
+        end
+      ENDCASE
+
       dark_frame_w = long(aoget_fits_keyword(dark_header, 'NAXIS1'))
       dark_frame_h = long(aoget_fits_keyword(dark_header, 'NAXIS2'))
-      if (dark_exptime eq exptime) and (strtrim(filter_tag,2) eq strtrim(dark_filter_tag,2)) and  $
+      if (dark_exptime eq exptime) and (strtrim(filter_tag,2) eq strtrim(dark_filter_name,2)) and  $
         (dark_frame_w eq frame_w) and (dark_frame_h eq frame_h) then dark_found=1B else dd+=1
     endwhile
     if dark_found then begin

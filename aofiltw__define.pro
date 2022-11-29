@@ -131,11 +131,11 @@ function AOfiltw::filters_LUT, wunit, fw_number, pos
 
   LBTIDX_SOUL_FW1 = replicate(INVALID, 6)
   LBTIDX_SOUL_FW1[0] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
-  LBTIDX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTIDX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.813,  550., 300. }
   LBTIDX_SOUL_FW1[2] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
   LBTIDX_SOUL_FW1[3] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
   LBTIDX_SOUL_FW1[4] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
-  LBTIDX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTIDX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  1.64 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
 
   LBTIDX_SOUL_FW2 = replicate(INVALID, 6)
   LBTIDX_SOUL_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
@@ -163,11 +163,11 @@ function AOfiltw::filters_LUT, wunit, fw_number, pos
 
   LBTISX_SOUL_FW1 = replicate(INVALID, 6)
   LBTISX_SOUL_FW1[0] = {filtw, 'Blank',            0.00,  0.00 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
-  LBTISX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.95,  550., 300. }
+  LBTISX_SOUL_FW1[1] = {filtw, '400 - 700nm',      0.05,  0.813,  550., 300. }
   LBTISX_SOUL_FW1[2] = {filtw, 'ND, OD3, T=0.1%',  0.00,  0.001,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
   LBTISX_SOUL_FW1[3] = {filtw, 'ND, OD2, T=1.0%',  0.00,  0.01 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
   LBTISX_SOUL_FW1[4] = {filtw, 'ND, OD1, T=10.0%', 0.00,  0.1  ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
-  LBTISX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  0.95,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
+  LBTISX_SOUL_FW1[5] = {filtw, 'Window',           0.05,  1.64 ,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
 
   LBTISX_SOUL_FW2 = replicate(INVALID, 6)
   LBTISX_SOUL_FW2[0] = {filtw, 'OD=2.5, T=0.3%',   0.00,  0.003,  !VALUES.F_INFINITY, !VALUES.F_INFINITY }
