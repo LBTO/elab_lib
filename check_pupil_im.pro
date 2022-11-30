@@ -18,20 +18,24 @@
 ;
 ; -
 
-pro check_pupil_IM, cloop_TN, combined_IM, side
+pro check_pupil_IM, cloop_TN, combined_IM, side=side
 
 ; initialize the elab_lib to get access to pupils and remap functions
-if n_elements(side) eq 0 then ao_init, /white
-if side EQ 'SX' then ao_init, /left, /white
-if side EQ 'DX' then ao_init, /right, /white
+if n_elements(side) eq 0 then begin
+    ao_init, /white
+endif else begin
+    if side EQ 'SX' then ao_init, /left, /white
+    if side EQ 'DX' then ao_init, /right, /white
+endelse
 
 ee=getaoelab(cloop_TN)
 
 ; restore the interaction matrix (combined signals)
-im=readfits(combined_IM)
+im=readfits(ao_datadir()+path_sep()+combined_IM)
 
 ; computes the RMS
-rms_im = rms(im,dim=1)
+rms_im = fltarr((size(im,/dim))[1])
+for i=0,(size(im,/dim))[1]-1 do rms_im[i] = rms(im[*,i])
 
 ; normalize the RMS
 rms_im = rms_im/mean(rms_im)
@@ -62,13 +66,13 @@ print, 'over: ', strtrim(count_good/2,2), ' elements'
 ; display the slopes RMS
 window, 0, xs=1200, ys=450
 loadct, 34
-image_show, /as, /sh, (sl2d+sl0)[120:225,15:59]
+image_show, /as, /sh, (sl2d+sl0)[120:239,0:59]
 ; histogram display
 
 window, 1, xs=900, ys=675
 plothist, rms_im_good_max, bin=0.1, $
   tit='!17', xtit='norm. slope RMS on sub-aperture', ytit='occurences', $
   xgridstyle=1, ygridstyle=1, xticklen=1, yticklen=1, charsize=3, $
-  fcolor=255l, xmargin=[12, 3], ymargin=[12, 2]
+  fcolor=255l;, xmargin=[12, 3], ymargin=[12, 2]
 
 end
