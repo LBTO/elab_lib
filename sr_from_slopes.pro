@@ -100,7 +100,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
       endfor
     endif else clvar = clvar0
    
-    goptMatFilename = file_dirname( filepath('sr_from_slopes.pro'))+path_sep()+'goptMatV3.fits'
+    goptMatFilename = file_dirname( filepath('sr_from_slopes.pro',sub=['lib','elab_lib']))+path_sep()+'goptMatV3.fits'
     scaleFactor = readfits(goptMatFilename, /silent)
     clvar *= 1/scaleFactor[0:n_elements(clvar)-1]^2.
 
