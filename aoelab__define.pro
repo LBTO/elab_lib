@@ -480,7 +480,8 @@ function AOelab::Init, tracknum, $
   self->addMethodHelp, "errorDescription()", "return the error description in case isOK return 0"
   self->addMethodHelp, "closedloop()", "return 1 if loop is closed"
   self->addMethodHelp, "mag()", "equivalent star magnitude (R)"
-  self->addMethodHelp, "sr_from_positions()", "Strehl Ratio estimate (default H band)"
+  self->addMethodHelp, "sr_from_positions(lambda_perf=lambda_perf)", "Strehl Ratio estimate from position (day-time test only default H band)"
+  self->addMethodHelp, "sr_from_slopes(lambda_, /fitting, /noise, seeing=seeing tilt_free=tilt_free)", "Strehl Ratio estimate from slopes (default H band)"
   self->addMethodHelp, "modalplot, /overplot, color=color", "Plot the modal performance evaluation"
   self->addMethodHelp, "operation_mode()", "Return ONSKY or RR (retroreflector)"
   self->addMethodHelp, "meas_type()", "Return the type of measurement: LOOP, NCPA (non-common path calibration), AG (autogain)"
@@ -859,11 +860,16 @@ pro AOelab::modalSpecPlot, modenum, OVERPLOT=OVERPLOT, COLOR=COLOR, NOLEGEND=NOL
 
 end
 
-
 function AOelab::sr_from_positions, lambda_perf=lambda_perf
   if not keyword_set(lambda_perf) then lambda_perf = 1.65e-6 	; Default: H band
   pos_coef_var = (self->modalpositions())->time_variance() * (2*!PI*self->reflcoef()/lambda_perf)^2. ;in rad^2 @ lambda_perf
   return, exp(-total(pos_coef_var))
+end
+
+function AOelab::sr_from_slopes, lambda_, fitting = fitting, seeing = seeing, noise = noise, tilt_free=tilt_free
+    if n_elements(fitting) eq 0 and ~keyword_set(fitting) then fitting = 1B
+    if n_elements(noise) eq 0 and ~keyword_set(noise) then noise = 1B
+    return, sr_from_slopes(self, lambda_, fitting=fitting, seeing = seeing, noise = noise, tilt_free=tilt_free)
 end
 
 function AOelab::duration
