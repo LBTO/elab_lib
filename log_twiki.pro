@@ -5,7 +5,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
 
     hdr =  "| *TrackNo* | *RefStar* | *Mag* | *El* | *Wind* | *DIMM/Corrected/OL/Disturb* | *Rec* | *bin* | *#mod* | *freq* "+$
            "| *emGain* | *gain* | *mod* | *nph/sa/fr* | *Gopt* | *AntiDrift* | *SR* | *SR (from slopes)* "+ $
-           "| *FWHM [max,min] (mas)* | *filter* | *exp* | *#frames* | *disturb* | *SN* | *skip* | *notes* | "
+           "| *FWHM [max,min] (mas)* | *filter* | *exp* | *#frames* | *disturb* | *SN* | *skip* | NCPA (nm rms WF) | *notes* | "
 
     print, hdr
     TEXT = hdr
@@ -71,9 +71,15 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
         if NOT obj_valid(sci_camera) then sci_camera = ee->lmircam()
  
         lambda_srfromslopes = obj_valid(sci_camera) ? sci_camera->lambda()*1e9 : 1650.
+        
+        seeing_ok = 0
+        if obj_valid(ee->disturb()) then begin
+          if (ee->disturb())->type() eq 'atm' or (ee->disturb())->type() eq 'atm+sinus' then seeing_ok = 1
+        endif
+        if obj_valid(ee->tel()) then if finite((ee->tel())->dimm_seeing()) then seeing_ok = 1
 
         VALID = [VALID, ee->tracknum()]
-        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f (%d nm) | [%d, %d] | %s | %d | %d | %s | %s | %d | %s |")', $
+        str = string(format='(%"| %s | %s | %4.1f | %d | %d | %5.2f %5.2f %5.2f %5.2f| %s | %d | %d | %d | %d | %4.1f  %4.1f  %4.1f | %d | %0.1f | %0.2f | %s | %6.1f | %6.1f (%d nm) | [%d, %d] | %s | %d | %d | %s | %s | %d| %0.1f | %s |")', $
             ee->tracknum(), $
             ref_star, $
             ee->mag(), $
@@ -96,7 +102,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
             obj_valid(ee->wfs_status()) ? (ee->wfs_status())->optg() : 1, $
             obj_valid(ee->frames()) ? ad_status : -1, $
             obj_valid(instr) ?  instr->sr_se()*100 : -1, $
-            obj_valid(ee->residual_modes()) ? sr_from_slopes(ee, lambda_srfromslopes,/fitting,/noise)*100 : -1, lambda_srfromslopes, $
+            (obj_valid(ee->residual_modes()) and seeing_ok) ? sr_from_slopes(ee, lambda_srfromslopes,/fitting,/noise)*100 : -1, lambda_srfromslopes, $
             obj_valid(sci_camera) ? (sci_camera->star_fwhm(0))[0:1]*1e3 : [-1,-1] , $
             obj_valid(instr) ? instr->filter_name() : '?' , $
             obj_valid(instr) ? round( instr->exptime()*1e3) : -1 , $
@@ -104,6 +110,7 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
 			disturb,  $
             sn_fname, $
             obj_valid(ee->sanitycheck()) ? (ee->sanitycheck())->skippedFrames() : -1, $
+            obj_valid(ee->adsec_status()) ? sqrt(total(((ee->adsec_status())->ncpa())^2.))*2e9 : 0, $
             ee->isOK(cause=cause) eq 1L ? "" :  cause $
         )
 
@@ -119,7 +126,6 @@ pro log_twiki, aodataset, ref_star=ref_star, TEXT = TEXT, VALID = VALID
     idlstring +="]"
     print, 'IDL string:  ' +idlstring
     if n_elements(VALID) gt 1 then VALID = VALID[1:*]
-    
     sr= aodataset->value('irtc.sr_se') > 0 < 1.
     print, string(format='(%"| %s | %g (%g) |")', 'SR', mean(sr),  stddev(sr))
     ols= aodataset->value('olmodes.seeing')
