@@ -31,7 +31,8 @@ endif
 
 end
 
-function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise = noise, tilt_free=tilt_free
+function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise = noise, tilt_free=tilt_free, $
+                         use_olmodes=use_olmodes, display=display, verbose=verbose
 
   ;SR computation from the residual slopes (using Marechal's approximation).
   ;
@@ -42,6 +43,9 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
   ;        Overrides the DIMM seeing for the computation of the fitting error.
   ;noise: (flag) Estimation and removal of the mode-per-mode noise in the CL variance.
   ;tilt_free: (flag) remove first two modes, tip and tilt, from the CL variance to have a tilt free SR estimation.
+  ;use_olmodes: (flag) if DIMM seeing is not available use the estimation from olmodes (if available)
+  ;display: (flag) plot data
+  ;verbose: (flag) print data
 
   if size(data,/type) eq 11 then begin
     if obj_class(data) eq 'AOELAB' then tns = data->tracknum()
@@ -80,6 +84,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
       then norm_fact_wfs /= 2 ;division by 2 to take into account the active Gopt
     clvar0  = (cur_data->residual_modes())->time_variance() * norm_fact_wfs^2.
     nmodes = (cur_data->residual_modes())->nmodes()
+    noise_level = fltarr(nmodes)
     
     if keyword_set(noise) then begin
       clvar = clvar0*0
@@ -87,16 +92,16 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         ;Compute temporal PSD of the residuals
         psd = (cur_data->residual_modes())->psd(j) * norm_fact_wfs^2.
         ;Noise variance is a constant offset in the temporal PSD (temporally uncorrelated), mostly visible at high frequencies
-        ;noise_level = median(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
-        noise_level = mean(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        ;noise_level[j] = median(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        noise_level[j] = mean(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
         
         ;Correlation of the residuals
 ;        ft_res = fft(((cur_data->residual_modes())->modes())[*,j])* norm_fact_wfs
 ;        corr = real(fft(ft_res*conj(ft_res),1))
 ;        p = poly_fit(indgen(10)+1,corr[1:10],6)
-;        noise_level = p[0]
+;        noise_level[j] = p[0]
         
-        clvar[j] = (clvar0[j]-noise_level) > 0
+        clvar[j] = (clvar0[j]-noise_level[j]) > 0
       endfor
     endif else clvar = clvar0
    
@@ -143,16 +148,60 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         if n_elements(seeing_rad) eq 0 then message, 'fitting error can not be computed', /info else begin
           r0500 = 0.976d*0.5d-6/seeing_rad ; Fried's r0 @ 500 nm
           r0LAM = r0500*(lambda/500.d)^(6.d/5.d)
-          ;fitting_error = 0.2778d*(cur_data->modal_rec())->nmodes()^(-0.9d) * (8.222d / r0LAM)^(5.d/3.d)
           fitting_error = 0.2313d*(8.222d/sqrt((cur_data->modal_rec())->nmodes()*4./!pi)/r0LAM)^(5.d/3.d)
         endelse
-      endif
 
-      if n_elements(fitting_error) eq 0 then fitting_error = 0.
+        if keyword_set(use_olmodes) and n_elements(fitting_error) eq 0 and obj_valid(cur_data->olmodes()) then begin
+            (cur_data->olmodes())->setup_r0_est_options, remove_noise=1B, outer_scale=25., $
+                                                         change_slope=1B, add_power=1B
+            r0500 = (cur_data->olmodes())->r0()
+            r0LAM = r0500*(lambda/500.d)^(6.d/5.d)
+            fitting_error = 0.2313d*(8.222d/sqrt((cur_data->modal_rec())->nmodes()*4./!pi)/r0LAM)^(5.d/3.d)
+        endif
 
-      tab_sr[i] = exp(-(total(clvar)*nm2torad2+fitting_error))
-  ;  endelse
+      endif else fitting_error = 0.
 
+      if n_elements(fitting_error) eq 0 then begin
+        tab_sr[i] = -1
+      endif else begin
+        if sqrt(total(clvar)) lt 1e1 or sqrt(total(noise_level)) lt 1e1 then $
+            print, 'WARNING: sr_from_slopes on TN='+tns[i]+' may be in error.' 
+
+        tab_sr[i] = exp(-(total(clvar)*nm2torad2+fitting_error))
+
+        if keyword_set(display) then begin
+          max_modes_for_fitting = 2000.
+          theovar1 = diag_matrix(kolm_mcovar(max_modes_for_fitting+1))
+          x = findgen(max_modes_for_fitting)+1       
+          fitvar_ol = fltarr(max_modes_for_fitting)
+          fitvar_ol = theovar1
+          fitvar = fltarr(max_modes_for_fitting)
+          fitvar[nmodes:max_modes_for_fitting-1] = theovar1[nmodes:max_modes_for_fitting-1]
+          fitvar_ol *= (fitting_error/nm2torad2/total(fitvar))
+          fitvar *= (fitting_error/nm2torad2/total(fitvar))
+          window, i
+          plot_oo, findgen(nmodes)+1, sqrt(clvar0), xra=[1,1000], /xst, thick=2, $
+                   tit='!3'+tns[i]+'!17', xtit='!17mode number', ytit='!17modal RMS !4[!17nm!4]!17'
+          oplot, findgen(nmodes)+1, sqrt(clvar), thick=2, col=255l
+          oplot, findgen(nmodes)+1, sqrt(noise_level), thick=2, col=255l*256l
+          oplot, x, sqrt(fitvar_ol), linest=2, col=255l*256l*256l
+          oplot, x, sqrt(fitvar), thick=2, col=255l*256l*256l
+          elab_legend, ['raw modes','modes w/o noise','noise','fitting'], col=[1,255l,255l*256l,255l*256l*256l], $
+              linest=0, /top, /right, /clear, thick=2
+        endif
+
+        if keyword_set(verbose) then begin
+          print, 'SR@'+strtrim(lambda,2)+'nm: '+strtrim(tab_sr[i],2)
+          print, 'fitting error [nm]: '+strtrim(sqrt(fitting_error/nm2torad2),2) 
+          print, 'residual on corrected modes [nm]: '+strtrim(sqrt(total(clvar)),2) 
+          if ~keyword_set(tilt_free) then begin
+              print, 'residual on tip&tilt [nm]: '+strtrim(sqrt(total(clvar[0:1])),2) 
+              print, 'SR@'+strtrim(lambda,2)+'nm w/o tip&tilt: '+strtrim(exp(-(total(clvar[2:*])*nm2torad2+fitting_error)),2) 
+          endif
+          print, 'noise level in slopes [nm]: '+strtrim(sqrt(total(noise_level)),2)          
+        endif
+      endelse
+      ;  endelse
   endfor
 
   return, tab_sr
