@@ -180,7 +180,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
           fitvar_ol *= (fitting_error/nm2torad2/total(fitvar))
           fitvar *= (fitting_error/nm2torad2/total(fitvar))
           window, i
-          plot_oo, findgen(nmodes)+1, sqrt(clvar0), xra=[1,1000], /xst, thick=2, $
+          plot_oo, findgen(nmodes)+1, sqrt(clvar0), xra=[1,1000], yra=[10,500], /xst, thick=2, $
                    tit='!3'+tns[i]+'!17', xtit='!17mode number', ytit='!17modal RMS !4[!17nm!4]!17'
           oplot, findgen(nmodes)+1, sqrt(clvar), thick=2, col=255l
           oplot, findgen(nmodes)+1, sqrt(noise_level), thick=2, col=255l*256l
