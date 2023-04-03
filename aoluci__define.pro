@@ -36,6 +36,7 @@ function aoluci::Init, root_obj, psf_fname, dark_fname
         'clear Br_gam':   lambda = 2.124e-6
         'clear P_beta':   lambda = 1.28e-6
         'clear Ks':       lambda = 2.15e-6
+        'clear K':        lambda = 2.20e-6
     	'J clear':        lambda = 1.25e-6
     	'H2 clear':       lambda = 2.124e-6
     	'FeII clear':     lambda = 1.646e-6
