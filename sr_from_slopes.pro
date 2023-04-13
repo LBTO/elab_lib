@@ -85,6 +85,7 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
     clvar0  = (cur_data->residual_modes())->time_variance() * norm_fact_wfs^2.
     nmodes = (cur_data->residual_modes())->nmodes()
     noise_level = fltarr(nmodes)
+    freq_max = max((cur_data->residual_modes())->freq())
     
     if keyword_set(noise) then begin
       clvar = clvar0*0
@@ -93,7 +94,9 @@ function sr_from_slopes, data, lambda_, fitting=fitting, seeing = seeing, noise 
         psd = (cur_data->residual_modes())->psd(j) * norm_fact_wfs^2.
         ;Noise variance is a constant offset in the temporal PSD (temporally uncorrelated), mostly visible at high frequencies
         ;noise_level[j] = median(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
-        noise_level[j] = mean(psd[round(n_elements(psd)/2.):*])/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
+        if freq_max ge 250 then tmp = mean(psd[round(n_elements(psd)/2.):*]) $
+          else tmp = mean(psd[round(3*n_elements(psd)/4.):*])
+        noise_level[j] = tmp/(cur_data->frames_counter())->deltat()/2 ;/2 from psd normalization
         
         ;Correlation of the residuals
 ;        ft_res = fft(((cur_data->residual_modes())->modes())[*,j])* norm_fact_wfs
