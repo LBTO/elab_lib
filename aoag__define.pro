@@ -76,6 +76,8 @@ pro AOag::readconf
          values = [values, value]
      endif
    endwhile
+   close,lun
+   free_lun, lun
 
    if ptr_valid(self._conftags) then ptr_free, self._conftags
    if ptr_valid(self._confvalues) then ptr_free, self._confvalues
